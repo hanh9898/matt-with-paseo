@@ -32,7 +32,13 @@ Read the signals below on the real repo. Walk the table from the bottom row up; 
 
 Ticket status is the primary signal for stage F; the two log sections `## Wave agents` and `## Review` only tell you which step is missing. A wave file with no `## Wave agents` whose tickets are all done is an old, finished wave, not stage F.
 
-For stage F, take each unfinished ticket of the wave. Find its agent in the `## Wave agents` table, or else with `list_agents` by the title `[Wave N] NN`:
+For stage F, a previous session may have ended mid-step (a crash, a closed window), so run the **recovery sweep** first and report what it finds before resuming any step:
+
+- `git worktree list` and `list_workspaces` against the `## Wave agents` table: a workspace or worktree of this wave with no row is an orphan of an interrupted spawn; a row whose workspace is gone is a cleanup already done.
+- `list_agents` for titles `[Wave N]`: an agent with no row was spawned but never logged; add its row before anything else.
+- Every background job or heartbeat the previous session started: its output, if any, may hold a report nobody processed.
+
+Then take each unfinished ticket of the wave. Find its agent in the `## Wave agents` table, or else with `list_agents` by the title `[Wave N] NN`:
 
 - No agent: step 4, spawning only for that ticket.
 - Agent still running (`get_agent_status`): wait, then step 5. If this session did not spawn the agent it will not receive the agent's notification, so create a heartbeat per step 5.
@@ -83,6 +89,8 @@ Present the graph, the upcoming wave, and the lost-width list to the user, and w
 ## 3. Write the wave's common rules
 
 Pin the base commit: `git rev-parse <integration branch>`. Write `wave<N>-common-rules.md` next to the ticket folder, following [`COMMON-RULES-TEMPLATE.md`](COMMON-RULES-TEMPLATE.md); its first section is the graph from step 2, with each ticket's wave and status, so the dependency tree lives on disk.
+
+Once the first agent is spawned, the rules part of the file is **frozen**: agents read it at any moment, so an edit mid-wave reaches some of them and not others. A rule that must change mid-wave goes to each running agent with `send_agent_prompt` and into the next wave's rules; only the log sections below the rules keep growing.
 
 The common rules are the single place holding what every agent in the wave needs to know, so each agent's own prompt carries only three things: which ticket, which private resources, and which flow (step 4). The file is also the wave's log: steps 4 and 7 append to it, so step 0 of a later session can read where an unfinished wave stands.
 
@@ -151,7 +159,7 @@ Each ticket was already reviewed by its agent in step 4. This pass targets only 
 - A one-ticket wave has no seam: write `## Review` as "not applicable: one-ticket wave, reviewed by its agent", then go to step 8.
 - A wave of two or more tickets: run `mattpocock-skills:code-review` with the wave's first base commit (step 3) as the fixed point, so tickets started by rolling start are covered too, stating in the call that each ticket was already reviewed on its own and only seam findings should be reported. Present the Standards and Spec axes separately.
 
-Fix each finding. A finding contained in one ticket's zone goes back to that same agent via `send_agent_prompt`; a finding cutting across several tickets you fix yourself on the integration branch. Gather every question that needs a human decision into one round, present it, then record the decisions in the comments of the tickets involved, so the next wave can read them.
+Fix each finding. Before sending new work into an existing worktree, fast-forward its branch to the integration branch (`git -C <worktree> merge --ff-only <integration branch>`), so the agent reads the latest ticket comments and its merge comes back without conflicts. The coordinator writes into a ticket file only while no agent holds that ticket; decisions for a held ticket go to its agent with `send_agent_prompt`. A finding contained in one ticket's zone goes back to that same agent via `send_agent_prompt`. A finding cutting across several tickets goes to one agent on a fresh workspace from the integration branch; the coordinator edits files itself only when the user assigns that fix to it in the decision round, and says so in `## Review`. Gather every question that needs a human decision into one round, present it, then record the decisions in the comments of the tickets involved, so the next wave can read them.
 
 Append a `## Review` section to the end of the common rules file: the fixed point, the number of findings per axis, and the outcome of each finding.
 

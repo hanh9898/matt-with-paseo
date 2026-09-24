@@ -1,6 +1,6 @@
 {
   "name": "matt-with-paseo",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "A simple multi-agent orchestrator: Matt Pocock's skills + the Paseo agent control plane, running tickets in waves of parallel agents.",
   "author": {
     "name": "hanh9898",
