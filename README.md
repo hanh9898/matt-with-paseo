@@ -56,12 +56,39 @@ The skill asks for your approval at the decisions that are yours: the stage and 
 
 - [Claude Code](https://claude.com/claude-code)
 - [Paseo](https://paseo.sh), with its MCP server available to the orchestrating session and its `paseo` skill installed
-- [Matt Pocock's skills](https://github.com/mattpocock/skills), installed as the `mattpocock-skills` plugin, so commands are namespaced `/mattpocock-skills:<skill>`
+- [Matt Pocock's skills](https://github.com/mattpocock/skills), installed as the `mattpocock-skills` Claude Code plugin. The skill suggests commands in the plugin's namespaced form, `/mattpocock-skills:<skill>`; if you installed Matt's skills another way, type the same skill without the prefix (`/<skill>`).
 - A git repository whose tracker is configured by `/mattpocock-skills:setup-matt-pocock-skills`
 
 ## Installation
 
-Copy the skill folder into your personal Claude Code skills directory.
+The repo follows the [Agent Skills](https://agentskills.io/specification) layout (`skills/matt-with-paseo/SKILL.md`) and is also a Claude Code plugin marketplace, so any of these works. Pick one; installing twice gives you two copies of the command.
+
+### Option 1: Claude Code plugin
+
+```
+/plugin marketplace add hanh9898/matt-with-paseo
+/plugin install matt-with-paseo@matt-with-paseo
+```
+
+Updates arrive through `/plugin marketplace update`. Plugin skills are namespaced, so the command is `/matt-with-paseo:matt-with-paseo`.
+
+### Option 2: `npx skills`
+
+```bash
+npx skills add hanh9898/matt-with-paseo -g -a claude-code
+```
+
+`-g` installs for your user; drop it to install into the current project. The command is `/matt-with-paseo`.
+
+### Option 3: GitHub CLI (v2.90+)
+
+```bash
+gh skill install hanh9898/matt-with-paseo matt-with-paseo --agent claude-code --scope user
+```
+
+This resolves the latest tagged release; add `--pin v0.1.0` to fix a version. The command is `/matt-with-paseo`.
+
+### Option 4: Manual copy
 
 macOS / Linux:
 
@@ -77,11 +104,11 @@ git clone https://github.com/hanh9898/matt-with-paseo.git
 Copy-Item -Recurse matt-with-paseo\skills\matt-with-paseo "$env:USERPROFILE\.claude\skills\"
 ```
 
-To use it in one project only, copy it into that project's `.claude/skills/` instead.
+To use it in one project only, copy it into that project's `.claude/skills/` instead. The command is `/matt-with-paseo`.
 
 ## Usage
 
-In a Claude Code session inside your repository:
+In a Claude Code session inside your repository (with the plugin install, use `/matt-with-paseo:matt-with-paseo`):
 
 ```
 /matt-with-paseo
@@ -101,6 +128,7 @@ Files in this repo:
 | [`skills/matt-with-paseo/SKILL.md`](skills/matt-with-paseo/SKILL.md) | The orchestrator: locate, then steps 1 to 8 |
 | [`skills/matt-with-paseo/COMMON-RULES-TEMPLATE.md`](skills/matt-with-paseo/COMMON-RULES-TEMPLATE.md) | The frame for each wave's common rules |
 | [`skills/matt-with-paseo/TROUBLESHOOTING.md`](skills/matt-with-paseo/TROUBLESHOOTING.md) | Symptoms and fixes for stopped agents, merge conflicts, and cleanup |
+| [`.claude-plugin/`](.claude-plugin/) | Marketplace and plugin manifests for the Claude Code plugin install |
 
 ## Design principles
 

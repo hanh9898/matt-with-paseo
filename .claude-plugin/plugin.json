@@ -1,0 +1,13 @@
+{
+  "name": "matt-with-paseo",
+  "version": "0.1.0",
+  "description": "A simple multi-agent orchestrator: Matt Pocock's skills + the Paseo agent control plane, running tickets in waves of parallel agents.",
+  "author": {
+    "name": "hanh9898",
+    "url": "https://github.com/hanh9898"
+  },
+  "homepage": "https://github.com/hanh9898/matt-with-paseo",
+  "repository": "https://github.com/hanh9898/matt-with-paseo",
+  "license": "MIT",
+  "keywords": ["multi-agent", "orchestration", "paseo", "skills", "worktree", "tdd"]
+}
