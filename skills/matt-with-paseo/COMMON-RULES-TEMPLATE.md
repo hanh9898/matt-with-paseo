@@ -9,8 +9,16 @@ Copy in only what an agent cannot look up: an unwritten convention, the reason b
 ```markdown
 # Common rules for wave <N> (tickets <NN>, <NN>)
 
+## Graph
+`<one-line graph from step 2, e.g. 01✓ → {02, 03?} → 04>`
+
+| Ticket | Status | Blocked by | Wave |
+|---|---|---|---|
+| <NN> | <status> | <NN, NN or -> | <N, or what blocks it> |
+
 ## Context
-- Your worktree branches off `<integration branch>` at `<base commit>`. That branch already contains tickets <...>.
+- Your worktree branches off `<integration branch>` at `<base commit>`, unless your prompt names another base commit
+  (a ticket started mid-wave). That branch already contains tickets <...>.
   Run `git branch --show-current` before every commit.
 - Read before you start: <spec>, <glossary / CONTEXT.md>, <ADRs>, your ticket, and the comments
   of tickets <...> for decisions already made.
@@ -38,7 +46,8 @@ Copy in only what an agent cannot look up: an unwritten convention, the reason b
 
 ## Done means
 - Commit to your branch. The orchestrator pushes and merges.
-- Skip your own code review step; the orchestrator reviews the whole wave after merging.
+- Before the last commit: run `/mattpocock-skills:code-review` with your base commit as the fixed point, fix the
+  findings, and write the number of findings per axis and the outcome of each into the ticket's comments.
 - Change the ticket status: `resolved` if fully done, `ready-for-human` for the part a human must do.
   Write in the comments what you verified, with evidence, and what remains open.
 - Clean up your private resources; state the reason for anything you keep.

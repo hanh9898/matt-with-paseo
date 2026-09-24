@@ -12,6 +12,8 @@ Each entry: the observable symptom, then how to handle it. When an incident expo
 
 ## Merging
 
+**Test count after a merge exceeds what the tracked test files contain.** The worktrees sit inside the integration branch's checkout, and a runner that scans the tree (`node --test`, a `**` glob) also runs the unmerged code of the worktrees still open, so green proves nothing. Restrict the input to files git tracks, for example `git ls-files '*.test.js' | xargs node --test`. Check: the printed count matches the tests in those files. Passing a directory name straight to the runner does not always work (`node --test test/` on Node 24 fails with `Cannot find module`).
+
 **Conflict in a registration file**, caused by two tickets both adding lines to a manifest, package index, route table, or permission file. Keep both sides' lines, in ticket-number order.
 
 **Install is green but the real run fails.** For example, two modules register a helper under the same name and one silently shadows the other: installing reports nothing, only a real call fails. Fix it, then add the real-call check to the "Done means" section and to the traps section of the next wave's common rules.

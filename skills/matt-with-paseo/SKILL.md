@@ -6,7 +6,7 @@ disable-model-invocation: true
 
 # Orchestrate tickets in waves with Paseo
 
-You are the orchestrator. Every run starts by **locating**: where the work stands and what the next step is. Once tickets exist, each ticket is worked by one Paseo agent in its own worktree; you split tickets into **waves**, write the **common rules**, spawn, check reports, merge into the **integration branch**, review the whole wave, then open the next one.
+You are the orchestrator. Every run starts by **locating**: where the work stands and what the next step is. Once tickets exist, each ticket is worked by one Paseo agent in its own worktree; you split tickets into **waves**, write the **common rules**, spawn, check reports, merge into the **integration branch**, review where the tickets touch, then open the next one.
 
 **Input:** $ARGUMENTS (a feature name, a ticket folder, or empty)
 
@@ -26,7 +26,7 @@ Read the signals below on the real repo. Walk the table from the bottom row up; 
 | B. Idea not sharp | No spec for the feature; the feature's terms are not in `CONTEXT.md` | `/mattpocock-skills:grill-with-docs`. Work too large for one session with no visible path: `/mattpocock-skills:wayfinder`. A raw issue someone else filed: `/mattpocock-skills:triage` |
 | C. Grilled, no spec | `CONTEXT.md` or an ADR records the feature's decisions; no spec file yet | Ask the user whether `/mattpocock-skills:prototype` is needed, then `/mattpocock-skills:to-spec`; both run in the **same session** that did the grilling. See the stage C notes below the table |
 | D. Spec, no tickets | A spec exists (location per `issue-tracker.md`); the feature's `issues/` folder is empty or missing | `/mattpocock-skills:to-tickets <spec path>`, run in the same session that wrote the spec |
-| E. Tickets, no wave run yet | Tickets exist; no `wave*-common-rules.md` file | Small work (one or two sequential tickets): `/mattpocock-skills:implement` in this session. Otherwise: step 1 of this skill |
+| E. Tickets, no wave run yet | Tickets exist; no `wave*-common-rules.md` file | A single ticket, or a pure chain where no two tickets can ever run side by side: `/mattpocock-skills:implement` in this session. Any width at all: step 1 of this skill |
 | F. Wave in progress | A `wave<N>-common-rules.md` file exists, and a ticket of that wave (listed in the file's title) is not yet `resolved`/`ready-for-human`; or the file has `## Wave agents` but no `## Review`, or the "cleaned" column is not fully checked | Resume at the missing step, see right below the table |
 | G. No work left for agents | At least one ticket exists, and every ticket is `resolved` or `ready-for-human` | Summarize per step 8; list the work waiting on humans |
 
@@ -63,17 +63,26 @@ Identify the tracker from `docs/agents/issue-tracker.md`. Identify the integrati
 
 ## 2. Build the graph and split into waves
 
-Read every ticket: status, dependency line (`Blocked by`), comments. Draw the dependency graph on one line, for example `01 → {02, 03} → {04, 05, 06} → 09`.
+**Width** is the point of this skill: every wave takes every ticket that can run now, and the orchestrator works to make that set wider. A ticket can run now when every ticket in its `Blocked by` is merged and its status is `ready-for-agent`.
+
+Read every ticket: status, dependency line (`Blocked by`), comments. Draw the dependency graph on one line, marking each ticket's status, for example `01✓ → {02, 03?} → {04, 05, 06} → 09`.
 
 Two tickets in the same wave must be logically independent. If they touch the same registration file (manifest, package index, route table, permission file) they can still share a wave, but the common rules must assign each ticket its own file zone.
 
-Present the graph and the upcoming wave to the user, and wait for approval.
+Run each symptom ticket's own reproduction on the base commit. A symptom that does not reproduce, or an acceptance criterion that already passes, leaves an agent nothing to fix but something to invent: take that ticket out of the wave and back to triage (the answer may be a ticket rewritten as a test that locks the correct behaviour).
 
-**Done when**: every open ticket has a wave number, and the user has approved the upcoming wave.
+Then hunt for lost width, and list every case with the one thing that would recover it:
+
+- **A ticket waiting on a human** (`needs-triage`, `ready-for-human`) that would join this wave, or that blocks tickets which would: name the exact question the human must answer, or the decision they must make.
+- **A false edge**: a `Blocked by` that stands for a shared file rather than a logical dependency (the later ticket neither calls nor reads what the earlier one builds). Propose dropping the edge and giving both tickets a file zone; the edge changes only in the ticket, and only with the user's agreement.
+
+Present the graph, the upcoming wave, and the lost-width list to the user, and wait for approval. A wave of one ticket is a signal to resolve the lost-width list first when the user can.
+
+**Done when**: every open ticket has a wave number, every case of lost width has been named to the user with its unblocking question, and the user has approved the upcoming wave.
 
 ## 3. Write the wave's common rules
 
-Pin the base commit: `git rev-parse <integration branch>`. Write `wave<N>-common-rules.md` next to the ticket folder, following [`COMMON-RULES-TEMPLATE.md`](COMMON-RULES-TEMPLATE.md).
+Pin the base commit: `git rev-parse <integration branch>`. Write `wave<N>-common-rules.md` next to the ticket folder, following [`COMMON-RULES-TEMPLATE.md`](COMMON-RULES-TEMPLATE.md); its first section is the graph from step 2, with each ticket's wave and status, so the dependency tree lives on disk.
 
 The common rules are the single place holding what every agent in the wave needs to know, so each agent's own prompt carries only three things: which ticket, which private resources, and which flow (step 4). The file is also the wave's log: steps 4 and 7 append to it, so step 0 of a later session can read where an unfinished wave stands.
 
@@ -81,12 +90,12 @@ The common rules are the single place holding what every agent in the wave needs
 
 ## 4. Spawn
 
-Write the `## Wave agents` heading and the table header row (ticket, agent id, workspace id, branch, private resources, cleaned) at the end of the common rules file **before** spawning the first agent. Write each agent's row as soon as it is spawned, so any session reopened midway can read which agents exist.
+Write the `## Wave agents` heading and the table header row (ticket, agent id, workspace id, branch, base commit, private resources, cleaned) at the end of the common rules file **before** spawning the first agent. Write each agent's row as soon as it is spawned, so any session reopened midway can read which agents exist.
 
 For each ticket in the wave:
 
 1. `create_workspace` with `isolation: "worktree"`, `mode: "branch-off"`, `baseBranch` set to the integration branch, and `branchName` shaped `wave<N>/<NN>-<slug>`. Check that `git -C <worktree> rev-parse HEAD` equals the base commit; if the integration branch stays still while you spawn, every worktree in the wave shares one base.
-2. `create_agent` in that workspace, titled `[Wave N] <NN> <ticket name>`. The prompt holds exactly four things: the path to the common rules, the path to the ticket, the private resources (database name, port, volume, temp directory; a distinct set per agent), and the **flow**.
+2. `create_agent` in that workspace, titled `[Wave N] <NN> <ticket name>`. The prompt holds exactly four things: the **absolute** path to the common rules in the integration branch's checkout (the file is the wave's live log and is not in the worktree), the path to the ticket, the private resources (database name, port, volume, temp directory; a distinct set per agent), and the **flow**.
 
 The **flow** is the chain of skills the agent runs for that ticket. Read the ticket, then pick one row:
 
@@ -95,6 +104,8 @@ The **flow** is the chain of skills the agent runs for that ticket. Read the tic
 | A symptom: broken, erroring, wrong numbers, slow | `/mattpocock-skills:diagnosing-bugs` then `/mattpocock-skills:tdd` |
 | Behaviour that should exist | `/mattpocock-skills:tdd` |
 | `Status: ready-for-human` | spawn no agent |
+
+Every flow ends the way Matt's `/implement` does: `/mattpocock-skills:code-review` with the ticket's base commit (its row's) as the fixed point, fix the findings (the refactor phase `tdd` hands to review lives here), then make the last commit and report. `code-review` opens fresh-context sub-agents for its two axes, so the reviewer stays independent of the agent.
 
 Symptom tickets go through `diagnosing-bugs` because that skill forces the agent to build a **tight** pass/fail loop that goes **red** on exactly that symptom, so the fix is proven to hit the right place instead of merely making the symptom disappear.
 
@@ -115,6 +126,7 @@ Each time an agent reports done, check the real artifacts, not the report's word
 - the commits sit on the ticket's own branch (`git log <branch>`);
 - the ticket's status has changed, and its comments carry verification evidence;
 - the report's most decisive claim is re-run once by you (call the endpoint, open the screen, look at the screenshot);
+- the ticket's comments carry the `code-review` result: the number of findings per axis and the outcome of each. Missing means the agent did not finish its flow;
 - symptom tickets: the report shows the loop **red before** the fix and green after. Green alone does not tell you whether the fix hit the right place or only masked the symptom;
 - private resources are cleaned up, or kept for a stated reason.
 
@@ -124,15 +136,20 @@ Agent stopped midway or report incomplete: see [`TROUBLESHOOTING.md`](TROUBLESHO
 
 ## 6. Merge into the integration branch
 
-One merge commit per ticket: `git merge --no-ff <ticket branch> -m "Merge ticket NN (<name>) into <integration branch>"`. Merge in ticket-number order. After each merge, run the cheapest verification the repo has (install, build, lint).
+Merge each ticket as soon as its report passes step 5, while the rest of the wave keeps running: steps 5 and 6 interleave. One merge commit per ticket: `git merge --no-ff <ticket branch> -m "Merge ticket NN (<name>) into <integration branch>"`. After each merge, run the cheapest verification the repo has (install, build, lint, test).
 
-Conflict or failure after a merge: see [`TROUBLESHOOTING.md`](TROUBLESHOOTING.md).
+**Rolling start.** After each green merge, re-read the graph: a ticket whose `Blocked by` is now fully merged and whose status is `ready-for-agent` joins the current wave at once, without waiting for the rest of it. Spawn it per step 4, with the integration branch's new head as its base commit, written in its row and named in its prompt; append it to the wave file's title and graph. Its agent's `code-review` uses that base commit.
 
-**Done when**: every ticket in the wave is merged, and verification is green after the last merge.
+Conflict, failure after a merge, or a test count after the merge that does not match the test files git tracks: see [`TROUBLESHOOTING.md`](TROUBLESHOOTING.md).
 
-## 7. Review the whole wave, fix, close
+**Done when**: every ticket in the wave is merged, every ticket its merges unblocked has been started in the wave, and verification is green after the last merge.
 
-Run `mattpocock-skills:code-review` with the wave's base commit as the fixed point; present the Standards and Spec axes separately. This is the wave's **only** review pass: the common rules told the agents to skip their own, because the places where tickets touch each other only show at the wave level.
+## 7. Review where the tickets touch, fix, close
+
+Each ticket was already reviewed by its agent in step 4. This pass targets only what a per-ticket review cannot see: the **seams** between tickets once merged (registration files, shared interfaces, two tickets solving the same thing two ways).
+
+- A one-ticket wave has no seam: write `## Review` as "not applicable: one-ticket wave, reviewed by its agent", then go to step 8.
+- A wave of two or more tickets: run `mattpocock-skills:code-review` with the wave's first base commit (step 3) as the fixed point, so tickets started by rolling start are covered too, stating in the call that each ticket was already reviewed on its own and only seam findings should be reported. Present the Standards and Spec axes separately.
 
 Fix each finding. A finding contained in one ticket's zone goes back to that same agent via `send_agent_prompt`; a finding cutting across several tickets you fix yourself on the integration branch. Gather every question that needs a human decision into one round, present it, then record the decisions in the comments of the tickets involved, so the next wave can read them.
 

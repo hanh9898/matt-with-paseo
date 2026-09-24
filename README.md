@@ -16,7 +16,7 @@ Paseo can run many agents in parallel, each in its own worktree. What it does no
 - It **splits** tickets into waves from their `Blocked by` lines, so only independent tickets run side by side.
 - It writes one **common rules** file per wave, so every agent gets the same context and each prompt stays four lines long.
 - It **checks** each agent's work against the real artifacts (commits, ticket status, a re-run of the key claim) instead of trusting the report.
-- It **merges** in ticket order, runs **one** code review over the whole wave, then **cleans up** worktrees and agents only when that is safe.
+- It **merges** each ticket as soon as it checks out, **starts** the tickets that merge unblocks, reviews the **seams** between tickets, then **cleans up** worktrees and agents only when that is safe.
 
 The wave file doubles as a log, so a new session can pick up a half-finished wave where the last one stopped.
 
@@ -42,12 +42,12 @@ Each run starts by locating the current stage from what is on disk:
 Each wave then goes through the same loop:
 
 1. **Prepare**: read Paseo profiles, the ticket tracker, and the integration branch.
-2. **Split**: draw the dependency graph and propose the next wave. You approve it.
+2. **Split**: draw the dependency graph and put every ticket that can run now into the wave. It also lists what is costing width (a ticket waiting on a human, a `Blocked by` that is only a shared file) with the one question that would unblock it. You approve it.
 3. **Common rules**: pin a base commit and write `wave<N>-common-rules.md` from the template.
-4. **Spawn**: one worktree and one agent per ticket. Symptom tickets run `diagnosing-bugs` then `tdd`; behaviour tickets run `tdd`.
+4. **Spawn**: one worktree and one agent per ticket. Symptom tickets run `diagnosing-bugs` then `tdd`; behaviour tickets run `tdd`. Every flow ends with `code-review`, as Matt's `/implement` does.
 5. **Check**: verify each report against commits, ticket status, and a re-run of its key claim.
-6. **Merge**: one `--no-ff` merge per ticket, in ticket order, with a cheap verification after each.
-7. **Review**: one `code-review` pass over the whole wave; findings go back to the owning agent or get fixed on the integration branch.
+6. **Merge**: one `--no-ff` merge per ticket as soon as its report is checked, with a cheap verification after each; any ticket that merge unblocks starts right away in the same wave (rolling start).
+7. **Review the seams**: for waves of two or more tickets, one `code-review` pass over where the tickets touch; findings go back to the owning agent or get fixed on the integration branch.
 8. **Clean up**: archive agents and worktrees that are stopped, clean, and merged; then open the next wave.
 
 The skill asks for your approval at the decisions that are yours: the stage and next step, the wave plan, and any question a review raises.
@@ -132,10 +132,11 @@ Files in this repo:
 
 ## Design principles
 
+- **Width first.** Parallel work is the point: each wave takes every ticket that can run, the orchestrator names what blocks the rest, and a ticket starts the moment its blockers merge.
 - **Every step ends on a checkable "done when".** The orchestrator can tell finished from unfinished without judgement calls.
 - **Check artifacts, not reports.** An agent's "all green" only covers what it checked.
 - **Red before green.** A bug fix counts only if its test failed on the symptom before the fix.
-- **One review per wave.** Agents skip their own review; the places where tickets collide only show once they are merged.
+- **Review per ticket, then the seams.** Each agent ends with Matt's `code-review` before its last commit, as `/implement` does; the orchestrator reviews only where tickets collide once merged, and skips that pass for one-ticket waves.
 - **Nothing destructive without three checks.** A worktree is archived only when its agent has stopped, its tree is clean, and its branch is merged.
 - **State lives on disk.** Ticket status and the wave file are enough for a fresh session to resume.
 
