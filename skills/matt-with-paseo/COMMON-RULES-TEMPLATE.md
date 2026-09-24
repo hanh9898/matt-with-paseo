@@ -1,0 +1,47 @@
+# Common rules template for a wave
+
+Copy the frame below into `wave<N>-common-rules.md` and fill in each section. Each section answers a question every agent in the wave would otherwise ask itself; answered here once, no agent has to guess.
+
+Steps 4 and 7 of the skill append two sections, `## Wave agents` and `## Review`, to the end of the file; leave both out when writing the rules.
+
+Copy in only what an agent cannot look up: an unwritten convention, the reason behind a choice, a trap already hit. Anything one command or one file answers (scripts in `package.json`, the directory layout, `CLAUDE.md`) gets a pointer, not a copy.
+
+```markdown
+# Common rules for wave <N> (tickets <NN>, <NN>)
+
+## Context
+- Your worktree branches off `<integration branch>` at `<base commit>`. That branch already contains tickets <...>.
+  Run `git branch --show-current` before every commit.
+- Read before you start: <spec>, <glossary / CONTEXT.md>, <ADRs>, your ticket, and the comments
+  of tickets <...> for decisions already made.
+- <k> other agents are working the remaining tickets of this wave in parallel, on other branches.
+  Work only on your own ticket.
+
+## Existing interfaces to reuse
+- `<function / hook / module>`: <signature>, <what it returns>, <what it already handles, e.g. sending mail, logging>.
+- Business rules go through the interfaces above; new layers only call them.
+
+## File zones
+- Ticket <NN> writes in `<own file>`; ticket <NN> writes in `<own file>`.
+- Shared files (<manifest, package index, route table, permission file>): add only your own lines, and keep
+  the order of the existing lines.
+
+## Traps already hit
+- <trap>: <symptom>, <how to avoid it>, <how to check you avoided it>.
+
+## Resources
+- Your private resources are listed in your prompt (database, port, volume, temp directory). Use exactly that set.
+- Shared resources, read-only: <main container, source database, another session's browser profile>.
+
+## Repo and user rules
+- <commit and comment language>, <accepted way to verify>, <lint command>, <test accounts>.
+
+## Done means
+- Commit to your branch. The orchestrator pushes and merges.
+- Skip your own code review step; the orchestrator reviews the whole wave after merging.
+- Change the ticket status: `resolved` if fully done, `ready-for-human` for the part a human must do.
+  Write in the comments what you verified, with evidence, and what remains open.
+- Clean up your private resources; state the reason for anything you keep.
+- Report back: a design summary, files touched, how you verified with evidence, work not done or still
+  in doubt, and decisions the user must make.
+```
