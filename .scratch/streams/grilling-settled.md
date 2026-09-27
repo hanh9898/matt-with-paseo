@@ -22,3 +22,13 @@ Bắt đầu 27/09/2026, `/grill-with-docs`, người dùng chạy `matt-with-pa
 - **Nhánh tích hợp theo đầu việc**, không theo stream: ticket merge vào nhánh của đầu việc mình; đầu việc nào xong thì vào `develop` riêng. Hệ quả: một wave có **nhiều nhánh tích hợp**; bước 3 (base commit), 6 (merge), 7 (review chỗ nối) của `matt-with-paseo` phải đổi. Quyết định khó đảo ngược.
 - **Tài nguyên máy dùng chung:** tên tài nguyên riêng theo `<stream>-<ticket>` (hoặc tương đương) để hai người điều phối không cấp trùng; cổng do services của `paseo.json`; tầng trên giữ **một trần chung** số agent chạy cùng lúc, con số do người dùng đặt; chạm trần thì wave của stream sau chờ.
 - **Hai stream cùng sửa một file:** chỉ cảnh báo, không chặn. Tầng trên liệt kê file mà các nhánh tích hợp đang mở trên cùng repo đều đã sửa (so với `develop`), báo sau mỗi wave; người dùng quyết.
+- **Phạm vi, sửa lại (Q3'):** không phải skill riêng ngoài `matt-with-paseo`. Tầng stream là **một skill thứ hai trong cùng plugin** (ví dụ `skills/matt-with-paseo-streams/`), gọi bằng lệnh riêng, spawn agent con chạy `/matt-with-paseo <stream>`. Plugin và repo phát hành chung là **`matt-with-paseo` 0.3.1** (người dùng chọn số này). Drift check quét cả hai skill.
+
+## Đề xuất chưa chốt (chờ đánh giá lại)
+
+- **Q12 nhánh đầu việc:** repo đích khai nhánh gốc và mẫu tên nhánh trong một mục cấu hình cạnh `## Agent skills`; không khai thì tách từ nhánh mặc định của remote, tên `<stream>/<đầu-việc>`. Skill không đoán quy ước repo.
+- **Q13 vào `develop`:** đầu việc xong thì tầng stream mở PR, dùng `mattpocock-skills:pr` viết thân; không tự merge.
+- **Q14 chỗ đứng:** một thư mục điều khiển riêng ngoài mọi repo (ví dụ `~/streams/`), chỉ chứa một file chỉ mục; mở phiên Paseo ở đó.
+- **Q15 duyệt qua hai tầng:** tầng trên chuyển nguyên văn câu hỏi của agent stream, gom theo vòng, không tự duyệt; trả lời bằng `send_agent_prompt` luôn bật `notifyOnFinish`; heartbeat ở cả hai tầng.
+- **Q16 ưu tiên khi chạm trần:** thứ tự do người dùng đặt trong chỉ mục, mặc định vào trước chạy trước; stream thấp chờ ở ranh giới wave kế tiếp.
+- **ADR đề xuất:** (1) nhánh tích hợp theo đầu việc thay vì theo stream; (2) điều phối lồng nhau thay vì một người điều phối lớn.
