@@ -37,6 +37,8 @@ Người điều phối kiểm chéo sau báo cáo: agent wave 7 **có** nhãn `
 
 Nên thông báo nhiều khả năng **đã được gửi đúng** — gửi cho agent cha đã tạo ra worker. Chỉ là agent cha đó không còn nghe nữa.
 
-**Vấp #8 vì thế không phải lỗi Paseo mà là lỗi thiết kế của `matt-with-paseo`:** bàn giao làm đứt ràng buộc cha–con, và skill không có gì nối lại. Điều này đổi phân loại ở ticket 03 và bỏ một mục khỏi ticket 10.
+> **Sửa lại 27/09 (ticket 03):** đoạn dưới đi quá xa so với bằng chứng. Một phiên trước đã xem xét chính chuyện này và ghi rằng dấu vết **hợp với việc Paseo/máy khởi động lại giữa lượt hơn**. Hiện có ba giả thuyết chưa cái nào được chứng minh; ticket 07 phân định. Giữ đoạn này để thấy đường suy luận, nhưng **đừng đọc nó như kết luận**.
+
+~~Vấp #8 vì thế không phải lỗi Paseo mà là lỗi thiết kế của `matt-with-paseo`:~~ *(giả thuyết 1/3)* bàn giao làm đứt ràng buộc cha–con, và skill không có gì nối lại. Điều này đổi phân loại ở ticket 03 và bỏ một mục khỏi ticket 10.
 
 Câu "chuyển quyền nhận thông báo sang agent khác có được không" tài liệu **không trả lời** — đã đưa vào bảng hỏi gửi đội Paseo (mục 1).

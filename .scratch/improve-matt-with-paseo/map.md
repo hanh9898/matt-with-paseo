@@ -68,8 +68,9 @@ Wayfinder mặc định chỉ đẻ ra quyết định. Bản đồ này **cho p
 
 ## Decisions so far
 
-- [01 — Plugin API của Paseo có bắt được lúc agent chuyển idle không?](issues/01-paseo-plugin-api-agent-idle.md): không có hook `idle`; gần nhất là `agent.turn_ended`, chạy trong daemon. Nhưng phát hiện lớn hơn nằm ngoài câu hỏi: `notifyOnFinish` đã có sẵn và mặc định bật — thông báo bị buộc vào **agent cha đã tạo worker**, nên bàn giao làm đứt nó. **Vấp #8 là lỗi thiết kế của skill, không phải lỗi Paseo.**
+- [01 — Plugin API của Paseo có bắt được lúc agent chuyển idle không?](issues/01-paseo-plugin-api-agent-idle.md): không có hook `idle`; gần nhất là `agent.turn_ended`, chạy trong daemon. Nhưng phát hiện lớn hơn nằm ngoài câu hỏi: `notifyOnFinish` đã có sẵn và mặc định bật — thông báo bị buộc vào **agent cha đã tạo worker**, nên bàn giao làm đứt nó. Giả thuyết này **đã bị ticket 03 hạ xuống 1 trong 3**, chưa chốt.
 - [02 — Năm skill v1.3 thật sự làm gì và giả định những gì?](issues/02-doc-than-5-skill-v13.md): `implement-spec` chạy subagent **trong cùng một phiên** (Task tool), không phải agent Paseo thật — nên trần ngữ cảnh của nó là có thật và **vị thế bậc A đứng vững**. `claude-handoff` không đăng ký trong `plugin.json`; `pr` chưa có chỗ cắm; `retro` chưa được gọi ở đâu.
+- [03 — Phân loại 12 vấp](issues/03-phan-loai-12-vap.md): **danh sách chưa bao giờ được ghi xuống đĩa**; khôi phục từ transcript được 7/12, **nội dung vấp 2–5 và 7 mất hẳn**. Bốn vấp còn lại phân loại được là "sửa ở skill" (9, 10, 11, 12). Vấp #8 còn ba giả thuyết. Mất 5/12 là lập luận mạnh nhất cho việc nối `/retro` (ticket 09).
 
 ## Not yet specified
 
