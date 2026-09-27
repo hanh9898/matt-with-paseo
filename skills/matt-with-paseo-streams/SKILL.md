@@ -135,7 +135,44 @@ Placeholder for ticket #19; replace this line.
 
 ## 6. Ship the stream
 
-Placeholder for ticket #20; replace this line.
+A stream ships through one pull request from its integration branch to its PR target. You open it; you never merge a pull request. Merging it, and any later promotion (such as `test` to `develop`), belongs to the repository's own process and its reviewers.
+
+**The last stage.** A stream reaches its last stage when two public signals agree:
+
+| Signal | Shows the last stage when |
+|---|---|
+| The stream agent's end-of-turn message | it reports the wave skill's stage F (no work left for agents): its summary lists every ticket as `resolved` or waiting on a human |
+| Ticket status on the tracker, read through the tracker configuration in the stream's worktree | every ticket of the stream's Tickets is `resolved` or in the ready for human role |
+
+Either signal alone is not the last stage. When they disagree, prompt the stream agent "where does the stream stand?" and read both again on its answer. Check this on each end-of-turn message of step 4 and on each tick of step 5. A stream at its last stage whose integration branch holds no commit beyond the PR target (`git -C <worktree> log --oneline origin/<PR target>..stream/<slug>` prints nothing) has nothing to ship: say so in the status line and stop here.
+
+**Ask first.** Pushing and opening a pull request are outward actions, so nothing is pushed or opened before the user says yes in a question round. Put the ship question into the next question round of step 4, headed with the stream's slug like every relayed question, and give the user what they need to decide:
+
+- the repository, the branch `stream/<slug>`, the PR target and the source it came from in step 1;
+- the commits the pull request will carry (`git -C <worktree> log --oneline origin/<PR target>..stream/<slug>`), and the shared-base warning of step 1 again if it was raised;
+- the tickets waiting on a human, which ship unresolved.
+
+Any answer other than yes keeps the stream unshipped; write what the user said into the status line, and ask again only when the user brings it up or the stream's tickets change.
+
+**Push and open.** On the user's yes, in this order:
+
+1. `git -C <worktree> status --porcelain` must be empty and `git -C <worktree> branch --show-current` must print `stream/<slug>`; otherwise tell the user and stop.
+2. `git -C <worktree> fetch origin`, then check the PR target still exists (`git -C <worktree> rev-parse --verify origin/<PR target>`).
+3. Look for a pull request this stream already has: `gh pr list --head stream/<slug> --base <PR target> --state open --json url`, run in the worktree. When one is listed, reuse it: skip to the link below, never open a second one. When `gh` cannot resolve the remote as a GitHub repository, the pull request cannot be opened this way; tell the user and stop.
+4. `git -C <worktree> push -u origin stream/<slug>`. Push only the integration branch, never the base branch or a wave or ticket branch.
+5. Write the pull request's description with `/mattpocock-skills:pr`, from public signals only: `git -C <worktree> diff origin/<PR target>...stream/<slug>`, the commit log above, and the tickets and their comments on the tracker for the evidence. Save it to a file outside the worktree, so it never lands in the branch.
+6. `gh pr create --head stream/<slug> --base <PR target> --title "<one line naming the stream's work>" --body-file <that file>`, run in the worktree. It prints the pull request's URL.
+
+**Post the link.** The requester reads the stream's spec or tickets, so the link goes there, through the tracker configuration's own way to comment:
+
+| Tracker | Where the link goes |
+|---|---|
+| GitHub | A comment on the stream's parent spec issue when Tickets names one; otherwise a comment on each ticket of the stream |
+| Local markdown | A comment in the spec file, or in each ticket file when the stream has no spec, as the tracker configuration writes comments. It is a file change in the stream's worktree: commit it on `stream/<slug>` and push again, so the open pull request carries it |
+
+Then write the link into the stream's status line: date, shipped, the pull request's URL, and that the stream waits on the repository's reviewers. The pull request stays open for them; you never merge it, approve it, or close it.
+
+**Done when**: the stream is at its last stage by both signals, the user said yes in a question round before anything was pushed, one pull request goes from `stream/<slug>` to the stream's PR target with a description written with `/mattpocock-skills:pr`, its link is posted on the stream's spec or tickets and written in the status line, and nothing was merged.
 
 ## 7. Warn when streams change the same file
 
