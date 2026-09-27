@@ -25,7 +25,7 @@ Copy in only what an agent cannot look up: an unwritten convention, the reason b
 - <k> other agents are working the remaining tickets of this wave in parallel, on other branches.
   Work only on your own ticket.
 - Do not end your turn while work you started is still running in the background (a build, a test run,
-  a long command): wait for it inside the same turn. Paseo sends no finish notification for a turn you
+  a long command, the review sub-agents `mattpocock-skills:code-review` launches): wait for it inside the same turn. Paseo sends no finish notification for a turn you
   start on your own afterwards, so your "finished" report must mean the work is done.
 
 ## Existing interfaces to reuse
@@ -49,7 +49,7 @@ Copy in only what an agent cannot look up: an unwritten convention, the reason b
   and move the ticket to `<ready for human label from the triage label file>`. Never rewrite the criteria.
 
 ## Resources
-- Your private resources are listed in your prompt (database, port, volume, temp directory). Use exactly that set.
+- Your private resources are listed in your prompt (database, port when no service is declared, volume, temp directory). Use exactly that set.
 - Shared resources, read-only: <main container, source database, another session's browser profile>.
 
 ## Repo and user rules
