@@ -1,6 +1,6 @@
 ---
 name: matt-with-paseo
-description: Locate where the work stands (not configured, a spec without tickets, tickets, or an agent wave), send earlier work to ask-matt, and orchestrate tickets in waves of parallel Paseo agents.
+description: Locate where the work stands (not configured, a spec without tickets, tickets, or an agent wave), send earlier work to `/mattpocock-skills:ask-matt`, and orchestrate tickets in waves of parallel Paseo agents.
 disable-model-invocation: true
 ---
 

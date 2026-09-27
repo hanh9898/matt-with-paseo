@@ -28,7 +28,7 @@ grill-with-docs ─┐
 wayfinder ───────┘   (Matt's skills, typed by you)  (this skill + Paseo agents)
 ```
 
-Work reaches this skill through one of two equal on-ramps, `/mattpocock-skills:grill-with-docs` or `/mattpocock-skills:wayfinder`, which both merge at `/mattpocock-skills:to-spec`. The route up to the spec is Matt's, not this skill's: when there is no spec and no tickets yet, the skill sends you to `/mattpocock-skills:ask-matt` to pick the skill that fits, and stops. A wayfinder map is a set of decision tickets, not yet through `to-spec`, so the skill names it and starts no wave on it.
+Work reaches this skill through one of two equal on-ramps, `/mattpocock-skills:grill-with-docs` or `/mattpocock-skills:wayfinder`, which both merge at `/mattpocock-skills:to-spec`. The route up to the spec is Matt's, not this skill's: when there is no spec and no tickets yet, the skill sends you to `/mattpocock-skills:ask-matt` to pick the skill that fits, and stops. A wayfinder map is a set of decision tickets, not yet through `/mattpocock-skills:to-spec`, so the skill names it and starts no wave on it.
 
 Each run then locates the current stage from what the tracker holds:
 
