@@ -126,3 +126,5 @@ Concretely, the skill stops routing me through setup, grilling, spec, and ticket
 > **Đã đăng:** GitHub issue [#1](https://github.com/hanh9898/matt-with-paseo/issues/1), nhãn `ready-for-agent`, 27/09/2026.
 
 > **Sửa đổi sau khi đăng (27/09, bình luận trên #1):** bước 0 giữ stage A (chưa cấu hình → setup) và D (có spec, chưa có ticket → `to-tickets` cùng phiên) cùng hai cảnh báo; chỉ B và C nhường cho `ask-matt`; thêm câu "có ticket rồi thì quay lại `matt-with-paseo`, không dùng `implement-spec`". Lý do: `ask-matt` không đọc trạng thái repo và không biết `matt-with-paseo`.
+
+> **Đã chia ticket (27/09):** #2–#13, sub-issue của #1, cạnh chặn bằng GitHub dependencies. Wave đầu: #2–#8. #13 là `ready-for-human`.
