@@ -20,7 +20,11 @@ B: /implement-spec
 F: /goal
 ```
 
-Nó **thay thế** ô cuối trong chuỗi `/wayfinder → /to-spec → /to-tickets → /implement-spec`, không bọc ngoài `/implement-spec`. Bằng chứng: 7 wave đã chạy trên việc thật, và nó không mắc cái trần mà chính Matt chê ở `/implement-spec` — *"có trần mở rộng là cửa sổ ngữ cảnh của bộ điều phối"* — vì mỗi ticket một agent riêng, người điều phối chỉ giữ sổ.
+Nó **thay thế** ô cuối trong chuỗi `/wayfinder → /to-spec → /to-tickets → /implement-spec`, không bọc ngoài `/implement-spec`.
+
+Bằng chứng đã kiểm (ticket 02): `implement-spec` chạy subagent **trong cùng một phiên** bằng Task tool, nên trần ngữ cảnh mà Matt tự chê là có thật và không tránh được. `matt-with-paseo` cho mỗi ticket một agent Paseo riêng với cửa sổ riêng, nên **không mắc trần đó ở phía agent làm việc**.
+
+**Nhưng nó mắc trần ở phía khác, và đã trả giá:** sổ của người điều phối sống trong hội thoại nhiều đợt, và việc đó đã làm **mất 5/12 vấp** khi ngữ cảnh bị nén (ticket 03). `pitfalls.md` vá được phần lưu bền; phần còn lại chưa đo được nhẹ hơn bao nhiêu. Spec 0.3.0 **phải** đặt một yêu cầu giảm tải ngữ cảnh cho người điều phối qua nhiều wave.
 
 Nguồn: <https://x.com/mattpocockuk/status/2090747462973571302> và <https://x.com/mattpocockuk/status/2090746680551383294>.
 
@@ -33,7 +37,9 @@ Mọi ticket phải soi `matt-with-paseo` bằng chính tiêu chí này.
 
 ### Luật tách đôi 1 — lỗi skill hay lỗi Paseo
 
-Trong 12 vấp, ít nhất ba cái là **hành vi của Paseo**, không phải của skill: agent chuyển idle không sinh thông báo, tham số `create_agent` không khớp tài liệu, permission hết hạn giữa chừng. Cái nào sửa được ở skill thì sửa; cái nào là lỗi Paseo thì **thành báo lỗi gửi ngược**, không dán băng bằng câu "dặn agent cẩn thận".
+Trong 12 vấp, một số là **hành vi của Paseo** chứ không phải của skill.
+
+> **Cập nhật 27/09 (ticket 03):** con số "ba cái" không còn đứng được. Chỉ **vấp #8** còn số hiệu xác nhận, và nó đang có **ba giả thuyết chưa phân định**, trong đó một giả thuyết quy lỗi cho **chính skill**. Hai ứng viên kia (`create_agent`, permission hết hạn) đã **mất nội dung**, không khôi phục được số hiệu. Cái nào sửa được ở skill thì sửa; cái nào là lỗi Paseo thì **thành báo lỗi gửi ngược**, không dán băng bằng câu "dặn agent cẩn thận".
 
 ### Luật tách đôi 2 — bẫy máy móc hay bẫy phán đoán
 
@@ -45,7 +51,20 @@ Bẫy máy móc → gợi ý thành phép kiểm trong repo đích. Bẫy phán 
 
 ### Ngoại lệ thi hành
 
-Wayfinder mặc định chỉ đẻ ra quyết định. Bản đồ này **cho phép đúng một deliverable**: bộ báo lỗi gửi ngược cho Paseo (ticket 10). Nó là sản phẩm chứ không phải thứ mở khoá quyết định, nên phải khai ở đây mới nằm trong phạm vi.
+Wayfinder mặc định chỉ đẻ ra quyết định. Bản đồ này cho phép **hai** thứ được ghi ra đĩa trong lúc lập kế hoạch:
+
+1. **`GLOSSARY.md`** ở gốc repo — ticket 04 ghi thẳng khi từng từ được chốt. Đây là sản phẩm phụ tự nhiên của việc chốt bảng từ.
+2. **Bộ báo lỗi gửi Paseo** — ticket 10. Cái này **không phục vụ đích đến**: nó vẫn đáng làm kể cả khi 0.3.0 bị huỷ. Nó ở đây vì tiện, không vì thuộc cây quyết định. Đừng tính tiến độ của nó vào tiêu chí sẵn sàng `/to-spec`.
+
+### Giả định vận hành — khai rõ để khỏi xây thừa
+
+**Bản đồ này do một người chạy, mỗi lần một phiên.** Không có hai phiên tranh ticket, không có hai phiên cùng tạo ticket mới. Vì vậy quy ước tracker **cố ý không có** khoá phân tán, chống trùng số, hay phát hiện chu trình chặn.
+
+Nếu về sau có nhiều người cùng chạy một bản đồ thì giả định này gãy, và khi đó mới cần dựng những thứ trên. Đừng dựng trước.
+
+### Luật đứng: ghi vấp ra đĩa ngay lúc phát hiện
+
+Vấp phải vào `pitfalls.md` **khi vừa thấy**, không giữ trong hội thoại. Viết **triệu chứng** trước, đừng viết nguyên nhân — nguyên nhân có thể sai, triệu chứng thì không. Đây là hệ quả trực tiếp của việc mất 5/12 vấp.
 
 ### Skill mọi phiên phải gọi
 
@@ -68,17 +87,20 @@ Wayfinder mặc định chỉ đẻ ra quyết định. Bản đồ này **cho p
 
 ## Decisions so far
 
-- [01 — Plugin API của Paseo có bắt được lúc agent chuyển idle không?](issues/01-paseo-plugin-api-agent-idle.md): không có hook `idle`; gần nhất là `agent.turn_ended`, chạy trong daemon. Nhưng phát hiện lớn hơn nằm ngoài câu hỏi: `notifyOnFinish` đã có sẵn và mặc định bật — thông báo bị buộc vào **agent cha đã tạo worker**, nên bàn giao làm đứt nó. Giả thuyết này **đã bị ticket 03 hạ xuống 1 trong 3**, chưa chốt.
-- [02 — Năm skill v1.3 thật sự làm gì và giả định những gì?](issues/02-doc-than-5-skill-v13.md): `implement-spec` chạy subagent **trong cùng một phiên** (Task tool), không phải agent Paseo thật — nên trần ngữ cảnh của nó là có thật và **vị thế bậc A đứng vững**. `claude-handoff` không đăng ký trong `plugin.json`; `pr` chưa có chỗ cắm; `retro` chưa được gọi ở đâu.
-- [03 — Phân loại 12 vấp](issues/03-phan-loai-12-vap.md): **danh sách chưa bao giờ được ghi xuống đĩa**; khôi phục từ transcript được 7/12, **nội dung vấp 2–5 và 7 mất hẳn**. Bốn vấp còn lại phân loại được là "sửa ở skill" (9, 10, 11, 12). Vấp #8 còn ba giả thuyết. Mất 5/12 là lập luận mạnh nhất cho việc nối `/retro` (ticket 09).
+<!-- một dòng mỗi ticket đã đóng: gist + HỆ QUẢ, rồi trỏ link. Không chép lại nội dung. -->
+
+- [01 — Plugin API có bắt được lúc agent idle không?](issues/01-paseo-plugin-api-agent-idle.md): không có hook `idle`; gần nhất là `agent.turn_ended`, chạy trong daemon. **Hệ quả:** gửi xuyên agent chưa ai chứng minh, nên ticket 07 chưa có tiền đề để chọn nhánh plugin.
+- [02 — Năm skill v1.3 làm gì?](issues/02-doc-than-5-skill-v13.md): `implement-spec` chạy subagent trong cùng một phiên, nên trần ngữ cảnh của nó là thật. **Hệ quả:** vị thế bậc A đứng vững; và bảng "chỗ nghi là hợp" của ticket 09 đã bị bác ba phần tư.
+- [03 — Phân loại 12 vấp](issues/03-phan-loai-12-vap.md): danh sách chưa bao giờ ghi xuống đĩa, 5/12 mục không tìm lại được. **Hệ quả:** ticket 10 co xuống còn một ứng viên và phải đợi 07; luật đứng "ghi vấp ra đĩa ngay" đã vào Notes.
 
 ## Not yet specified
 
-- **`AGENTS.md` và `CODING_STANDARDS.md` cho chính repo này.** Bảng từ thì cần ngay (ticket 04), nhưng hai file kia chỉ có nghĩa khi có agent viết mã trong repo — hiện chưa có. Xem lại khi 0.3.0 đã có hình.
-- **Sửa phía Paseo bằng plugin thay vì chờ upstream.** Ticket 01 sẽ cho biết plugin API có bắt được sự kiện "agent chuyển idle" hay không. Nếu có, đây thành một nhánh mới.
-- **Cơ chế phát hành**: đánh số phiên bản, cài lại từ cache plugin, và cái bẫy "thư mục worktree không phải tên nhánh". Chưa sắc đủ để thành ticket.
-- **Cách ly cho ticket nghiên cứu của wayfinder.** Hai agent nghiên cứu vừa giẫm lên nhau vì chạy chung thư mục. Luật "mỗi ticket một worktree" của skill không phủ loại ticket này. Chưa rõ nên sửa ở `matt-with-paseo` hay chỉ là luật vận hành.
-- **Căn từ vựng với hệ của Matt**: *software factory*, *harness*, *deterministic orchestrator*. Chưa rõ nên mượn tới đâu.
+<!-- chỉ giữ thứ CHƯA phát biểu sắc được. Phát biểu sắc được rồi thì tốt nghiệp thành ticket. -->
+
+- **`AGENTS.md` và `CODING_STANDARDS.md` cho chính repo này.** Không phải vì chưa có agent nào chạm repo — vấp #13 cho thấy có, và đã gây sự cố — mà vì 0.3.0 chưa có hình để viết chuẩn. Xem lại khi spec xong.
+- **Sửa phía Paseo bằng plugin.** Ticket 01 đã trả lời một nửa: không có hook `idle`, có `agent.turn_ended` chạy trong daemon, nhưng `agents.ref(id).send()` **chưa được chứng minh chạy xuyên agent**. Nhánh này treo trên đúng phép thử E4 của `paseo-probe-list.md`, chưa phải nhánh đã mở.
+
+*(Đã tốt nghiệp thành ticket: cơ chế phát hành → ticket 11; cách ly ticket nghiên cứu → ticket 12. Căn từ vựng đã gộp vào ticket 04.)*
 
 ## Out of scope
 

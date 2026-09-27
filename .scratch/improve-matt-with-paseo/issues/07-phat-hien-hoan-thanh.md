@@ -10,8 +10,14 @@ Vấp #8 xảy ra **hai lần** trên cùng một ticket. Lần đầu mất g�
 
 Ticket 01 sẽ cho biết Paseo có hook vòng đời hay không. Ticket này quyết định **dùng cái gì**, dựa vào câu trả lời đó:
 
-1. Nếu Paseo **có** hook idle: `matt-with-paseo` có nên đòi cài một plugin kèm theo không? Điều đó làm skill nặng thêm bao nhiêu, và ai chịu trách nhiệm cài?
-2. Nếu Paseo **không có**: heartbeat có nên thành **bước chính thức** trong skill — tức dựng wave là tự động tạo heartbeat — thay vì để người điều phối nhớ?
+> **Tiền đề chưa đủ — đọc trước khi nhận ticket này.** Ticket 01 trả lời **không nhị phân**: không có hook `idle`, nhưng có `agent.turn_ended`, và `agents.ref(id).send()` **chưa ai chứng minh chạy xuyên agent**. Ngoài ra ticket 03 để lại **ba giả thuyết chưa phân định** cho nguyên nhân vấp #8.
+>
+> **Phải chạy ba phép đo trước:** A1, A2 (vòng lặp đỏ), E4 (`send()` xuyên agent) trong `paseo-probe-list.md`. Ticket này **không quyết được bằng bàn bạc** — nó thuộc miền phải dò rồi mới chọn.
+
+1. Nhánh plugin chỉ mở **nếu** E4 xác nhận `send()` chạy xuyên agent. Nếu không xác nhận được thì bỏ nhánh này, đừng chọn nó vì nghe có vẻ sạch hơn.
+2. **Cảnh báo về nguyên nhân:** nếu giả thuyết 2 đúng (Paseo hoặc máy khởi động lại giữa lượt) thì hook **chạy trong tiến trình daemon** nên nó **chết cùng lúc** — nhánh plugin khi đó *không* đáng tin hơn heartbeat. Chọn cơ chế trước khi biết nguyên nhân là chọn mù.
+3. Heartbeat có nên thành **bước chính thức** không? Lưu ý: skill `paseo` dòng 99 **cho phép** heartbeat cho đúng việc này, và dòng 101 nói nó **không có tool update** — đổi nhịp phải xoá rồi tạo lại.
+4. `agent.turn_ended` bắn cả khi lượt **`failed`** hoặc **bị huỷ**, không chỉ `completed`. Hook có cần lọc trạng thái trước khi báo xong không?
 3. Nhịp bao lâu? 20 phút bắt được lần hai, nhưng con số đó chọn theo cảm tính.
 4. Điều kiện dừng heartbeat là gì, và ai xoá nó? Wave 7 phải xoá tay.
 5. Heartbeat kiểm gì mới đủ? Lần hai dùng: `status`, số commit, số file chưa commit, mục `## Comments`. Có thừa hay thiếu cái nào?

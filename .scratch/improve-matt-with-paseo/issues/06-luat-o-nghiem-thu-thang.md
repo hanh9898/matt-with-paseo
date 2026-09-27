@@ -2,6 +2,7 @@
 
 Type: grilling
 Status: open
+Blocked by: 04
 
 ## Question
 
@@ -19,3 +20,5 @@ Cần chốt:
 4. Chỗ lệch ghi vào đâu để wave sau không chép lại hướng dẫn cũ ở dạng sai?
 
 Luật này đi vào `matt-with-paseo` chứ không vào repo đích: nó nói về cách chạy wave, không nói về mã.
+
+**Chặn bởi ticket 04** vì nó dùng thẳng hai từ mà 04 mới là nơi chốt nghĩa: *bàn giao* và *ô nghiệm thu*.

@@ -34,7 +34,9 @@ Nguồn: `.scratch/rp-billable-next/` trong worktree OPMS — các file `waveN-c
 
 Dấu vết còn sót của bảng gốc: *"vấp 1–4 vào skill, 5 thêm dòng bảng bước 0, 6 luật tỉa bẫy, 7 vào `TROUBLESHOOTING.md`"* — đủ để biết chúng **từng** được phân loại, không đủ để biết chúng là gì.
 
-Năm mục này **không được bịa lại cho đủ 12**. Chúng mất thật.
+Năm mục này **không được bịa lại cho đủ 12**.
+
+> **Giới hạn của phép quét:** mới quét **80 file transcript gần nhất**, chưa quét hết `~/.claude/projects/`. Nên kết luận đúng là *"không tìm thấy trong phạm vi đã quét"*, không phải *"mất vĩnh viễn"*. Muốn kết luận mạnh hơn thì phải quét toàn bộ.
 
 ### Phân loại những cái còn lại
 

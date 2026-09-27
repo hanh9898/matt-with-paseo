@@ -18,4 +18,6 @@ Ticket 03 đã phân loại 12 vấp. Ticket này chốt cách làm chung:
 4. Bẫy phán đoán ở lại luật chung — nhưng có trần không? 21 mục đã quá dài để agent đọc kỹ.
 5. Bẫy đã thành phép kiểm thì **xoá khỏi văn xuôi**, hay giữ lại một dòng trỏ tới phép kiểm?
 
+**Chồng lấn với ticket 05 — xem phần cuối Question của nó.** Cả hai đang trả lời cùng một câu sâu hơn về nơi cư trú của hướng dẫn. Nếu 05 đã chốt khuôn thì ticket này kế thừa, đừng chốt lại khác.
+
 Lưu ý: một bẫy có thể chết vì hết thời — bẫy 17 sai ngay từ đầu và chỉ lộ ra ở wave 7. Luật tỉa phải xử được cả trường hợp bẫy **sai** chứ không chỉ bẫy **cũ**.

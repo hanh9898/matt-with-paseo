@@ -2,6 +2,7 @@
 
 Type: research
 Status: resolved
+Superseded-by: 03 (phần kết luận nguyên nhân vấp #8 đã bị hạ xuống 1 trong 3 giả thuyết)
 
 ## Question
 
