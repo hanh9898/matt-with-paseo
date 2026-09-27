@@ -76,6 +76,8 @@ Mọi ticket soi đề xuất của mình bằng câu: *Matt sửa thì bên nà
 
 `/to-spec` **không nhận đường dẫn**; nó tổng hợp từ hội thoại hiện tại và mã. Phiên chạy nó phải **đọc `map.md` và mọi `## Answer` vào hội thoại trước**, rồi mới gọi. Mỗi quyết định sống ở `## Answer` của ticket nó; bản đồ chỉ là chỉ mục. *(ticket 04, Q2)*
 
+**Seam kiểm thử đã chốt với người dùng (27/09, lúc chạy `/to-spec`):** hai seam, không thêm fixture. (1) Một wave thật trên repo đích (ứng viên: `test-infra` của OPMS), chứng minh bước 0 không mở wave trên bản đồ wayfinder, agent không kết thúc lượt khi còn việc nền, báo "finished" thiếu hiện vật thì bật heartbeat có `expiresIn`, services cấp cổng riêng, dọn wave không sót heartbeat hay worktree. (2) Script kiểm lệch upstream (ticket 13), so với bản Matt đang cài. Repo này chưa có `docs/agents/issue-tracker.md`: người dùng chạy `/setup-matt-pocock-skills` trước khi đăng spec.
+
 **Ba ticket cùng sửa một dòng `SKILL.md:97`** ("Done when" của bước 3): 06 mục 3 (đối chiếu bẫy cũ với acceptance criteria), 08 mục 4 (lọc bẫy trước khi chép), và 04 Q6 (bỏ danh từ *Done*). Spec viết một câu gộp cả ba, không viết ba lần.
 
 ### Skill mọi phiên phải gọi
