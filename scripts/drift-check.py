@@ -8,7 +8,8 @@ import sys
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
-DEFAULT_TARGETS = [REPO / "skills" / "matt-with-paseo", REPO / "README.md"]
+DEFAULT_TARGETS = [REPO / "skills" / "matt-with-paseo", REPO / "skills" / "matt-with-paseo-streams",
+                   REPO / "README.md"]
 REFERENCE = re.compile(r"mattpocock-skills:([a-z0-9][a-z0-9-]*)")
 
 
@@ -63,10 +64,11 @@ def markdown_files(targets):
 
 
 def agent_flow_lines(path, lines):
-    """Line numbers an agent runs as its flow: the whole common rules template, and step 4 of SKILL.md."""
+    """Line numbers an agent runs as its flow: the whole common rules template, and step 4 of the
+    wave skill's SKILL.md. The stream skill spawns only the wave skill, so it has no agent flow."""
     if path.name == "COMMON-RULES-TEMPLATE.md":
         return set(range(1, len(lines) + 1))
-    if path.name != "SKILL.md":
+    if path.name != "SKILL.md" or frontmatter(path).get("name") != "matt-with-paseo":
         return set()
     flow, inside = set(), False
     for number, line in enumerate(lines, 1):
