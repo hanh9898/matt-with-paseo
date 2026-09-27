@@ -6,6 +6,7 @@
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -13,6 +14,7 @@ import unittest
 from pathlib import Path
 
 SCRIPT = Path(__file__).with_name("drift-check.py")
+STREAM_SKILL = SCRIPT.resolve().parent.parent / "skills" / "matt-with-paseo-streams"
 
 SKILL_MD = """\
 ---
@@ -181,6 +183,45 @@ class DriftCheck(unittest.TestCase):
         repo = SCRIPT.resolve().parent.parent
         self.assertIn(str(repo / "skills" / "matt-with-paseo" / "SKILL.md"), paths)
         self.assertIn(str(repo / "README.md"), paths)
+
+    def copy_stream_skill(self):
+        """A copy of this repo's stream skill, and a plugin holding every Matt skill it names.
+
+        Every one of those skills is user-only: the stream skill spawns only the wave skill,
+        so no line of it is an agent flow and no flag may be reported."""
+        copy = self.tmp / "matt-with-paseo-streams"
+        shutil.copytree(STREAM_SKILL, copy)
+        names = {name for path in copy.rglob("*.md")
+                 for name in re.findall(r"mattpocock-skills:([a-z0-9][a-z0-9-]*)",
+                                        path.read_text(encoding="utf-8"))}
+        make_plugin(self.plugin, {name: True for name in names})
+        return copy
+
+    def test_reports_exactly_the_bad_reference_planted_in_the_stream_skill(self):
+        copy = self.copy_stream_skill()
+        skill_md = copy / "SKILL.md"
+        lines = skill_md.read_text(encoding="utf-8").splitlines()
+        step_4 = next(n for n, line in enumerate(lines, 1) if line.startswith("## 4."))
+        lines.insert(step_4, "Then `/mattpocock-skills:no-such-skill`.")
+        write(skill_md, "\n".join(lines) + "\n")
+
+        result = self.run_check(copy)
+
+        self.assert_one_mismatch(
+            result, f"SKILL.md:{step_4 + 1}:", "mattpocock-skills:no-such-skill", "not in the installed plugin")
+
+    def test_accepts_a_user_only_skill_in_step_4_of_the_stream_skill(self):
+        copy = self.copy_stream_skill()
+        skill_md = copy / "SKILL.md"
+        lines = skill_md.read_text(encoding="utf-8").splitlines()
+        step_4 = next(n for n, line in enumerate(lines, 1) if line.startswith("## 4."))
+        lines.insert(step_4, "The user types `/mattpocock-skills:to-spec`.")
+        write(skill_md, "\n".join(lines) + "\n")
+
+        result = self.run_check(copy)
+
+        self.assertEqual(result.stdout, "")
+        self.assertEqual(result.returncode, 0)
 
     def test_fails_loudly_when_skill_md_has_no_step_4(self):
         make_skill(self.skill, SKILL_MD.replace("## 4. Spawn", "## Spawn"))
