@@ -1,7 +1,7 @@
 # 14 — Tận dụng tính năng Paseo mà skill chưa dùng
 
 Type: grilling
-Status: claimed
+Status: resolved
 
 ## Question
 
@@ -43,3 +43,21 @@ Tải nguyên văn năm trang: `docs/orchestration.md`, `docs/orchestration-work
 17. **`cancel_agent` dừng lượt, giữ agent** (*"The current task stops; the worker remains available for a follow-up"*): xác nhận mục 3.
 
 Không có gì trong năm trang mâu thuẫn với các kết luận A1, A2, E4, B2, B3, B6, P3.
+
+## Answer
+
+Người dùng duyệt 27/09 (đồng ý rồi chạy `/to-spec`). Bằng chứng đo: [`probes-07.md`](../probes-07.md), mục B2, B3, B6, P3, SVC.
+
+**Dùng** (mỗi mục một vài dòng trong skill):
+
+1. `get_agent_activity` ở bước 5 để đọc tiến độ và báo cáo.
+2. Nhãn `wave` khi `create_agent` và cho workspace; recovery sweep ở bước 0 lọc theo nhãn thay vì so tiêu đề.
+3. `cancel_agent` (dừng lượt, giữ agent), `kill_agent`, `archive_agent`: một dòng trong `TROUBLESHOOTING.md` cho ticket hỏng giữa chừng.
+4. `paseo.json` của repo đích, theo kiểu trỏ: có `worktree.setup` thì bước 4 không chép bước dựng môi trường vào prompt; có service thì không tự chia cổng. Lưu ý cho người viết `paseo.json`: **không khai `port` cố định** (SVC: mọi worktree dùng chung, Windows chuyển nhầm mà health vẫn xanh); trên Windows `setup` chạy PowerShell, `scripts` chạy cmd. Skill không tự viết `paseo.json`.
+5. Heartbeat ở bước 5 luôn đặt `expiresIn`.
+6. Bước 7 dùng profile review nếu `list_profiles` có profile ghi chú cho review.
+7. Trả lời permission loại `question` bằng `updatedInput.answers` (P3).
+
+**Không dùng:** duyệt quyền tập trung ở `default` (B3 chạy được, nhưng mỗi lần ghi phải có người điều phối duyệt, thành nút thắt ngược với width); terminal (B6: không có thông báo hoàn thành, không chữa vấp #8); plugin; Paseo browser (ticket 05: repo đích tự khai công cụ bằng chứng); `paseoTools.disabledTools` (cấu hình của người dùng, không phải ranh giới bảo mật); SDK; Hub.
+
+Kèm theo: luật bước 8 (kiểm `status --porcelain` rỗng trước `archive_workspace`) **giữ nguyên và là bắt buộc**: SVC cho thấy archive xoá worktree bẩn.

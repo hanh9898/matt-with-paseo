@@ -20,7 +20,7 @@ B: /implement-spec
 F: /goal
 ```
 
-Nó **thay thế** ô cuối trong chuỗi `/wayfinder → /to-spec → /to-tickets → /implement-spec`, không bọc ngoài `/implement-spec`.
+Nó **thay thế** ô cuối trong chuỗi `/grill-with-docs` **hoặc** `/wayfinder` → `/to-spec` → `/to-tickets` → `/implement-spec`, không bọc ngoài `/implement-spec`. Hai lối vào ngang hàng, chọn theo tiêu chí của Matt (`engineering/ask-matt/SKILL.md:17`, `:50`). *(ticket 15)*
 
 Bằng chứng đã kiểm (ticket 02): `implement-spec` chạy subagent **trong cùng một phiên** bằng Task tool, nên trần ngữ cảnh mà Matt tự chê là có thật và không tránh được. `matt-with-paseo` cho mỗi ticket một agent Paseo riêng với cửa sổ riêng, nên **không mắc trần đó ở phía agent làm việc**.
 
@@ -112,6 +112,8 @@ Mọi ticket soi đề xuất của mình bằng câu: *Matt sửa thì bên nà
 - [08 — Tách danh sách bẫy](issues/08-tach-danh-sach-bay.md): phân loại bằng cột "cách kiểm" đã có; bẫy máy móc giữ kèm lệnh, nối vào repo đích là ticket riêng của repo đích; bẫy phán đoán ở lại file từng wave. **Hệ quả:** chỉ sửa `SKILL.md:97` (lọc trước khi chép), không thêm artifact.
 - [09 — Nối skill mới](issues/09-noi-skill-moi.md): không nối `retro`, `handoff`, `claude-handoff`; không thêm bước PR. **Hệ quả:** 0.3.0 không có chỗ ghép nối mới với Matt.
 - [10 — Báo lỗi gửi Paseo](issues/10-bo-bao-loi-paseo.md): ba file sẵn gửi (#8 lượt tự mở không thông báo; #3 thiếu tài liệu trả lời permission loại câu hỏi; shell khác nhau trên Windows); #2 không phải lỗi Paseo. **Hệ quả:** chưa gửi, chờ người dùng; bước 4 của skill trỏ `paseo/SKILL.md:54-56` cho hình dạng `create_agent`.
+- [14 — Tận dụng tính năng Paseo](issues/14-tan-dung-tinh-nang-paseo.md): dùng `get_agent_activity`, nhãn `wave` cho agent và workspace, ba mức dừng agent, `paseo.json` của repo đích (setup + services, không khai `port` cố định), heartbeat có `expiresIn`, profile review nếu có, cách trả lời permission loại câu hỏi. Không dùng duyệt quyền tập trung, terminal, plugin, Paseo browser, giới hạn tool, SDK, Hub. **Hệ quả:** bước 4 bỏ việc tự chia cổng khi repo đích có services.
+- [15 — Hai lối vào ngang hàng](issues/15-hai-loi-vao-ngang-hang.md): `grill-with-docs` và `wayfinder` cùng nhập vào `/to-spec`; bản đồ wayfinder không bao giờ là đầu vào của wave. **Hệ quả:** bước 0 thêm tín hiệu nhận ra bản đồ (`map.md`, dòng `Type:`).
 - [11 — Phát hành 0.3.0](issues/11-co-che-phat-hanh.md): câu đi trước upstream tan; đánh số như cũ, không CHANGELOG; cài tay thì copy kèm `plugin.json`. **Hệ quả:** README thêm hai dòng (copy `plugin.json`, trỏ luật lấy nhánh `SKILL.md:66`); không di trú wave cũ.
 - [12 — Cách ly ticket nghiên cứu](issues/12-cach-ly-ticket-nghien-cuu.md): không thuộc skill này, thuộc `wayfinder` và kỷ luật vận hành. **Hệ quả:** không sửa `SKILL.md`; vấp #13 đổi loại.
 - [13 — Chỉ giữ phần điều phối](issues/13-chi-giu-phan-dieu-phoi.md): bảng kiểm ba file; bước 0 mới (E–G + câu trỏ `ask-matt`, thêm ô vấp #5); nhãn triage đọc từ `triage-labels.md`; rút dòng 116/118 thành con trỏ; thêm script kiểm lệch upstream chạy trước phát hành. **Hệ quả:** `README.md:34-37` và `COMMON-RULES-TEMPLATE.md:23, 51` vào phạm vi spec.

@@ -36,3 +36,5 @@ Bằng chứng, bảng kiểm ghép nối đầy đủ cho ba file, và câu ch�
 6. **Phép kiểm lệch upstream: có.** Một script nhỏ liệt kê mọi `mattpocock-skills:<x>` trong skill, so với skill đang cài (có tồn tại không, cờ `disable-model-invocation`), báo chỗ lệch. Chạy tay trước mỗi lần phát hành (ticket 11). Lý do: dòng 120 đã lệch thật một lần (`resolving-merge-conflicts`, `pr`). Chỗ đặt và ngôn ngữ script: để `/to-spec`.
 
 Ngoại lệ duy nhất được phép chép: `SKILL.md:122` (plugin chưa tới worktree thì dán phương pháp vào prompt).
+
+**Bổ sung từ ticket 15:** bước 0 mới có thêm một ô: thư mục ticket có `map.md` bên cạnh hoặc ticket có dòng `Type:` là bản đồ wayfinder; báo "chưa qua `/to-spec`" và dừng, không mở wave. Ô này khác ô "chưa có ticket".
