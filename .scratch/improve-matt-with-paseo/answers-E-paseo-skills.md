@@ -42,7 +42,7 @@ Phương pháp: đọc toàn thân sáu file skill sơ cấp (`paseo-committee`,
 - Chỗ người điều phối tự làm một mình: bước 5, `"the report's most decisive claim is re-run once by you (call the endpoint, open the screen, look at the screenshot)."`
 - `paseo-advisor/SKILL.md:59`: `"Create the advisor agent via Paseo... Wait for it to finish. Read its response. Synthesize for the user."` — xác nhận đây là lời gọi chờ đồng bộ, có phí thời gian thật, không phải fire-and-forget.
 
-**Nghĩa gì cho matt-with-paseo:** nếu nối, nối vào bước 5 (soát lại xác nhận của báo cáo) như một lựa chọn thay/():"bổ sung cho việc người điều phối tự kiểm một mình — không nối vào bước 7, vì ở đó đã có cơ chế tương đương (và rẻ hơn về mặt thiết kế, vì đã song song). Câu "rẻ hơn bao nhiêu" — **tài liệu không trả lời được**; cần đo bằng cách chạy cả hai trên cùng một báo cáo thật và so thời gian/token.
+**Nghĩa gì cho matt-with-paseo:** nếu nối, nối vào bước 5 (soát lại xác nhận của báo cáo) như một lựa chọn bổ sung cho việc người điều phối tự kiểm một mình — không nối vào bước 7, vì ở đó đã có cơ chế tương đương (và rẻ hơn về mặt thiết kế, vì đã song song sẵn). Câu "rẻ hơn bao nhiêu" — **tài liệu không trả lời được**; cần đo bằng cách chạy cả hai trên cùng một báo cáo thật và so thời gian/token.
 
 ---
 

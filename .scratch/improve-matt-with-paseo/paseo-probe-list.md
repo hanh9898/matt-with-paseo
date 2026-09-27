@@ -160,14 +160,31 @@ Mô tả của nó: lập hội đồng hai agent suy luận mạnh để lùi l
 
 ---
 
-## F. Chỗ đã biết là mâu thuẫn
+## F. Chỗ đã biết là vênh
 
-### F1. Heartbeat làm đúng việc mà skill `paseo` bảo đừng làm
+### F1. Heartbeat KHÔNG mâu thuẫn với skill `paseo` — người điều phối đã đọc sót
 
-`paseo/SKILL.md` dòng 111: *"Đừng poll `list_agents` hay `get_agent_status` để canh một agent đang chạy. Thông báo sẽ báo cho bạn."*
+**Bản đầu của mục này sai.** Nó dẫn dòng 111 (*"Đừng poll `list_agents` hay `get_agent_status` để canh một agent đang chạy"*) rồi kết luận heartbeat vi phạm lời khuyên của chính Paseo.
 
-Heartbeat 20 phút mà chúng ta dựng làm **chính xác** việc đó. Nó cứu được đợt 7, nhưng nó là băng dán lên một chỗ lẽ ra không nên thủng.
+Đọc thêm dòng 99 thì ngược lại:
 
-**Cách dò:** phụ thuộc A1 và A2. Nếu thông báo chạy đúng khi dùng đúng cách, thì heartbeat phải bị **gỡ**, không phải được phong thành bước chính thức.
+> `create_heartbeat` — *"Dùng cho nhắc việc, trông PR/build, và **các lượt kiểm trạng thái cần quay về chính cuộc hội thoại này**."*
+
+Dòng 111 cấm **poll trong lượt của mình**. Dòng 99 **cho phép** heartbeat làm đúng việc kiểm trạng thái. Heartbeat đợt 7 nằm ở vế được phép.
+
+**Ràng buộc thật, đáng đưa vào skill:** heartbeat **không có tool update**. Đổi việc hay đổi nhịp thì phải xoá rồi tạo lại (dòng 101). Skill hiện không nói điều này.
+
+**Vẫn treo trên A1:** nếu A1 cho thấy thông báo tới được phiên không phải cha, thì heartbeat là thừa chứ không phải sai. Đó là câu hỏi khác.
+
+>
+
+### F2. Bốn chỗ vênh khác, agent E tìm ra
+
+Chi tiết trong `answers-E-paseo-skills.md`. Tóm tắt:
+
+1. **`archive_workspace`** — tài liệu nói xoá thư mục **có điều kiện** (đếm tham chiếu); skill viết như xoá vô điều kiện. Luồng hiện tại cho kết quả trùng nhau nên chưa gây lỗi; chỉ cần sửa lời văn.
+2. **`list_agents`** không có tham số lọc theo title, nhưng bước 0 của skill viết như thể có.
+3. **"Phiên không phải cha thì không nhận thông báo"** là **suy luận của `matt-with-paseo`**, không phải điều tài liệu `paseo` phát biểu. Liên quan thẳng vấp #8.
+4. **Profile** chọn ở bước 1 không được vật chất hoá rõ vào `create_agent` ở bước 4, và không chọn lại ở các đợt sau — vênh với chính lời cấm *"đừng nhớ profile đã chọn"* ở dòng 83.
 
 >
