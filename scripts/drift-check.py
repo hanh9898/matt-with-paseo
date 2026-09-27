@@ -39,6 +39,21 @@ def markdown_files(targets):
             yield target
 
 
+def agent_flow_lines(path, lines):
+    """Line numbers an agent runs as its flow: the whole common rules template, and step 4 of SKILL.md."""
+    if path.name == "COMMON-RULES-TEMPLATE.md":
+        return set(range(1, len(lines) + 1))
+    if path.name != "SKILL.md":
+        return set()
+    flow, inside = set(), False
+    for number, line in enumerate(lines, 1):
+        if line.startswith("## "):
+            inside = line.startswith("## 4.")
+        elif inside:
+            flow.add(number)
+    return flow
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("targets", nargs="*", type=Path)
@@ -48,11 +63,18 @@ def main():
     skills = installed_skills(args.plugin_root)
     mismatches = 0
     for path in markdown_files(args.targets):
-        for number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+        lines = path.read_text(encoding="utf-8").splitlines()
+        flow = agent_flow_lines(path, lines)
+        for number, line in enumerate(lines, 1):
             for name in REFERENCE.findall(line):
                 if name not in skills:
-                    print(f"{path}:{number}: mattpocock-skills:{name}: not in the installed plugin")
-                    mismatches += 1
+                    reason = "not in the installed plugin"
+                elif number in flow and skills[name].get("disable-model-invocation") == "true":
+                    reason = "in an agent flow, but the skill sets disable-model-invocation"
+                else:
+                    continue
+                print(f"{path}:{number}: mattpocock-skills:{name}: {reason}")
+                mismatches += 1
     return 1 if mismatches else 0
 
 

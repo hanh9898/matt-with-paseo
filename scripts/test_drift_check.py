@@ -86,6 +86,41 @@ class DriftCheck(unittest.TestCase):
         self.assertIn("mattpocock-skills:no-such-skill", lines[0])
         self.assertIn("not in the installed plugin", lines[0])
 
+    def test_reports_a_human_only_skill_in_the_step_4_flow_table(self):
+        planted = SKILL_MD.replace(
+            "| Behaviour that should exist | `/mattpocock-skills:tdd` |",
+            "| Behaviour that should exist | `/mattpocock-skills:tdd` |\n"
+            "| A spec to write | `/mattpocock-skills:to-spec` |")
+        make_skill(self.skill, planted)
+
+        result = self.run_check()
+
+        self.assertNotEqual(result.returncode, 0)
+        lines = result.stdout.splitlines()
+        self.assertEqual(len(lines), 1, result.stdout)
+        self.assertIn("SKILL.md:14:", lines[0])
+        self.assertIn("mattpocock-skills:to-spec", lines[0])
+        self.assertIn("disable-model-invocation", lines[0])
+
+    def test_reports_a_human_only_skill_anywhere_in_the_common_rules_template(self):
+        make_skill(self.skill, template_md=TEMPLATE_MD + "- Then run `/mattpocock-skills:to-spec`.\n")
+
+        result = self.run_check()
+
+        self.assertNotEqual(result.returncode, 0)
+        lines = result.stdout.splitlines()
+        self.assertEqual(len(lines), 1, result.stdout)
+        self.assertIn("COMMON-RULES-TEMPLATE.md:3:", lines[0])
+        self.assertIn("disable-model-invocation", lines[0])
+
+    def test_accepts_a_human_only_skill_suggested_outside_the_agent_flow(self):
+        make_skill(self.skill)  # step 0 suggests to-spec, which the user types
+
+        result = self.run_check()
+
+        self.assertEqual(result.stdout, "")
+        self.assertEqual(result.returncode, 0)
+
 
 if __name__ == "__main__":
     unittest.main()
