@@ -1,7 +1,7 @@
 # 04 — Chốt bảng từ: wave, nhánh tích hợp, cửa, frontier, done
 
 Type: grilling
-Status: open
+Status: claimed
 
 ## Question
 
