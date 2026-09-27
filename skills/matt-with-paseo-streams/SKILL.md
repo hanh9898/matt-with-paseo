@@ -128,3 +128,15 @@ A stream agent waiting on a question-type permission (`list_pending_permissions`
 A message that asks nothing (a progress report) only updates the status line.
 
 **Done when**: every end-of-turn message has updated the status line, and every question has been shown to the user verbatim and its answer, and only the user's answer, sent back with finish notifications on.
+
+## 5. Reconcile and supervise
+
+Placeholder for ticket #19; replace this line.
+
+## 6. Ship the stream
+
+Placeholder for ticket #20; replace this line.
+
+## 7. Warn when streams change the same file
+
+Placeholder for ticket #21; replace this line.
