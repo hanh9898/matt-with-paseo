@@ -31,8 +31,8 @@ Read the signals on the real repo through its tracker configuration: the `## Age
 | B. Spec, no tickets | A spec exists where the tracker configuration puts specs; no ticket belongs to it yet | The user types `/mattpocock-skills:to-tickets <spec>`, in the same session that wrote the spec |
 | C. Tickets, no wave run yet | Tickets exist; no `wave*-common-rules.md` file | A single ticket, or a pure chain where no two tickets can ever run side by side: `/mattpocock-skills:implement` in this session. Any width at all: step 1 of this skill |
 | D. N waves done, tickets left | A `wave*-common-rules.md` file exists, no wave is in progress (stage E does not match), and at least one ticket is still open | Back to step 2, building the graph from the open tickets; run step 1 first if this session has not |
-| E. Wave in progress | A `wave<N>-common-rules.md` file exists, and a ticket of that wave (listed in the file's title) is not yet `resolved`/`ready-for-human`; or the file has `## Wave agents` but no `## Review`, or the "cleaned" column is not fully checked | Resume at the missing step, see right below the table |
-| F. No work left for agents | At least one ticket exists, and every ticket is `resolved` or `ready-for-human` | Summarize per step 8; list the work waiting on humans |
+| E. Wave in progress | A `wave<N>-common-rules.md` file exists, and a ticket of that wave (listed in the file's title) is neither `resolved` nor in the ready for human role; or the file has `## Wave agents` but no `## Review`, or the "cleaned" column is not fully checked | Resume at the missing step, see right below the table |
+| F. No work left for agents | At least one ticket exists, and every ticket is `resolved` or in the ready for human role | Summarize per step 8; list the work waiting on humans |
 
 Ticket status is the primary signal for stage E; the two log sections `## Wave agents` and `## Review` only tell you which step is missing. A wave file with no `## Wave agents` whose tickets are all done is an old, finished wave, not stage E.
 
@@ -62,11 +62,13 @@ Load the `paseo` skill and call `list_profiles`, reading each profile's `notes`.
 
 Identify the tracker from `docs/agents/issue-tracker.md`. Identify the integration branch with `git branch --show-current`, never from the directory name.
 
-**Done when**: you have stated four things: the ticket folder, how status and dependencies are recorded, the integration branch, and the profile the agents will use.
+Read the triage label file the `## Agent skills` section points to (its triage labels entry): it maps each triage role to the label string this repo writes. This skill names triage states only by role (needs triage, ready for agent, ready for human); wherever it names one, use the label string the file maps it to, and fill the template's `<ready for human label>` placeholder with it in step 3. When the repo has no triage label file, each role's label string is the role name written with hyphens.
+
+**Done when**: you have stated five things: the ticket folder, how status and dependencies are recorded, the label string of each triage role above, the integration branch, and the profile the agents will use.
 
 ## 2. Build the graph and split into waves
 
-**Width** is the point of this skill: every wave takes every ticket that can run now, and the orchestrator works to make that set wider. A ticket can run now when every ticket in its `Blocked by` is merged and its status is `ready-for-agent`.
+**Width** is the point of this skill: every wave takes every ticket that can run now, and the orchestrator works to make that set wider. A ticket can run now when every ticket in its `Blocked by` is merged and it is in the ready for agent role.
 
 Read every ticket: status, dependency line (`Blocked by`), comments. Draw the dependency graph on one line, marking each ticket's status, for example `01✓ → {02, 03?} → {04, 05, 06} → 09`.
 
@@ -76,7 +78,7 @@ Run each symptom ticket's own reproduction on the base commit. A symptom that do
 
 Then hunt for lost width, and list every case with the one thing that would recover it:
 
-- **A ticket waiting on a human** (`needs-triage`, `ready-for-human`) that would join this wave, or that blocks tickets which would: name the exact question the human must answer, or the decision they must make.
+- **A ticket waiting on a human** (in the needs triage or ready for human role) that would join this wave, or that blocks tickets which would: name the exact question the human must answer, or the decision they must make.
 - **A false edge**: a `Blocked by` that stands for a shared file rather than a logical dependency (the later ticket neither calls nor reads what the earlier one builds). Propose dropping the edge and giving both tickets a file zone; the edge changes only in the ticket, and only with the user's agreement.
 
 Present the graph, the upcoming wave, and the lost-width list to the user, and wait for approval. A wave of one ticket is a signal to resolve the lost-width list first when the user can.
@@ -116,7 +118,7 @@ The **flow** is the chain of skills the agent runs for that ticket. Read the tic
 |---|---|
 | A symptom: broken, erroring, wrong numbers, slow | `/mattpocock-skills:diagnosing-bugs` then `/mattpocock-skills:tdd` |
 | Behaviour that should exist | `/mattpocock-skills:tdd` |
-| `Status: ready-for-human` | spawn no agent |
+| Work for a human: the ticket is in the ready for human role | spawn no agent |
 
 Every flow ends with `/mattpocock-skills:code-review` with the ticket's base commit (its row's) as the fixed point, then fixing the findings, the last commit, and the report.
 
@@ -155,7 +157,7 @@ Agent stopped midway or report incomplete: see [`TROUBLESHOOTING.md`](TROUBLESHO
 
 Merge each ticket as soon as its report passes step 5, while the rest of the wave keeps running: steps 5 and 6 interleave. One merge commit per ticket: `git merge --no-ff <ticket branch> -m "Merge ticket NN (<name>) into <integration branch>"`. After each merge, run the cheapest verification the repo has (install, build, lint, test).
 
-**Rolling start.** After each green merge, re-read the graph: a ticket whose `Blocked by` is now fully merged and whose status is `ready-for-agent` joins the current wave at once, without waiting for the rest of it. Spawn it per step 4, with the integration branch's new head as its base commit, written in its row and named in its prompt; append it to the wave file's title and graph. Its agent's `code-review` uses that base commit.
+**Rolling start.** After each green merge, re-read the graph: a ticket whose `Blocked by` is now fully merged and which is in the ready for agent role joins the current wave at once, without waiting for the rest of it. Spawn it per step 4, with the integration branch's new head as its base commit, written in its row and named in its prompt; append it to the wave file's title and graph. Its agent's `code-review` uses that base commit.
 
 Conflict, failure after a merge, or a test count after the merge that does not match the test files git tracks: see [`TROUBLESHOOTING.md`](TROUBLESHOOTING.md).
 
