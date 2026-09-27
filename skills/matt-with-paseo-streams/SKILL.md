@@ -60,6 +60,20 @@ Agent cap: 6
 
 With no index yet, write `streams.md` with the cap line and the table header, ask the user for the cap and each stream's fields, and write them in.
 
+### Split the cap into quotas
+
+A stream's quota is the `quota <N>` its stream agent's command carries: the most ticket agents its wave skill runs at once. A running stream takes one slot of the cap for its stream agent and its quota for its ticket agents. Split the cap again at every wave boundary (step 4) and whenever a stream starts or stops running:
+
+1. Streams in a wave keep the slots they hold, their stream agent plus their current quota, until their own next wave boundary. Take those slots off the cap.
+2. Walk every other stream to run (not yet started, waiting on the cap, or at its wave boundary now) in priority order: the lowest Priority number first, then the rows without a number; ties and empty cells go in the order of rows, so first come first served is the default.
+3. While at least two slots are left, a stream takes one for its stream agent and a quota of its open tickets in the ready for agent role on its tracker (at least 1), but no more than the slots left minus one. A stream left with fewer than two slots waits on the cap, with no stream agent; it waits at its next wave boundary, never in the middle of a wave.
+
+A stream whose tickets are all resolved or waiting on a human holds only its stream agent's slot.
+
+With the example above, billing-export having 3 ready tickets and login-bug 4, and neither started: billing-export takes 1 + quota 3, leaving 2; login-bug takes 1 + quota 1, leaving 0.
+
+Changing the cap or a priority in the index takes effect at the next wave boundary: it changes the next split, never a quota a stream is running a wave with. A cap lowered below the slots in use is reached as each stream comes to its boundary.
+
 ## 0. Pick the stream
 
 Read `streams.md`. With a slug in the input, take its row; with none, show the index and ask the user which stream to run.
@@ -106,11 +120,11 @@ Call `list_profiles` and read each profile's `notes`, as the wave skill's step 1
 /matt-with-paseo <tickets> stream <slug> quota <N>
 ```
 
-`<tickets>` is the row's Tickets cell as written, `<slug>` the row's slug, and `<N>` the stream's quota: with one stream running, the whole agent cap minus one for the stream agent itself. The worktree is a checkout of the integration branch, which is the wave skill's precondition. A child agent runs a user-only skill when its initial prompt starts with that command (probe L2), so nothing may come before it.
+`<tickets>` is the row's Tickets cell as written, `<slug>` the row's slug, and `<N>` the stream's quota from "Split the cap into quotas" (The index). When the split leaves the stream no room, spawn nothing: write "waits on the cap" in its status line and stop here for this stream; step 4 spawns it at a later wave boundary. The worktree is a checkout of the integration branch, which is the wave skill's precondition. A child agent runs a user-only skill when its initial prompt starts with that command (probe L2), so nothing may come before it.
 
 Write the agent id into the stream's status line.
 
-**Done when**: the stream has exactly one stream agent, running in its worktree, whose initial prompt is the wave skill's command with `stream <slug>` and `quota <N>`.
+**Done when**: the stream has exactly one stream agent, running in its worktree, whose initial prompt is the wave skill's command with `stream <slug>` and `quota <N>`, or it has none and its status line says it waits on the cap.
 
 ## 4. Relay questions and keep the status line
 
