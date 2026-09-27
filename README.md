@@ -13,6 +13,7 @@ Paseo can run many agents in parallel, each in its own worktree. What it does no
 `matt-with-paseo` fills that gap with one skill:
 
 - It **locates** where your work stands (not configured, no spec yet, spec, tickets, a wave in progress, finished) and suggests one next step.
+- It **names** a wayfinder map as a set of decision tickets not yet through `/mattpocock-skills:to-spec`, and starts no wave on it.
 - It **splits** tickets into waves from their `Blocked by` lines, so only independent tickets run side by side.
 - It writes one **common rules** file per wave, so every agent gets the same context and each prompt stays four lines long.
 - It **checks** each agent's work against the real artifacts (commits, ticket status, a re-run of the key claim) instead of trusting the report.
@@ -45,7 +46,7 @@ Once the tickets exist, come back to this skill rather than Matt's `/mattpocock-
 
 Each wave then goes through the same loop:
 
-1. **Prepare**: read Paseo profiles, the ticket tracker, and the integration branch.
+1. **Prepare**: read Paseo profiles, the ticket tracker, and the integration branch. The branch is read with `git branch --show-current`, never from the directory name (the rule in step 1 of `SKILL.md`).
 2. **Split**: draw the dependency graph and put every ticket that can run now into the wave. It also lists what is costing width (a ticket waiting on a human, a `Blocked by` that is only a shared file) with the one question that would unblock it. You approve it.
 3. **Common rules**: pin a base commit and write `wave<N>-common-rules.md` from the template.
 4. **Spawn**: one worktree and one agent per ticket. Symptom tickets run `mattpocock-skills:diagnosing-bugs` then `mattpocock-skills:tdd`; behaviour tickets run `mattpocock-skills:tdd`. Every flow ends with `mattpocock-skills:code-review`, as `/mattpocock-skills:implement` does.
@@ -112,6 +113,7 @@ macOS / Linux:
 ```bash
 git clone https://github.com/hanh9898/matt-with-paseo.git
 cp -r matt-with-paseo/skills/matt-with-paseo ~/.claude/skills/
+cp matt-with-paseo/.claude-plugin/plugin.json ~/.claude/skills/matt-with-paseo/
 ```
 
 Windows (PowerShell):
@@ -119,9 +121,10 @@ Windows (PowerShell):
 ```powershell
 git clone https://github.com/hanh9898/matt-with-paseo.git
 Copy-Item -Recurse matt-with-paseo\skills\matt-with-paseo "$env:USERPROFILE\.claude\skills\"
+Copy-Item matt-with-paseo\.claude-plugin\plugin.json "$env:USERPROFILE\.claude\skills\matt-with-paseo\"
 ```
 
-To use it in one project only, copy it into that project's `.claude/skills/` instead. The command is `/matt-with-paseo`.
+The second copy puts the plugin manifest next to the skill, so a hand-installed copy carries its version: read the `version` field of `plugin.json` in the skill folder to see which release you run. To use it in one project only, copy the skill into that project's `.claude/skills/` and the manifest into its `.claude/skills/matt-with-paseo/` instead. The command is `/matt-with-paseo`.
 
 ## Usage
 
