@@ -7,6 +7,8 @@ import re
 import sys
 from pathlib import Path
 
+REPO = Path(__file__).resolve().parent.parent
+DEFAULT_TARGETS = [REPO / "skills" / "matt-with-paseo", REPO / "README.md"]
 REFERENCE = re.compile(r"mattpocock-skills:([a-z0-9][a-z0-9-]*)")
 
 
@@ -72,6 +74,9 @@ def agent_flow_lines(path, lines):
             inside = line.startswith("## 4.")
         elif inside:
             flow.add(number)
+    if not any(line.startswith("## 4.") for line in lines):
+        fail(f"{path}: no '## 4.' heading, so the agent flow cannot be found. "
+             "Update agent_flow_lines in this script to the step that spawns agents.")
     return flow
 
 
@@ -84,7 +89,7 @@ def main():
     plugin_root = args.plugin_root or find_installed_plugin()
     skills = installed_skills(plugin_root)
     mismatches = 0
-    for path in markdown_files(args.targets):
+    for path in markdown_files(args.targets or DEFAULT_TARGETS):
         lines = path.read_text(encoding="utf-8").splitlines()
         flow = agent_flow_lines(path, lines)
         for number, line in enumerate(lines, 1):

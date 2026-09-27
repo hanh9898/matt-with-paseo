@@ -5,6 +5,7 @@
 
 import json
 import os
+import re
 import subprocess
 import sys
 import tempfile
@@ -156,6 +157,28 @@ class DriftCheck(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertNotEqual(result.returncode, 1)
         self.assertIn("mattpocock-skills", result.stderr)
+
+    def test_without_targets_checks_the_skill_and_readme_of_this_repo(self):
+        make_plugin(self.plugin, {})  # an empty plugin: every reference is stale
+
+        result = subprocess.run(
+            [sys.executable, str(SCRIPT), "--plugin-root", str(self.plugin)],
+            capture_output=True, text=True)
+
+        self.assertEqual(result.returncode, 1)
+        paths = {re.match(r"(.*?):\d+: mattpocock-skills:", line).group(1)
+                 for line in result.stdout.splitlines()}
+        repo = SCRIPT.resolve().parent.parent
+        self.assertIn(str(repo / "skills" / "matt-with-paseo" / "SKILL.md"), paths)
+        self.assertIn(str(repo / "README.md"), paths)
+
+    def test_fails_loudly_when_skill_md_has_no_step_4(self):
+        make_skill(self.skill, SKILL_MD.replace("## 4. Spawn", "## Spawn"))
+
+        result = self.run_check()
+
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("## 4.", result.stderr)
 
 
 if __name__ == "__main__":
