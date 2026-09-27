@@ -105,7 +105,7 @@ For each ticket in the wave:
 1. `create_workspace` with `isolation: "worktree"`, `mode: "branch-off"`, `baseBranch` set to the integration branch, and `branchName` shaped `wave<N>/<NN>-<slug>`. Check that `git -C <worktree> rev-parse HEAD` equals the base commit; if the integration branch stays still while you spawn, every worktree in the wave shares one base.
 2. `create_agent` in that workspace, titled `[Wave N] <NN> <ticket name>`. The prompt holds exactly four things: the **absolute** path to the common rules in the integration branch's checkout (the file is the wave's live log and is not in the worktree), the path to the ticket, the private resources (database name, port, volume, temp directory; a distinct set per agent), and the **flow**.
 
-Take the shape of each `create_agent` call (required fields, optional fields, how the chosen profile maps onto it) from the `paseo` skill's reference loaded in step 1; do not guess parameters.
+Take the shape of each `create_agent` call (required fields, optional fields, how the chosen profile maps onto it) from the `paseo` skill (loaded in step 1); do not guess parameters.
 
 The **flow** is the chain of skills the agent runs for that ticket. Read the ticket, then pick one row:
 
