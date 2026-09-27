@@ -12,7 +12,7 @@ Paseo can run many agents in parallel, each in its own worktree. What it does no
 
 `matt-with-paseo` fills that gap with one skill:
 
-- It **locates** where your work stands (not configured, grilling, spec, tickets, a wave in progress, finished) and suggests one next step.
+- It **locates** where your work stands (not configured, no spec yet, spec, tickets, a wave in progress, finished) and suggests one next step.
 - It **splits** tickets into waves from their `Blocked by` lines, so only independent tickets run side by side.
 - It writes one **common rules** file per wave, so every agent gets the same context and each prompt stays four lines long.
 - It **checks** each agent's work against the real artifacts (commits, ticket status, a re-run of the key claim) instead of trusting the report.
