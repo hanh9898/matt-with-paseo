@@ -1,6 +1,6 @@
 # Troubleshooting a wave
 
-Each entry: the observable symptom, then how to handle it. When an incident exposes a trap the next wave's agents would also hit, copy that trap into the "Traps already hit" section of the next wave's common rules.
+Each entry: the observable symptom, then how to handle it. When an incident exposes a trap the next wave's agents would also hit, carry that trap into the "Traps already hit" section of the next wave's common rules, filtered per step 3 of the skill.
 
 ## Agents
 

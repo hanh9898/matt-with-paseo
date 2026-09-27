@@ -94,7 +94,11 @@ Once the first agent is spawned, the rules part of the file is **frozen**: agent
 
 The common rules are the single place holding what every agent in the wave needs to know, so each agent's own prompt carries only three things: which ticket, which private resources, and which flow (step 4). The file is also the wave's log: steps 4 and 7 append to it, so step 0 of a later session can read where an unfinished wave stands.
 
-**Done when**: every section of the template has content or reads "not applicable", and every trap found in earlier waves is copied into the traps section.
+Filter each trap from earlier waves before copying it and check it against the acceptance criteria of the tickets it touches: a trap that became a check shrinks to a one-line pointer to that check, a trap that contradicts those criteria is fixed or dropped, and a trap proven wrong while a wave runs is marked **wrong** (not outdated) in that wave's log, below its frozen rules, so the next wave fixes or drops it instead of copying it as written.
+
+A trap's "how to check you avoided it" column tells its kind: a command with a clear result makes it mechanical, prose makes it a judgement call (the split `mattpocock-skills:retro` draws). A mechanical trap stays in the list together with its command. Wiring that command into the target repo's own checks is a separate ticket for that repo, proposed to the user; this skill never edits the target repo's checks itself.
+
+**Done when**: every section of the template has content or reads "not applicable", and every trap from earlier waves has been filtered and checked against the acceptance criteria as above before it was copied.
 
 ## 4. Spawn
 
