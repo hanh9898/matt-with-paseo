@@ -2,11 +2,12 @@
 status: accepted
 ---
 
-# One integration branch per work item; a cross-item edge clears only when the blocker is in develop
+# One integration branch per work item; dependent requests become one work item
 
-Unrelated work items ship at different times, so each gets its own integration branch (one spec, one integration branch, as Matt's `implement-spec` does) and reaches `develop` through its own pull request, which a human merges. A consequence that looks surprising: when work item B depends on work item A, B does not start (or opens no further wave) until A's pull request is merged into `develop`, and B's branch then merges `develop` at a wave boundary. A dependency on another work item's ticket therefore waits for a human merge, not for the ticket's merge into A's branch.
+Each work item gets its own integration branch (one spec, one integration branch, as Matt's `implement-spec` does) and reaches `develop` through its own pull request, which a human merges. Inside one stream, requests that depend on each other become **one work item** by default: one branch, one pull request, one ticket graph, so the wave skill runs unchanged. Only when the user asks to split them do they stay separate work items with an edge, and then the dependent one does not start (or opens no further wave) until the other's pull request is merged into `develop`, merging `develop` at a wave boundary.
 
 ## Considered Options
 
-- One integration branch per stream: rejected, a finished bug would wait for an unrelated feature of the same requester before reaching `develop`.
-- Several integration branches inside one wave: rejected, it changes the base commit, merge and seam-review steps of the wave skill and still cannot carry an edge across branches.
+- Wait for `develop` as the default for every dependency: rejected as the default, dependencies inside a stream are common and each one would wait for a human merge; kept as the opt-in when separate pull requests are wanted.
+- Stacked branches (the dependent branch starts from the blocker's branch, its pull request retargeted to `develop` later): rejected, it needs pull-request retargeting and a re-merge whenever review changes the blocker.
+- One integration branch per stream: rejected, an independent bug would wait for an unrelated feature of the same requester.

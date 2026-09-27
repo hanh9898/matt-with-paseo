@@ -79,3 +79,10 @@ Tầng 1  TICKET   = DAG như 0.3.0; wave = frontier
 - **ADR** 0001, 0002, 0003 trong `docs/adr/`.
 
 **Còn đứng từ vòng trước:** Q1, Q4, Q6, Q9, Q10, Q3' (skill thứ hai trong cùng plugin), L2.
+
+## Sửa sau prototype (27/09)
+
+- **Không có phụ thuộc giữa hai stream.** Phụ thuộc chỉ nằm giữa các đầu việc của cùng một người giao việc. Stream là tô màu và **không cạnh nào vượt ranh giới stream**; các stream chạy song song, tầng trên không giữ phụ thuộc chéo stream. ADR 0001 sửa tiền đề theo.
+- **Q18, phụ thuộc trong stream:** mặc định **gộp các đầu việc phụ thuộc nhau thành một đầu việc** (một nhánh, một PR, một đồ thị ticket; tầng wave 0.3.0 giữ nguyên). Chỉ khi người dùng muốn tách PR thì giữ hai đầu việc với một cạnh, và đầu việc sau chờ PR của đầu việc trước vào `develop` (I3 cũ). Loại: nhánh xếp chồng. ADR 0003 sửa theo.
+- Hệ quả: theo mặc định tầng 2 **không có cạnh**; cạnh chỉ xuất hiện trong một stream, khi người dùng chọn tách. Luật 1–3 (cạnh suy ra từ ticket, DAG, cạnh gỡ khi vào `develop`) chỉ áp cho trường hợp tách. Đường găng (luật 4) chủ yếu còn là chiều dài đồ thị ticket của từng đầu việc.
+- Việc gộp: khi `to-tickets` hoặc `triage` sinh ra ticket có `Blocked by` trỏ sang ticket của một đầu việc khác trong cùng stream, tầng trên đề xuất gộp hai đầu việc (hoặc tách, nếu người dùng muốn), người dùng quyết.
