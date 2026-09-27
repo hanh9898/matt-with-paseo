@@ -10,6 +10,16 @@ Each entry: the observable symptom, then how to handle it. When an incident expo
 
 **Branch name differs from directory name.** A Paseo worktree directory is named by a slug, not by the branch. Get the branch name with `git -C <worktree> branch --show-current`.
 
+**A ticket goes wrong while its agent is running** (wrong direction, a loop, work outside its zone). Pick the lightest stop that fixes it:
+
+| Control | What it does | Use it when |
+|---|---|---|
+| `cancel_agent` | Stops the current turn; the agent and its context stay | The agent can still do the ticket: redirect it with `send_agent_prompt`, narrowing the task as in "Agent stops midway" |
+| `kill_agent` | Ends the agent's session for good; its workspace and worktree stay | The session itself is broken (errors on every turn, context unusable): check the worktree for what is done, then spawn a new agent in the same workspace per step 4 for the remainder, and update its row |
+| `archive_agent` | Interrupts the agent if running and removes it from the active list; the worktree stays | Only in step 8 cleanup, after its three checks. Archiving the workspace (`archive_workspace`) is what deletes the worktree |
+
+**Agent waits on a question-type permission** (it asked the user a question, and `list_pending_permissions` shows the request). Answer with `respond_to_permission`, `behavior: "allow"`, and an `updatedInput` holding the request's `questions` plus an `answers` map from each question's text to the chosen option's label, for example `answers: { "Which database?": "Postgres" }`. Without `answers` (only `selectedActionId`, or only `questions`), the agent receives an ambiguous answer and guesses.
+
 ## Merging
 
 **Test count after a merge exceeds what the tracked test files contain.** The worktrees sit inside the integration branch's checkout, and a runner that scans the tree (`node --test`, a `**` glob) also runs the unmerged code of the worktrees still open, so green proves nothing. Restrict the input to files git tracks, for example `git ls-files '*.test.js' | xargs node --test`. Check: the printed count matches the tests in those files. Passing a directory name straight to the runner does not always work (`node --test test/` on Node 24 fails with `Cannot find module`).
