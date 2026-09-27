@@ -60,6 +60,20 @@ Agent cap: 6
 
 With no index yet, write `streams.md` with the cap line and the table header, ask the user for the cap and each stream's fields, and write them in.
 
+### Split the cap into quotas
+
+A stream's quota is the wave skill's `quota <N>` argument in its stream agent's command. A running stream takes one slot of the cap for its stream agent and its quota for its ticket agents. Split the cap again at every wave boundary (step 4) and whenever a stream starts or stops running, reading the cap and the priorities from `streams.md` afresh each time:
+
+1. Streams in a wave keep the slots they hold, their stream agent plus their current quota, until their own next wave boundary. Take those slots off the cap.
+2. Walk every other stream to run (not yet started, waiting on the cap, or at its wave boundary now) in priority order: the lowest Priority number first, then the rows without a number; ties and empty cells go in the order of rows, so first come first served is the default.
+3. While at least two slots are left, a stream takes one for its stream agent and a quota of its open tickets in the ready for agent role on its tracker (at least 1), but no more than the slots left minus one. A stream left with fewer than two slots waits on the cap, with no stream agent; it waits at its next wave boundary, never in the middle of a wave.
+
+A running stream with no ticket left for agents (every ticket resolved or waiting on a human) counts only its stream agent's slot and is left out of the walk: its wave skill plans no more waves, so its command is never changed.
+
+With the example above, billing-export having 3 ready tickets and login-bug 4, and neither started: billing-export takes 1 + quota 3, leaving 2; login-bug takes 1 + quota 1, leaving 0.
+
+Changing the cap or a priority in the index takes effect at the next wave boundary: it changes the next split, never a quota a stream is running a wave with. A cap lowered below the slots in use is reached as each stream comes to its boundary.
+
 ## 0. Pick the stream
 
 Read `streams.md`. With a slug in the input, take its row; with none, show the index and ask the user which stream to run.
@@ -106,28 +120,40 @@ Call `list_profiles` and read each profile's `notes`, as the wave skill's step 1
 /matt-with-paseo <tickets> stream <slug> quota <N>
 ```
 
-`<tickets>` is the row's Tickets cell as written, `<slug>` the row's slug, and `<N>` the stream's quota: with one stream running, the whole agent cap minus one for the stream agent itself. The worktree is a checkout of the integration branch, which is the wave skill's precondition. A child agent runs a user-only skill when its initial prompt starts with that command (probe L2), so nothing may come before it.
+`<tickets>` is the row's Tickets cell as written, `<slug>` the row's slug, and `<N>` the stream's quota from "Split the cap into quotas" (The index). When the split leaves the stream no room, spawn nothing: write "waits on the cap" in its status line and stop here for this stream; step 4 spawns it at a later wave boundary. The worktree is a checkout of the integration branch, which is the wave skill's precondition. A child agent runs a user-only skill when its initial prompt starts with that command (probe L2), so nothing may come before it.
 
 Write the agent id into the stream's status line.
 
-**Done when**: the stream has exactly one stream agent, running in its worktree, whose initial prompt is the wave skill's command with `stream <slug>` and `quota <N>`.
+**Done when**: the stream has exactly one stream agent, running in its worktree, whose initial prompt is the wave skill's command with `stream <slug>` and `quota <N>`, or it has none and its status line says it waits on the cap.
 
 ## 4. Relay questions and keep the status line
 
-The stream agent asks by ending its turn with a question: stage confirmation, wave approval, a review decision, anything the wave skill waits on the user for. Its finish notification reaches you because you created it with `notifyOnFinish: true`.
+Each stream agent asks by ending its turn with a question: stage confirmation, wave approval, a review decision, anything the wave skill waits on the user for. Its finish notification reaches you because you created it with `notifyOnFinish: true`.
 
 On each notification:
 
 1. Read the end-of-turn message with `get_agent_activity`.
-2. Update the stream's status line in `streams.md` from that message and the ticket status on the tracker: date, stage, and who the stream waits on.
-3. When the message asks the user something, present it to the user **verbatim**, headed with the stream's slug, and wait. The answer is the user's alone: every approval gate of the wave skill keeps its meaning only if the user is the one who passes it, so you never answer, approve, or pick an option for them, even when the answer looks obvious.
-4. Send the user's answer back as written with `send_agent_prompt` to that stream agent, `background: true`, `notifyOnFinish: true`, so its next end-of-turn message reaches you again.
+2. Update the stream's status line in `streams.md` from that message and the ticket status on the tracker: date, stage, and who the stream waits on. A message that asks the user something makes the stream wait on the user until its answer is sent.
+3. When the message is the wave skill's wave approval (its step 2 presenting the graph and the upcoming wave), the stream is at its wave boundary: handle it as below before it joins a round.
+4. Run a question round.
 
-A stream agent waiting on a question-type permission (`list_pending_permissions` lists it) is a question too: present its questions verbatim, then answer with the user's choice as the wave skill's [`TROUBLESHOOTING.md`](../matt-with-paseo/TROUBLESHOOTING.md) entry "Agent waits on a question-type permission" describes.
+**At a wave boundary.** The wave approval is the one signal of a wave boundary: the last wave is cleaned up and the next has not started. Check that `paseo ls -g --label stream=<slug> --json` lists no running agent with a `wave` label, then split the cap again ("Split the cap into quotas", The index) and compare the stream's new quota with the one in its stream agent's command:
+
+| New quota | Do |
+|---|---|
+| Same | Nothing; the wave approval joins the round. |
+| Different, at least 1 | `archive_agent` the stream agent, then spawn a new one per step 3 with the new quota. Its wave skill resumes at its step 0, which first asks its own stage confirmation, then plans the wave within the new quota and asks the wave approval again; each question joins a round like any other. The old wave approval is never shown. |
+| No room (the split leaves the stream waiting on the cap) | `archive_agent` the stream agent and write "waits on the cap" in the status line. A later split that gives the stream room spawns it per step 3. |
+
+Capacity changes only here: you never prompt, cancel or archive a stream agent for capacity anywhere else, so a running wave is never cut. A split that frees slots (a stream archived here, or a stream with no ticket left for agents) gives them to the streams that wait on the cap, in priority order, each spawned per step 3.
+
+**A question round.** Gather every question pending across all streams: each stream whose status line says it waits on the user, plus every stream agent that `list_pending_permissions` lists with a question-type permission. Present them to the user in one round, one message, each question **verbatim** under a heading `[<slug>]` with its stream's slug, and wait. The answers are the user's alone: every approval gate of the wave skill keeps its meaning only if the user is the one who passes it, so you never answer, approve, or pick an option for them, even when the answer looks obvious.
+
+Route each answer by the heading it answers, only to the stream agent that asked, whose id is in that stream's status line: send it as written with `send_agent_prompt`, `background: true`, `notifyOnFinish: true`, so its next end-of-turn message reaches you again. A question-type permission is answered with the user's choice as the wave skill's [`TROUBLESHOOTING.md`](../matt-with-paseo/TROUBLESHOOTING.md) entry "Agent waits on a question-type permission" describes. When an answer does not say which stream it is for, ask the user; never guess, and never send one answer to several streams unless the user gives it to each of them. A question the user leaves unanswered, or one that arrives while a round waits on the user, stays pending for the next round; it is never presented alone.
 
 A message that asks nothing (a progress report) only updates the status line.
 
-**Done when**: every end-of-turn message has updated the status line, and every question has been shown to the user verbatim and its answer, and only the user's answer, sent back with finish notifications on.
+**Done when**: every end-of-turn message has updated the status line; every wave boundary has had its split applied; every pending question has been shown to the user verbatim in one round under its stream's slug; and each answer, only the user's, has gone to the stream agent that asked, with finish notifications on.
 
 ## 5. Reconcile and supervise
 
