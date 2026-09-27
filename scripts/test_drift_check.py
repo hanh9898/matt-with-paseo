@@ -69,10 +69,19 @@ class DriftCheck(unittest.TestCase):
         self.skill = self.tmp / "skill"
         make_plugin(self.plugin, {"tdd": False, "code-review": False, "to-spec": True})
 
-    def run_check(self, *targets, env=None):
-        args = [sys.executable, str(SCRIPT), "--plugin-root", str(self.plugin)]
+    def run_check(self, *targets, plugin_root=True, env=None):
+        args = [sys.executable, str(SCRIPT)]
+        if plugin_root:
+            args += ["--plugin-root", str(self.plugin)]
         args += [str(t) for t in targets] or [str(self.skill)]
         return subprocess.run(args, capture_output=True, text=True, env=env)
+
+    def fake_home(self, plugins):
+        """A home directory whose Claude Code install record lists `plugins`."""
+        home = self.tmp / "home"
+        write(home / ".claude" / "plugins" / "installed_plugins.json",
+              json.dumps({"version": 2, "plugins": plugins}))
+        return dict(os.environ, HOME=str(home), USERPROFILE=str(home))
 
     def test_reports_a_reference_to_a_skill_that_does_not_exist(self):
         make_skill(self.skill, SKILL_MD + "\nThen `/mattpocock-skills:no-such-skill`.\n")
@@ -120,6 +129,33 @@ class DriftCheck(unittest.TestCase):
 
         self.assertEqual(result.stdout, "")
         self.assertEqual(result.returncode, 0)
+
+    def test_without_plugin_root_compares_against_the_user_scope_install(self):
+        project_copy = self.tmp / "project-plugin"
+        make_plugin(project_copy, {"tdd": False, "code-review": False, "to-spec": True, "extra": False})
+        env = self.fake_home({
+            "mattpocock-skills@claude-plugins-official": [
+                {"scope": "project", "projectPath": "D:\\x", "installPath": str(project_copy)}],
+            "mattpocock-skills@mattpocock": [
+                {"scope": "user", "installPath": str(self.plugin)}],
+        })
+        make_skill(self.skill, SKILL_MD + "\nAnd `mattpocock-skills:extra`.\n")
+
+        result = self.run_check(plugin_root=False, env=env)
+
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("mattpocock-skills:extra", result.stdout)
+        self.assertIn(str(self.plugin), result.stdout)
+
+    def test_fails_loudly_when_no_matt_plugin_is_installed(self):
+        env = self.fake_home({"other@market": [{"scope": "user", "installPath": "x"}]})
+        make_skill(self.skill)
+
+        result = self.run_check(plugin_root=False, env=env)
+
+        self.assertNotEqual(result.returncode, 0)
+        self.assertNotEqual(result.returncode, 1)
+        self.assertIn("mattpocock-skills", result.stderr)
 
 
 if __name__ == "__main__":

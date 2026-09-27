@@ -10,6 +10,12 @@ from pathlib import Path
 REFERENCE = re.compile(r"mattpocock-skills:([a-z0-9][a-z0-9-]*)")
 
 
+def fail(message):
+    """Exit 2: the check could not run. Exit 1 is kept for "mismatches found"."""
+    print(message, file=sys.stderr)
+    sys.exit(2)
+
+
 def frontmatter(skill_md):
     lines = skill_md.read_text(encoding="utf-8").splitlines()
     fields = {}
@@ -29,6 +35,21 @@ def installed_skills(plugin_root):
         fields = frontmatter(plugin_root / entry / "SKILL.md")
         skills[fields.get("name", Path(entry).name)] = fields
     return skills
+
+
+def find_installed_plugin():
+    record = Path.home() / ".claude" / "plugins" / "installed_plugins.json"
+    if not record.is_file():
+        fail(f"No {record}: pass --plugin-root <the mattpocock-skills plugin directory>.")
+    plugins = json.loads(record.read_text(encoding="utf-8"))["plugins"]
+    installs = [entry for key, entries in plugins.items() if key.startswith("mattpocock-skills@")
+                for entry in entries]
+    for entry in installs:
+        if entry.get("scope") == "user":
+            return Path(entry["installPath"])
+    found = ", ".join(entry["installPath"] for entry in installs) or "none"
+    fail(f"No user-scope mattpocock-skills plugin in {record} (project installs: {found}). "
+             "Pass --plugin-root <the mattpocock-skills plugin directory>.")
 
 
 def markdown_files(targets):
@@ -60,7 +81,8 @@ def main():
     parser.add_argument("--plugin-root", type=Path)
     args = parser.parse_args()
 
-    skills = installed_skills(args.plugin_root)
+    plugin_root = args.plugin_root or find_installed_plugin()
+    skills = installed_skills(plugin_root)
     mismatches = 0
     for path in markdown_files(args.targets):
         lines = path.read_text(encoding="utf-8").splitlines()
@@ -73,7 +95,7 @@ def main():
                     reason = "in an agent flow, but the skill sets disable-model-invocation"
                 else:
                     continue
-                print(f"{path}:{number}: mattpocock-skills:{name}: {reason}")
+                print(f"{path}:{number}: mattpocock-skills:{name}: {reason} (compared against {plugin_root})")
                 mismatches += 1
     return 1 if mismatches else 0
 
