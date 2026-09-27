@@ -120,3 +120,16 @@ Phần điều phối là bước 1–8 (wave, worktree, merge, dọn, heartbeat
 Kéo theo biến mất cùng bảng: dòng 26, 27, 51 (Q3), mục "Stage C always presents…" và "Two notes for stages C and D" (dòng 49–56).
 
 Việc còn lại (soát `TROUBLESHOOTING.md`, `COMMON-RULES-TEMPLATE.md` theo cùng luật; chốt câu chữ cho bước 0 mới): ticket 13.
+
+### Đính chính Q9 (27/09, lúc chạy `/to-tickets`)
+
+Người dùng đảo **một phần** Q9 sau khi xét trade-off. Lý do: `ask-matt` là bản đồ tĩnh, **không đọc trạng thái repo**, và nó dẫn tới `/implement-spec`, không biết `matt-with-paseo`. Bước 0 của 0.2.x đã có ích thật trong chính phiên này (nhận ra stage D, spec ở issue #1; và lộ bẫy bản đồ wayfinder). Chỗ đã lệch thật chỉ nằm ở B và C.
+
+Chốt mới cho bảng bước 0:
+
+- **Giữ A** (chưa cấu hình → người dùng gõ `/setup-matt-pocock-skills`) và **D** (có spec, chưa có ticket → `/to-tickets` trong **cùng phiên**), kèm hai cảnh báo: `to-spec`/`to-tickets` chạy ở phiên còn giữ ngữ cảnh; skill ở các stage này chỉ người dùng gõ được. Tín hiệu của A và D đọc qua cấu hình tracker, không viết cứng tên file tài liệu miền.
+- **B và C** thay bằng một câu: chưa có spec thì `/ask-matt` để chọn `grill-with-docs`, `wayfinder` hay `prototype`, ngang hàng (ticket 15).
+- **Thêm:** có ticket rồi thì quay lại `matt-with-paseo`, không dùng `/implement-spec`.
+- **Giữ E, F, G**, cộng ô nhận ra bản đồ wayfinder (ticket 15) và ô "đã xong N wave".
+
+Cái giá: còn hai chỗ phụ thuộc quy ước của Matt (file cấu hình tracker, chỗ spec nằm), cả hai đọc qua cấu hình.

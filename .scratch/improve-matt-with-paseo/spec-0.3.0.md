@@ -124,3 +124,5 @@ Concretely, the skill stops routing me through setup, grilling, spec, and ticket
 - If Paseo fixes the silent-finish notification, the rule that turns an artifact-less finished report into a heartbeat can be removed.
 
 > **Đã đăng:** GitHub issue [#1](https://github.com/hanh9898/matt-with-paseo/issues/1), nhãn `ready-for-agent`, 27/09/2026.
+
+> **Sửa đổi sau khi đăng (27/09, bình luận trên #1):** bước 0 giữ stage A (chưa cấu hình → setup) và D (có spec, chưa có ticket → `to-tickets` cùng phiên) cùng hai cảnh báo; chỉ B và C nhường cho `ask-matt`; thêm câu "có ticket rồi thì quay lại `matt-with-paseo`, không dùng `implement-spec`". Lý do: `ask-matt` không đọc trạng thái repo và không biết `matt-with-paseo`.

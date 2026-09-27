@@ -38,3 +38,5 @@ Bằng chứng, bảng kiểm ghép nối đầy đủ cho ba file, và câu ch�
 Ngoại lệ duy nhất được phép chép: `SKILL.md:122` (plugin chưa tới worktree thì dán phương pháp vào prompt).
 
 **Bổ sung từ ticket 15:** bước 0 mới có thêm một ô: thư mục ticket có `map.md` bên cạnh hoặc ticket có dòng `Type:` là bản đồ wayfinder; báo "chưa qua `/to-spec`" và dừng, không mở wave. Ô này khác ô "chưa có ticket".
+
+**Đính chính từ ticket 04 (Q9, 27/09):** bước 0 **giữ A và D**, chỉ B và C nhường cho `/ask-matt`. Câu "chưa có ticket thì gợi ý `ask-matt` rồi dừng" ở mục 1 bên trên đổi thành: chưa cấu hình → setup; chưa có spec → `ask-matt`; có spec chưa có ticket → `to-tickets` cùng phiên.
