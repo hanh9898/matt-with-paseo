@@ -173,7 +173,9 @@ Append a `## Review` section to the end of the common rules file: the fixed poin
 - `git -C <worktree> status --porcelain` is empty;
 - the ticket's branch appears in `git branch --merged <integration branch>`.
 
-With all three, `archive_agent`, `archive_workspace`, clean up the non-Paseo resources listed in the private resources column, then check the "cleaned" column. If any is missing, leave the row as is and see [`TROUBLESHOOTING.md`](TROUBLESHOOTING.md). Delete every heartbeat created for the wave.
+The clean-worktree check is mandatory, never skipped: Paseo archives a worktree with uncommitted or untracked files without warning and deletes them with it.
+
+With all three, `archive_agent`, `archive_workspace`, clean up the non-Paseo resources listed in the private resources column, then check the "cleaned" column. If any is missing, leave the row as is and see [`TROUBLESHOOTING.md`](TROUBLESHOOTING.md). Delete every heartbeat created for the wave. Then `paseo ls -g --label wave=<N>` must list nothing; an agent still listed has no row in the table, so check and clean it the same way.
 
 Return to step 2 with the new base commit. When no open ticket can join a wave, report a summary: which tickets are `resolved`, which wait on a human, and which remain open and what blocks them.
 
