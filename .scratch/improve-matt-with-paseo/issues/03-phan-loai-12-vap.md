@@ -43,7 +43,7 @@ Năm mục này **không được bịa lại cho đủ 12**.
 | # | Vấp | Loại | Ghi chú |
 |---|---|---|---|
 | 1 | *(nội dung không đủ rõ; chỉ biết "vào skill")* | — | không phân loại được |
-| 6 | Danh sách bẫy phình vô hạn (21 mục ở đợt 7) | **thiếu phép kiểm** + phán đoán | Ticket 08 xử; cách chữa theo `/retro` là tách đôi chứ không tỉa |
+| 6 | Danh sách bẫy phình vô hạn (21 mục ở đợt 7) | **thiếu phép kiểm** + phán đoán | Ticket 08 xử; cách chữa theo `/retro` (`engineering/retro/SKILL.md:19`, mục *Coding standards*) là tách đôi chứ không tỉa |
 | 8 | Agent xong, chuyển `idle`, người điều phối không nhận thông báo | **xem mục dưới — chưa chốt được** | |
 | 9 | Dùng `git stash` trần trong worktree dùng chung | **sửa ở skill** | Công thức đúng đã ghi: `git add -A` + commit vào ref tạm, hoặc `git stash push -u -m` |
 | 10 | Skill liệt kê `/resolving-merge-conflicts` để nối chuỗi | **sửa ở skill** | Upstream đã xoá skill đó, lý do: *"việc của harness, không phải của skill"* |

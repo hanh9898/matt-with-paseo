@@ -17,7 +17,9 @@ Ticket 01 sẽ cho biết Paseo có hook vòng đời hay không. Ticket này qu
 1. Nhánh plugin chỉ mở **nếu** E4 xác nhận `send()` chạy xuyên agent. Nếu không xác nhận được thì bỏ nhánh này, đừng chọn nó vì nghe có vẻ sạch hơn.
 2. **Cảnh báo về nguyên nhân:** nếu giả thuyết 2 đúng (Paseo hoặc máy khởi động lại giữa lượt) thì hook **chạy trong tiến trình daemon** nên nó **chết cùng lúc** — nhánh plugin khi đó *không* đáng tin hơn heartbeat. Chọn cơ chế trước khi biết nguyên nhân là chọn mù.
 3. Heartbeat có nên thành **bước chính thức** không? Lưu ý: skill `paseo` dòng 99 **cho phép** heartbeat cho đúng việc này, và dòng 101 nói nó **không có tool update** — đổi nhịp phải xoá rồi tạo lại.
-4. `agent.turn_ended` bắn cả khi lượt **`failed`** hoặc **bị huỷ**, không chỉ `completed`. Hook có cần lọc trạng thái trước khi báo xong không?
+4. **Người điều phối sống sót qua ranh giới phiên thế nào?** Đây là gốc chung của vấp #8 (giả thuyết 1: phiên điều phối đổi, thông báo tới phiên cũ) và của việc mất 5/12 vấp (sổ điều phối sống trong hội thoại). Spec 0.3.0 cần một yêu cầu cụ thể ở đây — nhưng yêu cầu gì thì chưa ai quyết.
+
+5. `agent.turn_ended` bắn cả khi lượt **`failed`** hoặc **bị huỷ**, không chỉ `completed`. Hook có cần lọc trạng thái trước khi báo xong không?
 3. Nhịp bao lâu? 20 phút bắt được lần hai, nhưng con số đó chọn theo cảm tính.
 4. Điều kiện dừng heartbeat là gì, và ai xoá nó? Wave 7 phải xoá tay.
 5. Heartbeat kiểm gì mới đủ? Lần hai dùng: `status`, số commit, số file chưa commit, mục `## Comments`. Có thừa hay thiếu cái nào?

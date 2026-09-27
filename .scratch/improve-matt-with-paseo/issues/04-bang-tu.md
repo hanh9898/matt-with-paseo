@@ -24,6 +24,8 @@ Dựng `GLOSSARY.md` cho repo này, chốt nghĩa những từ `matt-with-paseo`
 
 **Chỗ `/to-spec` đọc quyết định.** Đây là lỗ hổng đụng thẳng vào đích đến: bản đồ hứa *"không còn gì phải quyết trước khi `/to-spec` chạy được"*, nhưng bước 0 của `SKILL.md` nói stage C nhận tín hiệu qua `CONTEXT.md` hoặc một ADR, trong khi ticket này lại ghi vào `GLOSSARY.md` — file stage C không nhắc tới. Phải chốt: quyết định của ticket 04–09 nằm ở file nào để `/to-spec` mở đúng chỗ.
 
+**Liên quan ticket 08:** từ *luật chung* đang được định nghĩa theo **hình dạng hiện tại** của `waveN-common-rules.md` — trộn cả bẫy máy móc lẫn bẫy phán đoán. Ticket 08 có thể rút phần máy móc ra, đổi thể loại file. Chốt nghĩa *luật chung* thì phải tính trước điều đó.
+
 Theo `domain-modeling`: `GLOSSARY.md` **chỉ là bảng từ**, không được lẫn chi tiết cài đặt.
 
 Nếu lộ ra một quyết định khó đảo và cần giải thích thì mới đẻ ADR — không mặc định đẻ.

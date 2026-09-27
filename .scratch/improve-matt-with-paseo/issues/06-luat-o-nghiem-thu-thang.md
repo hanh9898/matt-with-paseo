@@ -18,6 +18,7 @@ Cần chốt:
 2. Agent phải làm gì khi phát hiện mâu thuẫn — dừng lại hỏi, hay cứ làm theo ô nghiệm thu rồi ghi lại? (Wave 7 làm cách sau và nó chạy tốt, nhưng agent lúc đó chạy một mình.)
 3. Người điều phối có phải làm gì ở chiều ngược lại — kiểm mục bàn giao **trước khi** phát ticket?
 4. Chỗ lệch ghi vào đâu để wave sau không chép lại hướng dẫn cũ ở dạng sai?
+5. **Nếu chính ô nghiệm thu sai thì sao?** Bốn câu trên đều ngầm coi ô nghiệm thu là sự thật. Nhưng ô nghiệm thu cũng do người viết, và cũng sai được. Luật "ô nghiệm thu thắng" mà không có lối thoát này sẽ **hợp thức hoá** một ô nghiệm thu sai.
 
 Luật này đi vào `matt-with-paseo` chứ không vào repo đích: nó nói về cách chạy wave, không nói về mã.
 

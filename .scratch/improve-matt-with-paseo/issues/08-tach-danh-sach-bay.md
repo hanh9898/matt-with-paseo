@@ -6,7 +6,7 @@ Blocked by: 03
 
 ## Question
 
-Danh sách bẫy của wave 7 có **21 mục** và vẫn đang dài ra (vấp #6). Cách chữa không phải tỉa bớt — mà là tách đôi, theo luật của `/retro`:
+Danh sách bẫy của wave 7 có **21 mục** và vẫn đang dài ra (vấp #6). Cách chữa không phải tỉa bớt — mà là tách đôi, theo luật của `/retro` (`engineering/retro/SKILL.md:19`, mục *Coding standards*):
 
 > *"**Mặc định là dựng phép kiểm chứ không viết luật.**"*
 
@@ -17,6 +17,8 @@ Ticket 03 đã phân loại 12 vấp. Ticket này chốt cách làm chung:
 3. Ai chạy chúng, lúc nào? Agent tự chạy trước khi báo xong? Người điều phối chạy ở cửa?
 4. Bẫy phán đoán ở lại luật chung — nhưng có trần không? 21 mục đã quá dài để agent đọc kỹ.
 5. Bẫy đã thành phép kiểm thì **xoá khỏi văn xuôi**, hay giữ lại một dòng trỏ tới phép kiểm?
+
+**Liên quan ticket 04:** tách bẫy sẽ đổi thể loại của `waveN-common-rules.md`, trong khi 04 đang chốt nghĩa từ *luật chung* dựa trên chính file đó.
 
 **Chồng lấn với ticket 05 — xem phần cuối Question của nó.** Cả hai đang trả lời cùng một câu sâu hơn về nơi cư trú của hướng dẫn. Nếu 05 đã chốt khuôn thì ticket này kế thừa, đừng chốt lại khác.
 

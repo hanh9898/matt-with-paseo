@@ -36,3 +36,5 @@ Ticket 07 phân định. **Không viết nguyên nhân vào skill trước khi p
 | 13 | 27/09 | — | Hai agent nghiên cứu của wayfinder chạy chung một thư mục, giẫm lên nhánh HEAD của nhau. Commit rơi nhầm nhánh. | sửa ở skill |
 
 Vấp 13: luật "mỗi ticket một worktree" của skill **không phủ ticket nghiên cứu của wayfinder**. Lỗi thuộc người điều phối, nhưng chỗ hở thuộc skill.
+
+**Phân biệt quan trọng:** hai agent va nhau là **subagent của Claude Code** (Agent tool), **không phải agent Paseo**. Nên chỗ hở không nằm ở phần skill quản agent Paseo. Lần thứ hai người điều phối **cấm agent đụng git** và cho mỗi agent ghi đúng một file riêng — hai agent chạy song song, không va chạm nào. Xem ticket 12.

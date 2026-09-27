@@ -24,7 +24,7 @@ Nó **thay thế** ô cuối trong chuỗi `/wayfinder → /to-spec → /to-tick
 
 Bằng chứng đã kiểm (ticket 02): `implement-spec` chạy subagent **trong cùng một phiên** bằng Task tool, nên trần ngữ cảnh mà Matt tự chê là có thật và không tránh được. `matt-with-paseo` cho mỗi ticket một agent Paseo riêng với cửa sổ riêng, nên **không mắc trần đó ở phía agent làm việc**.
 
-**Nhưng nó mắc trần ở phía khác, và đã trả giá:** sổ của người điều phối sống trong hội thoại nhiều đợt, và việc đó đã làm **mất 5/12 vấp** khi ngữ cảnh bị nén (ticket 03). `pitfalls.md` vá được phần lưu bền; phần còn lại chưa đo được nhẹ hơn bao nhiêu. Spec 0.3.0 **phải** đặt một yêu cầu giảm tải ngữ cảnh cho người điều phối qua nhiều wave.
+**Nhưng nó mắc trần ở phía khác, và đã trả giá:** sổ của người điều phối sống trong hội thoại nhiều đợt, và việc đó đã làm **mất 5/12 vấp** khi ngữ cảnh bị nén (ticket 03). `pitfalls.md` vá được phần lưu bền; phần còn lại chưa đo được nhẹ hơn bao nhiêu. Giảm tải ngữ cảnh cho người điều phối qua nhiều wave là **câu hỏi mở**, đã gộp vào ticket 07 — cùng gốc với vấp #8: người điều phối không sống sót qua ranh giới phiên.
 
 Nguồn: <https://x.com/mattpocockuk/status/2090747462973571302> và <https://x.com/mattpocockuk/status/2090746680551383294>.
 
@@ -43,7 +43,7 @@ Trong 12 vấp, một số là **hành vi của Paseo** chứ không phải củ
 
 ### Luật tách đôi 2 — bẫy máy móc hay bẫy phán đoán
 
-Theo `/retro`:
+Theo `/retro` (`engineering/retro/SKILL.md:19`, mục *Coding standards*):
 
 > *"Phân loại vi phạm trước: loại **máy móc** thì làm một phép kiểm tất định, hết chuyện… **Mặc định là dựng phép kiểm chứ không viết luật.** Dành `CODING_STANDARDS.md` cho **phán đoán thật sự**."*
 
