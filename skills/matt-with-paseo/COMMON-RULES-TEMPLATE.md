@@ -46,7 +46,7 @@ Copy in only what an agent cannot look up: an unwritten convention, the reason b
 - On conflict, follow the criteria and write the discrepancy and its reason in your ticket's comments;
   do not stop to ask.
 - If the criteria themselves look wrong, stop that part, write the evidence in your ticket's comments,
-  and move the ticket to `<ready for human label>`. Never rewrite the criteria.
+  and move the ticket to `<ready for human label from the triage label file>`. Never rewrite the criteria.
 
 ## Resources
 - Your private resources are listed in your prompt (database, port, volume, temp directory). Use exactly that set.
@@ -59,7 +59,7 @@ Copy in only what an agent cannot look up: an unwritten convention, the reason b
 - Commit to your branch. The orchestrator pushes and merges.
 - Before the last commit: run `/mattpocock-skills:code-review` with your base commit as the fixed point, fix the
   findings, and write the number of findings per axis and the outcome of each into the ticket's comments.
-- Change the ticket status: `resolved` if fully done, `<ready for human label>` for the part a human must do.
+- Change the ticket status: `resolved` if fully done, `<ready for human label from the triage label file>` for the part a human must do.
   Write in the comments what you verified, with evidence, and what remains open.
 - Clean up your private resources; state the reason for anything you keep.
 - Report back: a design summary, files touched, how you verified with evidence, work not done or still

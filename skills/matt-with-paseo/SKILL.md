@@ -62,7 +62,7 @@ Load the `paseo` skill and call `list_profiles`, reading each profile's `notes`.
 
 Identify the tracker from `docs/agents/issue-tracker.md`. Identify the integration branch with `git branch --show-current`, never from the directory name.
 
-Read the triage label file the `## Agent skills` section points to (its triage labels entry): it maps each triage role to the label string this repo writes. This skill names triage states only by role (needs triage, ready for agent, ready for human); wherever it names one, use the label string the file maps it to, and fill the template's `<ready for human label>` placeholder with it in step 3. When the repo has no triage label file, each role's label string is the role name written with hyphens.
+Read the triage label file the `## Agent skills` section points to (its triage labels entry): it maps each triage role to the label string this repo writes. This skill names triage states only by role (needs triage, ready for agent, ready for human); wherever it names one, use the label string the file maps it to, and fill the template's `<ready for human label from the triage label file>` placeholder with it in step 3. When the repo has no triage label file, use the default label strings `mattpocock-skills:setup-matt-pocock-skills` defines.
 
 **Done when**: you have stated five things: the ticket folder, how status and dependencies are recorded, the label string of each triage role above, the integration branch, and the profile the agents will use.
 
