@@ -14,6 +14,9 @@
         "database": {
           "label": "Git branch"
         },
+        "messagebus": {
+          "label": "Pull request"
+        },
         "external": {
           "label": "Person"
         },
@@ -47,19 +50,16 @@
         "note": "The stream skill talks only to stream agents; ticket agents belong to the wave skill, as in 0.3.0."
       },
       {
-        "id": "independent",
-        "label": "Independent streams",
+        "id": "pr",
+        "label": "Who opens the PR",
         "focus": [
-          "wave-a",
-          "tickets-a",
+          "streams",
           "branch-a",
-          "target-a",
-          "wave-b",
-          "tickets-b",
+          "pr-a",
           "branch-b",
-          "target-b"
+          "pr-b"
         ],
-        "note": "No dependency between streams; each has one integration branch and one PR to its own target."
+        "note": "The stream skill opens one PR per stream, from its integration branch to its own target; a human merges."
       }
     ]
   },
@@ -84,11 +84,11 @@
       "label": "matt-with-paseo-streams",
       "sublabel": "index · WIP cap 6 · reconcile loop",
       "pos": [
-        430,
+        440,
         60
       ],
       "size": [
-        300,
+        280,
         64
       ]
     },
@@ -112,11 +112,11 @@
       "label": "matt-with-paseo",
       "sublabel": "stream a · quota 4",
       "pos": [
-        90,
-        220
+        80,
+        230
       ],
       "size": [
-        230,
+        220,
         64
       ]
     },
@@ -126,11 +126,11 @@
       "label": "Ticket agents A1–A4",
       "sublabel": "waves as in 0.3.0",
       "pos": [
-        90,
-        350
+        80,
+        355
       ],
       "size": [
-        230,
+        220,
         64
       ]
     },
@@ -140,22 +140,22 @@
       "label": "a/integration",
       "sublabel": "cut from develop",
       "pos": [
-        390,
-        350
+        80,
+        480
       ],
       "size": [
-        170,
+        220,
         64
       ]
     },
     {
-      "id": "target-a",
-      "type": "database",
-      "label": "test",
-      "sublabel": "PR target of A",
+      "id": "pr-a",
+      "type": "messagebus",
+      "label": "PR → test",
+      "sublabel": "a human merges",
       "pos": [
         390,
-        500
+        480
       ],
       "size": [
         170,
@@ -168,11 +168,11 @@
       "label": "matt-with-paseo",
       "sublabel": "stream b · quota 2",
       "pos": [
-        650,
-        220
+        860,
+        230
       ],
       "size": [
-        230,
+        220,
         64
       ]
     },
@@ -182,11 +182,11 @@
       "label": "Ticket agents B1–B2",
       "sublabel": "waves as in 0.3.0",
       "pos": [
-        650,
-        350
+        860,
+        355
       ],
       "size": [
-        230,
+        220,
         64
       ]
     },
@@ -196,22 +196,22 @@
       "label": "b/integration",
       "sublabel": "cut from develop",
       "pos": [
-        950,
-        350
+        860,
+        480
       ],
       "size": [
-        170,
+        220,
         64
       ]
     },
     {
-      "id": "target-b",
-      "type": "database",
-      "label": "develop",
-      "sublabel": "PR target of B",
+      "id": "pr-b",
+      "type": "messagebus",
+      "label": "PR → develop",
+      "sublabel": "a human merges",
       "pos": [
-        950,
-        500
+        600,
+        480
       ],
       "size": [
         170,
@@ -278,8 +278,8 @@
       "fromSide": "bottom",
       "toSide": "top",
       "labelAt": [
-        205,
-        310
+        190,
+        318
       ]
     },
     {
@@ -290,8 +290,8 @@
       "fromSide": "bottom",
       "toSide": "top",
       "labelAt": [
-        765,
-        310
+        970,
+        318
       ]
     },
     {
@@ -299,40 +299,56 @@
       "from": "tickets-a",
       "to": "branch-a",
       "label": "merge",
-      "fromSide": "right",
-      "toSide": "left"
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        190,
+        443
+      ]
     },
     {
       "id": "b-merge",
       "from": "tickets-b",
       "to": "branch-b",
       "label": "merge",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        970,
+        443
+      ]
+    },
+    {
+      "id": "a-head",
+      "from": "branch-a",
+      "to": "pr-a",
+      "label": "head",
       "fromSide": "right",
       "toSide": "left"
     },
     {
-      "id": "a-pr",
-      "from": "branch-a",
-      "to": "target-a",
-      "label": "PR, human merges",
-      "fromSide": "bottom",
-      "toSide": "top",
-      "labelAt": [
-        475,
-        462
-      ]
+      "id": "b-head",
+      "from": "branch-b",
+      "to": "pr-b",
+      "label": "head",
+      "fromSide": "left",
+      "toSide": "right"
     },
     {
-      "id": "b-pr",
-      "from": "branch-b",
-      "to": "target-b",
-      "label": "PR, human merges",
+      "id": "streams-pr-a",
+      "from": "streams",
+      "to": "pr-a",
+      "label": "opens",
       "fromSide": "bottom",
-      "toSide": "top",
-      "labelAt": [
-        1035,
-        462
-      ]
+      "toSide": "top"
+    },
+    {
+      "id": "streams-pr-b",
+      "from": "streams",
+      "to": "pr-b",
+      "label": "opens",
+      "fromSide": "bottom",
+      "toSide": "top"
     }
   ],
   "cards": [
