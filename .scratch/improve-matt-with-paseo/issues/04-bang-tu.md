@@ -31,3 +31,49 @@ Theo `domain-modeling`: `GLOSSARY.md` **chỉ là bảng từ**, không được
 Nếu lộ ra một quyết định khó đảo và cần giải thích thì mới đẻ ADR — không mặc định đẻ.
 
 Ghi thẳng `GLOSSARY.md` ở gốc repo khi từng từ được chốt, không gom lại cuối phiên.
+
+## Answer
+
+*(Đang dở: vòng 1 đã chốt, vòng 2 đang hỏi. Ghi ngay theo luật đứng, không đợi hết ticket.)*
+
+### Phát hiện khi đối chiếu với mã
+
+- `SKILL.md` **đã có bảng từ** ngay trong file, dòng 13–17: *"Three words used throughout"* — **Wave**, **Integration branch**, **Done**.
+- Ba từ mà câu hỏi của ticket này đòi chốt **không phải từ của skill**: *gate* (skill gọi là **verification**), *frontier* (từ của wayfinder), *handover* (skill không có khái niệm này; mục bàn giao ở wave 7 là thói quen tự phát của agent).
+- **"Done" mang hai nghĩa**: dòng 17 định nghĩa nó là trạng thái agent phải đạt trước khi dừng; 11 bước lại có dòng **"Done when:"** là điều kiện thoát của bước.
+
+### Q1 — Từ ngữ sống ở đâu
+
+**Một nguồn duy nhất: khối từ trong `SKILL.md`. Không tạo `GLOSSARY.md` cho repo này.**
+
+Lý do: agent chạy wave chỉ đọc `SKILL.md`; một `GLOSSARY.md` riêng chỉ phục vụ người phát triển skill và tạo ra chỗ thứ hai định nghĩa cùng một từ. Hệ quả: deliverable số 1 trong Ngoại lệ thi hành của bản đồ **bị bỏ**.
+
+Ràng buộc kèm theo cho các từ còn lại: **chỗ nào Matt đã có từ thì dùng lại, không đặt từ mới.**
+
+### Q2 — `/to-spec` đọc quyết định ở đâu
+
+Mỗi quyết định sống ở `## Answer` của ticket nó; `map.md` là chỉ mục.
+
+**Đã đối chiếu upstream, và nó sửa đề xuất ban đầu.** `to-spec` **không nhận đường dẫn**: *"takes the current conversation context and codebase understanding and produces a spec. Do NOT interview the user"* (`engineering/to-spec/SKILL.md`, đoạn mở đầu). `wayfinder` cũng không định nghĩa cầu nối, chỉ nói đích đến *"might be a spec to hand off"* (`engineering/wayfinder/SKILL.md:9`).
+
+Nên cầu nối đúng là: **phiên chạy `/to-spec` phải đọc `map.md` và mọi `## Answer` vào hội thoại trước, rồi mới gọi `/to-spec`.** Không phải "gọi `/to-spec` với đầu vào là `map.md`".
+
+### Q3 — Tín hiệu stage B/C
+
+**Đang sai, không phải rủi ro tương lai.** Upstream đã đổi: *"the skills only look for `GLOSSARY.md`/`GLOSSARY-MAP.md` going forward"* (`.changeset/rename-context-to-glossary.md`). `SKILL.md` dòng **26, 27, 51** đang trỏ vào `CONTEXT.md`.
+
+Quyết định: **đọc tên file tài liệu miền từ `docs/agents/domain.md`**, rồi fallback khi repo không có file đó (chưa chạy `/setup-matt-pocock-skills`):
+
+1. `GLOSSARY-MAP.md`, nếu không có thì `GLOSSARY.md`
+2. `CONTEXT-MAP.md`, nếu không có thì `CONTEXT.md`
+
+Hai lưu ý khi viết vào skill:
+
+- `domain.md` là **văn xuôi hướng dẫn**, không phải khoá cấu hình. Agent đọc rồi làm theo, không parse.
+- Cách này đúng với OPMS ngay bây giờ: `docs/agents/domain.md` của OPMS **vẫn ghi `CONTEXT.md`** vì được sinh bởi bản setup cũ. Viết cứng `GLOSSARY.md` thì skill sai với OPMS; đọc theo `domain.md` thì đúng cả trước và sau khi OPMS đổi tên.
+
+**Hệ quả cho ticket 11:** phần "đi trước hay đợi upstream" **cho riêng việc đổi tên tài liệu miền** không còn phải quyết.
+
+### Q4 — Ghi chú một ticket để lại cho ticket sau
+
+**Đặt tên cho khái niệm, nhưng không gọi là *handoff*/bàn giao.** `ask-matt/SKILL.md:73` đã dùng `/handoff` với nghĩa hẹp: *"a portable markdown file… only for a new harness, a new directory, a colleague, or forking a side task mid-phase"*. Tên cụ thể: đang hỏi ở vòng 2.

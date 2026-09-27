@@ -53,7 +53,7 @@ Bẫy máy móc → gợi ý thành phép kiểm trong repo đích. Bẫy phán 
 
 Wayfinder mặc định chỉ đẻ ra quyết định. Bản đồ này cho phép **hai** thứ được ghi ra đĩa trong lúc lập kế hoạch:
 
-1. **`GLOSSARY.md`** ở gốc repo — ticket 04 ghi thẳng khi từng từ được chốt. Đây là sản phẩm phụ tự nhiên của việc chốt bảng từ.
+1. ~~`GLOSSARY.md` ở gốc repo~~ — **đã bỏ** (ticket 04, Q1: từ ngữ sống trong khối từ của `SKILL.md`).
 2. **Bộ báo lỗi gửi Paseo** — ticket 10. Cái này **không phục vụ đích đến**: nó vẫn đáng làm kể cả khi 0.3.0 bị huỷ. Nó ở đây vì tiện, không vì thuộc cây quyết định. Đừng tính tiến độ của nó vào tiêu chí sẵn sàng `/to-spec`.
 
 ### Giả định vận hành — khai rõ để khỏi xây thừa
@@ -65,6 +65,10 @@ Nếu về sau có nhiều người cùng chạy một bản đồ thì giả đ
 ### Luật đứng: ghi vấp ra đĩa ngay lúc phát hiện
 
 Vấp phải vào `pitfalls.md` **khi vừa thấy**, không giữ trong hội thoại. Viết **triệu chứng** trước, đừng viết nguyên nhân — nguyên nhân có thể sai, triệu chứng thì không. Đây là hệ quả trực tiếp của việc mất 5/12 vấp.
+
+### Cầu nối sang `/to-spec`
+
+`/to-spec` **không nhận đường dẫn**; nó tổng hợp từ hội thoại hiện tại và mã. Phiên chạy nó phải **đọc `map.md` và mọi `## Answer` vào hội thoại trước**, rồi mới gọi. Mỗi quyết định sống ở `## Answer` của ticket nó; bản đồ chỉ là chỉ mục. *(ticket 04, Q2)*
 
 ### Skill mọi phiên phải gọi
 
