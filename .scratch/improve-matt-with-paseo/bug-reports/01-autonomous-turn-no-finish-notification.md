@@ -35,6 +35,7 @@ It also happens without being asked: Claude Code blocks a foreground `sleep`, so
 - Caller agent `47538630-e6a2-47ac-b9a4-a7a0ac1ef9d6`; probe agents `[probe A2] 11`–`20`, created 2026-09-27 07:32 UTC, e.g. `e4b98cc2-3124-48b0-8485-cb7e385bed01`, `c8e3ccf9-7416-4336-b896-1e8fdd5ee54c`, `dc1df1c9-3a47-43f2-87ab-cc0411317da9` (archived after the test).
 - A server plugin on `agent.turn_ended` **does** see turn 2: its `turnId` is `autonomous-turn-2` (turn 1 is `foreground-turn-1`), `outcome.kind` is `completed`, and `agent.parentAgentId` is set. So the daemon knows the turn ended; only the notification is missing.
 - Related, observed in the same test: the notification goes to whoever sent the prompt for that turn with `notifyOnFinish`, not to the parent agent. A self-started turn has no such sender, which is probably why nobody is notified.
+- Docs: `docs/orchestration.md` says "Your main agent receives a notification when the worker finishes"; nothing says a self-started turn is excluded.
 
 ## Current workaround and its cost
 
