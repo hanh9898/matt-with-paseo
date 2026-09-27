@@ -64,7 +64,9 @@ Identify the tracker from `docs/agents/issue-tracker.md`. Identify the integrati
 
 Read the triage label file the `## Agent skills` section points to (its triage labels entry): it maps each triage role to the label string this repo writes. This skill names triage states only by role (needs triage, ready for agent, ready for human); wherever it names one, use the label string the file maps it to, and fill the template's `<ready for human label from the triage label file>` placeholder with it in step 3. When the repo has no triage label file, use the default label strings `mattpocock-skills:setup-matt-pocock-skills` defines.
 
-**Done when**: you have stated five things: the ticket folder, how status and dependencies are recorded, the label string of each triage role above, the integration branch, and the profile the agents will use.
+Read the repo's **evidence standards file** when it declares one: an `## Evidence standards` section of `CLAUDE.md`/`AGENTS.md`, outside the `## Agent skills` block, pointing to a file of free prose on how this repo proves a change works. When the section or its file is absent, continue without it; nothing else in the wave changes.
+
+**Done when**: you have stated six things: the ticket folder, how status and dependencies are recorded, the label string of each triage role above, the integration branch, the profile the agents will use, and the evidence standards file's path or that the repo declares none.
 
 ## 2. Build the graph and split into waves
 
@@ -120,7 +122,7 @@ The **flow** is the chain of skills the agent runs for that ticket. Read the tic
 | Behaviour that should exist | `/mattpocock-skills:tdd` |
 | Work for a human: the ticket is in the ready for human role | spawn no agent |
 
-Every flow ends with `/mattpocock-skills:code-review` with the ticket's base commit (its row's) as the fixed point, then fixing the findings, the last commit, and the report.
+Every flow ends with `/mattpocock-skills:code-review` with the ticket's base commit (its row's) as the fixed point, naming the evidence standards file in the call when the repo declares one (the Standards axis reads only documents on how code is written by itself), then fixing the findings, the last commit, and the report.
 
 For a symptom ticket, `/mattpocock-skills:diagnosing-bugs` must leave a loop in the report that goes **red** on exactly that symptom before the fix; step 5 checks it.
 
@@ -168,7 +170,8 @@ Conflict, failure after a merge, or a test count after the merge that does not m
 Each ticket was already reviewed by its agent in step 4. This pass targets only what a per-ticket review cannot see: the **seams** between tickets once merged (registration files, shared interfaces, two tickets solving the same thing two ways).
 
 - A one-ticket wave has no seam: write `## Review` as "not applicable: one-ticket wave, reviewed by its agent", then go to step 8.
-- A wave of two or more tickets: run `mattpocock-skills:code-review` with the wave's first base commit (step 3) as the fixed point, so tickets started by rolling start are covered too, stating in the call that each ticket was already reviewed on its own and only seam findings should be reported. Present the Standards and Spec axes separately.
+- A wave of two or more tickets: run `mattpocock-skills:code-review` with the wave's first base commit (step 3) as the fixed point, so tickets started by rolling start are covered too, stating in the call that each ticket was already reviewed on its own and only seam findings should be reported, and naming the evidence standards file when the repo declares one. Present the Standards and Spec axes separately.
+- When a profile read in step 1 has `notes` saying it is for review, run that `code-review` in an agent launched with that profile, on a fresh workspace from the integration branch, taking the `create_agent` shape from the `paseo` skill as in step 4; otherwise run it in this session.
 
 Fix each finding. Before sending new work into an existing worktree, fast-forward its branch to the integration branch (`git -C <worktree> merge --ff-only <integration branch>`), so the agent reads the latest ticket comments and its merge comes back without conflicts. The coordinator writes into a ticket file only while no agent holds that ticket; decisions for a held ticket go to its agent with `send_agent_prompt`. A finding contained in one ticket's zone goes back to that same agent via `send_agent_prompt`. A finding cutting across several tickets goes to one agent on a fresh workspace from the integration branch; the coordinator edits files itself only when the user assigns that fix to it in the decision round, and says so in `## Review`. Gather every question that needs a human decision into one round, present it, then record the decisions in the comments of the tickets involved, so the next wave can read them.
 

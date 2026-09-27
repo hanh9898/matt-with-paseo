@@ -70,6 +70,12 @@ If the target repo commits a `paseo.json`, the skill uses it when spawning: with
 - Do not declare a fixed `port` on a service. Every worktree then gets the same port; on Windows the processes all bind it without error, a worktree's proxy URL serves another worktree's files, and `health` still reports healthy. Leave `port` out and read the assigned one from `PASEO_PORT`.
 - On Windows, `worktree.setup` runs in Windows PowerShell, while `scripts` and terminals run in cmd. The sh form `$VAR` used in the Paseo docs fails silently in both: it expands to nothing in PowerShell and stays literal in cmd. Use PowerShell syntax in setup (`$env:PASEO_WORKTREE_PORT`) and cmd syntax in scripts (`%PASEO_PORT%`).
 
+### Target repo evidence standards file (optional)
+
+If the target repo has its own standard for proving a change works (measure on real data, attach a recording of the screen, run a command twice and compare the counts), write it as free prose in a file, for example `docs/agents/evidence-standards.md`, and declare it in an `## Evidence standards` section of `CLAUDE.md` or `AGENTS.md` that points to that file. Put the section **outside** the `## Agent skills` block: `/mattpocock-skills:setup-matt-pocock-skills` rewrites that block in place and would drop anything added inside it.
+
+The skill reads the file while preparing a wave, points every agent to it from the common rules instead of copying it, and names it in every `mattpocock-skills:code-review` call, because the review's Standards axis reads only documents on how code is written (such as `CODING_STANDARDS.md`) on its own. The file is about how to prove a change works, so keep it separate from those. A repo without the section runs exactly as before.
+
 ## Installation
 
 The repo follows the [Agent Skills](https://agentskills.io/specification) layout (`skills/matt-with-paseo/SKILL.md`) and is also a Claude Code plugin marketplace, so any of these works. Pick one; installing twice gives you two copies of the command.
