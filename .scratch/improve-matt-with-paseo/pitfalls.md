@@ -28,7 +28,9 @@ Mỗi dòng: số hiệu, ngày, đợt phát hiện, triệu chứng, và loạ
 2. Paseo hoặc máy khởi động lại giữa lượt. *(hợp dấu vết hơn: lúc idle `requiresAttention: false`)*
 3. Lượt kết thúc ở `failed` hoặc chờ permission, không phải `completed` sạch.
 
-Ticket 07 phân định. **Không viết nguyên nhân vào skill trước khi phân định xong.**
+4. **(27/09, có vòng lặp đỏ 10/10)** Agent chạy việc qua lệnh nền rồi kết thúc lượt ("đang đợi…"); điều phối nhận "finished" cho lượt đó. Khi lệnh nền xong, agent **tự mở lượt mới** và làm xong việc thật, nhưng lượt tự mở **không sinh thông báo** và không cập nhật `attentionTimestamp`. Xem `probes-07.md`.
+
+Giả thuyết 4 tái hiện được một cách tất định, không cần giả thuyết 2 hay 3. Giả thuyết 1 là cùng quy luật (người nhận thông báo là người gửi prompt cho lượt đó; A1). Chưa chứng minh được hai lần vấp #8 thật rơi vào giả thuyết 4, nhưng đây là giải thích duy nhất đã tái hiện. Chọn cơ chế: ticket 07.
 
 ## Vấp phát hiện sau khi lập file này
 

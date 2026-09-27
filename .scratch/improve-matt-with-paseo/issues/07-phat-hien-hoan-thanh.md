@@ -25,3 +25,11 @@ Ticket 01 sẽ cho biết Paseo có hook vòng đời hay không. Ticket này qu
 8. Heartbeat kiểm gì mới đủ? Lần hai dùng: `status`, số commit, số file chưa commit, mục `## Comments`. Có thừa hay thiếu cái nào?
 
 Lưu ý một cái bẫy: heartbeat **cũng là** một agent tiêu token. Chạy nhịp 20 phút suốt một wave dài không miễn phí.
+
+## Kết quả đo (27/09)
+
+Tiền đề đã đủ. Chi tiết và bằng chứng: [`probes-07.md`](../probes-07.md).
+
+- **A1:** thông báo hoàn thành tới **agent đã gửi prompt kèm `notifyOnFinish`** cho lượt đó, không tới agent cha. Mỗi lượt có người nhận riêng.
+- **A2:** vòng lặp đỏ **có, tất định, 10/10**. Agent đẩy việc xuống lệnh nền rồi kết thúc lượt; lượt tự mở sau đó làm xong việc thật nhưng **không có thông báo nào** (0/10), `attentionTimestamp` cũng không đổi. Đây là giả thuyết 4, mới; không cần Paseo khởi động lại.
+- **E4:** `agents.ref(id).send()` **chạy xuyên agent**; `agent.turn_ended` **bắn cả cho lượt tự mở** (`turnId` = `autonomous-turn-N`) và mang `parentAgentId`. Nhánh plugin mở được. Giới hạn daemon khởi động lại (mục 2) vẫn còn, nhưng không liên quan tới giả thuyết 4.
