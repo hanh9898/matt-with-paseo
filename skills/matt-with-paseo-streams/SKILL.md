@@ -131,7 +131,43 @@ A message that asks nothing (a progress report) only updates the status line.
 
 ## 5. Reconcile and supervise
 
-Placeholder for ticket #19; replace this line.
+Every running stream stays under one reconcile loop (ADR 0004). A **tick** compares, stream by stream, the desired state with the observed state, and closes each gap it finds with the one action the table gives. Run a tick on every heartbeat prompt, after every finish notification from a stream agent (step 4 is then the action of its gap), and first thing in any session opened in the control folder.
+
+- **Desired state** is the index. A stream should run when its status line holds a stream agent id (step 3 wrote it) and says neither shipped nor stopped; any other row should not run.
+- **Observed state** is the public signals of the Inputs section and nothing else: the stream's agents (`paseo ls -g --label stream=<slug> --json`, the stream agent being the one without a `wave` label), `get_agent_status` and `get_agent_activity` on the stream agent, ticket status on the stream's tracker, the stream's worktree on `stream/<slug>` (`git -C <repository> worktree list`), and the stream's open pull request (`gh pr list --head stream/<slug> --state open` for GitHub, or the host's equivalent).
+
+The stream's status line is the loop's only memory. Every action writes its outcome into the status line before the tick goes on (the agent it spawned, the end-of-turn message it handled with that message's time, the question it showed, the restart it counted), so each action is idempotent: a second tick right after the first finds nothing left to close and changes nothing.
+
+| Observed, for one stream | Action |
+|---|---|
+| Should run, and no worktree on `stream/<slug>` | Step 2, which opens the existing branch instead of cutting a new one |
+| Should run, and no stream agent | A restart, per "Supervise one-for-one" below |
+| Stream agent running | None; its finish notification, or a later tick, brings its message |
+| Stream agent idle, and its last end-of-turn message is newer than the one the status line records | Step 4 on that message. This is how a turn that ended without a finish notification (probe A2) is caught: the next tick finds it |
+| Stream agent waits on a question-type permission not yet shown to the user | Step 4 |
+| Stream agent idle on the message the status line records, the status line waiting on the user | None; the question is already shown, and a tick never shows it twice |
+| Stream agent failed | A restart, per "Supervise one-for-one" below |
+| Stream agent idle and its context past the respawn threshold | A respawn, per "Supervise one-for-one" below |
+| Every ticket of the stream resolved or in the ready for human role, and the stream agent idle | Step 6 |
+| A `stream=<slug>` agent without a `wave` label for a row that should not run or a slug not in the index, two such agents for one slug, or an open pull request the status line does not record | Report it to the user and take no other action; the status line records that it was reported |
+
+The loop's own heartbeat is reconciled in the same tick:
+
+| Observed, for this session | Action |
+|---|---|
+| A stream should run and this session holds no reconcile heartbeat | `create_heartbeat` with `expiresIn` always set (for example a `*/15 * * * *` cron that expires in `8h`), named `streams-reconcile`, prompting "Reconcile tick: run step 5 of the matt-with-paseo-streams skill on streams.md". Keep its id and expiry in this session |
+| A stream should run and this session's heartbeat expires before its next firing | `delete_heartbeat`, then create it again as above; heartbeats have no update tool |
+| No stream runs and this session holds a heartbeat | `delete_heartbeat` |
+
+**Recovery after the top session dies is: run one tick**, in a new session in the control folder; there is no separate recovery procedure. The tick finds each stream agent by its label, handles the end-of-turn message the dead session may never have read, restarts only what has failed, and creates this session's heartbeat. The dead session's heartbeat belongs to that session and cannot be deleted from another one; its expiry is what ends it. Ask the user to close the old session if it still lives, since two sessions ticking at once could both spawn for the same gap. Stream agents the dead session spawned send it their finish notifications, not this one, until this session prompts them with `notifyOnFinish: true`; the heartbeat covers them meanwhile.
+
+Everything a tick does stays at the stream agent's level: a tick never prompts, cancels, kills or archives a ticket agent, which the stream agent's wave skill supervises.
+
+**Supervise one-for-one.**
+
+Placeholder: supervision (next slice).
+
+**Done when**: a tick has closed or reported every gap it found and a second tick right after it finds none, every stopped stream has been reported to the user, and this session holds a reconcile heartbeat with an expiry exactly while a stream runs.
 
 ## 6. Ship the stream
 
