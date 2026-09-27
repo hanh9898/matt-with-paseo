@@ -168,15 +168,14 @@ git -C <worktree> diff --name-only --no-renames <base ref>...stream/<slug>
 Continue both, or pause one? If pausing, which one?
 ```
 
-This item is your own, not a stream agent's question: relaying the other questions of the round and sending their answers back never waits for it. When both streams merged a wave in the same round, the pair gets one item. Until the user answers, both streams keep running.
+The next question round is the next time you present questions to the user (step 4). The message that reported the merge usually asks the user to approve the stream's next wave, so the warning joins that round; when no question is pending at all, the warning makes a round of its own, shown right away. This item is your own, not a stream agent's question: relaying the other questions of the round and sending their answers back never waits for it. When both streams merged a wave in the same round, the pair gets one item. Until the user answers, both streams keep running.
 
-**The user's answer.**
+**The user's answer.** A pause uses the gate the wave skill already has: it starts no wave before the user approves it (its step 2), and a running wave is never cut.
 
 | Answer | Action |
 |---|---|
-| Continue both | nothing; the next wave of either stream warns again with the list as it then stands |
-| Pause one | `send_agent_prompt` to that stream's agent (never a ticket agent), `background: true`, `notifyOnFinish: true`: finish the running wave, then start no next wave until the user resumes the stream; write "paused by the user, overlaps `<other>`" into its status line |
-| Resume a paused stream | `send_agent_prompt` to its agent, same options: the user resumes the stream; update its status line |
+| Continue both | nothing; the next merged wave of either stream warns again with the list as it then stands |
+| Pause one | no prompt to any agent; the stream's running wave finishes. When its agent next asks to approve a wave, relay that question verbatim as step 4 says, noting under it that the user paused the stream over the overlap with `<other>`; the stream waits there until the user approves. Its status line reads: date, stage, waits on the user (paused, overlaps `<other>`) |
 
 You never pause, block or delay a stream without the user's answer, and never pick an answer for them.
 
