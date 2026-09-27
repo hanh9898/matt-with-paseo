@@ -18,6 +18,10 @@ Each entry: the observable symptom, then how to handle it. When an incident expo
 | `kill_agent` | Ends the agent's session for good; its workspace and worktree stay | The session itself is broken (errors on every turn, context unusable): handle the remainder as in "Agent stops midway", sent to a new agent spawned in the same workspace per step 4 instead of the same one |
 | `archive_agent` | Interrupts the agent if running and removes it from the active list; the worktree stays | Only in step 8 cleanup, after its three checks. Archiving the workspace (`archive_workspace`) is what deletes the worktree |
 
+**`paseo ls` lists an agent carrying a `stream` label this run does not have.** Another run in the same repository uses the same wave number under its own `stream` slug; a run without `stream` does not filter it out. It has no row in this run's `## Wave agents` table and its branch lacks this run's ticket branch shape ("Names this run writes" in the skill): it is not an unlogged agent of this wave. Never add its row, prompt it or archive it.
+
+**`create_workspace` fails because git cannot create the ticket branch under the `stream` prefix.** Git refuses a branch whose prefix is itself a branch name, so a branch named exactly the slug blocks every ticket branch of the run. Stop spawning and tell the user: the way out is another slug, or renaming that branch; the naming rule stays as it is.
+
 **Agent waits on a question-type permission** (it asked the user a question, and `list_pending_permissions` shows the request). Answer with `respond_to_permission`, `behavior: "allow"`, and an `updatedInput` holding the request's `questions` plus an `answers` map from each question's text to the chosen option's label, for example `answers: { "Which database?": "Postgres" }`. Without `answers` (only `selectedActionId`, or only `questions`), the agent receives an ambiguous answer and guesses.
 
 ## Merging
