@@ -37,6 +37,14 @@ Copy in only what an agent cannot look up: an unwritten convention, the reason b
 ## Traps already hit
 - <trap>: <symptom>, <how to avoid it>, <how to check you avoided it>.
 
+## Acceptance criteria are the contract
+- A trap above, or an instruction an earlier ticket left in its comments, is guidance; your ticket's
+  acceptance criteria are the contract.
+- On conflict, follow the criteria and write the discrepancy and its reason in your ticket's comments;
+  do not stop to ask.
+- If the criteria themselves look wrong, stop that part, write the evidence in your ticket's comments,
+  and move the ticket to `ready-for-human`. Never rewrite the criteria.
+
 ## Resources
 - Your private resources are listed in your prompt (database, port, volume, temp directory). Use exactly that set.
 - Shared resources, read-only: <main container, source database, another session's browser profile>.
