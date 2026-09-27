@@ -44,7 +44,7 @@ Copy in only what an agent cannot look up: an unwritten convention, the reason b
 ## Repo and user rules
 - <commit and comment language>, <accepted way to verify>, <lint command>, <test accounts>.
 
-## Done means
+## Done when:
 - Commit to your branch. The orchestrator pushes and merges.
 - Before the last commit: run `/mattpocock-skills:code-review` with your base commit as the fixed point, fix the
   findings, and write the number of findings per axis and the outcome of each into the ticket's comments.

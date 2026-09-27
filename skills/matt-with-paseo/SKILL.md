@@ -14,7 +14,7 @@ Three words used throughout:
 
 - **Wave**: a set of tickets run in parallel. A ticket joins a wave once every ticket it depends on is `resolved` and merged.
 - **Integration branch**: the branch collecting the results of every wave. Each wave branches its worktrees off a **base commit** pinned on this branch.
-- **Done**: the state an agent must reach before it stops, defined in the common rules (step 3).
+- **Common rules**: what every agent of the wave needs to know that its own prompt does not carry. Written once per wave (step 3).
 
 ## 0. Locate the state and suggest the next step
 
