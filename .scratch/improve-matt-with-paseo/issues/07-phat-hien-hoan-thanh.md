@@ -20,8 +20,8 @@ Ticket 01 sẽ cho biết Paseo có hook vòng đời hay không. Ticket này qu
 4. **Người điều phối sống sót qua ranh giới phiên thế nào?** Đây là gốc chung của vấp #8 (giả thuyết 1: phiên điều phối đổi, thông báo tới phiên cũ) và của việc mất 5/12 vấp (sổ điều phối sống trong hội thoại). Spec 0.3.0 cần một yêu cầu cụ thể ở đây — nhưng yêu cầu gì thì chưa ai quyết.
 
 5. `agent.turn_ended` bắn cả khi lượt **`failed`** hoặc **bị huỷ**, không chỉ `completed`. Hook có cần lọc trạng thái trước khi báo xong không?
-3. Nhịp bao lâu? 20 phút bắt được lần hai, nhưng con số đó chọn theo cảm tính.
-4. Điều kiện dừng heartbeat là gì, và ai xoá nó? Wave 7 phải xoá tay.
-5. Heartbeat kiểm gì mới đủ? Lần hai dùng: `status`, số commit, số file chưa commit, mục `## Comments`. Có thừa hay thiếu cái nào?
+6. Nhịp bao lâu? 20 phút bắt được lần hai, nhưng con số đó chọn theo cảm tính.
+7. Điều kiện dừng heartbeat là gì, và ai xoá nó? Wave 7 phải xoá tay.
+8. Heartbeat kiểm gì mới đủ? Lần hai dùng: `status`, số commit, số file chưa commit, mục `## Comments`. Có thừa hay thiếu cái nào?
 
 Lưu ý một cái bẫy: heartbeat **cũng là** một agent tiêu token. Chạy nhịp 20 phút suốt một wave dài không miễn phí.
