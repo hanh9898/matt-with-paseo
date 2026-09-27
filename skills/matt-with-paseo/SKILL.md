@@ -124,13 +124,13 @@ Chaining another Matt Pocock skill means adding a row to this table, not a prose
 
 If the wave's first agent reports it cannot find a skill, the plugin has not reached the worktree: paste the method straight into the prompts of the remaining agents, and record it in the traps section of the common rules.
 
-Leave `notifyOnFinish` at its default. Each agent reports when it finishes; between reports, spend the time on other work of the wave.
+Leave `notifyOnFinish` at its default. Each agent reports when it finishes; between reports, spend the time on other work of the wave. A finish the notification misses is caught in step 5.
 
 **Done when**: every ticket in the wave has exactly one running agent and one row in the table.
 
 ## 5. Check each report
 
-If this session spawned the agents, notifications arrive on their own. A session reopened mid-wave does not receive notifications from agents an earlier session spawned: create a `create_heartbeat` (for example every 15 minutes) with the prompt "check `get_agent_status` for the still-running agents of wave N", and `delete_heartbeat` once no agent is running. Reports from agents an earlier session spawned are no longer in the conversation: read them in the ticket's comments.
+Read each agent's progress and report with `get_agent_activity`, not by reconstructing them from commits and ticket comments; this also covers reports from agents an earlier session spawned, which are no longer in the conversation. If this session spawned the agents, finish notifications arrive on their own. A session reopened mid-wave does not receive notifications from agents an earlier session spawned: create a heartbeat for them under the heartbeat contract below.
 
 Each time an agent reports done, check the real artifacts, not the report's words:
 
@@ -140,6 +140,10 @@ Each time an agent reports done, check the real artifacts, not the report's word
 - the ticket's comments carry the `code-review` result: the number of findings per axis and the outcome of each. Missing means the agent did not finish its flow;
 - symptom tickets: the report shows the loop **red before** the fix and green after. Green alone does not tell you whether the fix hit the right place or only masked the symptom;
 - private resources are cleaned up, or kept for a stated reason.
+
+A finished report whose artifacts are not there yet (no commits on the ticket's branch, no status change on the ticket) means the agent is still working: Paseo sends no notification for a turn an agent starts on its own after a background command, so its real finish would pass silently. Do not record the ticket as failed; create a heartbeat for its agent under the heartbeat contract, and check the report again once the agent has really stopped.
+
+**Heartbeat contract**, for both cases above: `create_heartbeat` always with `expiresIn` set; the cadence is yours (for example every 15 minutes), always capped by an expiry, so no heartbeat outlives its wave. Each tick checks, for every agent it watches, `get_agent_status`, the commits on the ticket's branch (`git log <branch>`), uncommitted files in its worktree (`git -C <worktree> status --porcelain`), and the ticket's comments. `delete_heartbeat` once the agent has really stopped and its artifacts pass the checks above, and at the latest in step 8.
 
 Agent stopped midway or report incomplete: see [`TROUBLESHOOTING.md`](TROUBLESHOOTING.md).
 

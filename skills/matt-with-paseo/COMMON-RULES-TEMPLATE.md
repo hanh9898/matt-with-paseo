@@ -24,6 +24,9 @@ Copy in only what an agent cannot look up: an unwritten convention, the reason b
   of tickets <...> for decisions already made.
 - <k> other agents are working the remaining tickets of this wave in parallel, on other branches.
   Work only on your own ticket.
+- Do not end your turn while work you started is still running in the background (a build, a test run,
+  a long command): wait for it inside the same turn. Paseo sends no finish notification for a turn you
+  start on your own afterwards, so your "finished" report must mean the work is done.
 
 ## Existing interfaces to reuse
 - `<function / hook / module>`: <signature>, <what it returns>, <what it already handles, e.g. sending mail, logging>.
