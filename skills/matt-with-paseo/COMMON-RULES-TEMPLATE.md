@@ -55,7 +55,7 @@ Copy in only what an agent cannot look up: an unwritten convention, the reason b
 ## Repo and user rules
 - <commit and comment language>, <accepted way to verify>, <lint command>, <test accounts>.
 - Evidence standards: read `<path to the evidence standards file, or "none declared">`; it is not copied here.
-  Name it in your `mattpocock-skills:code-review` call: the Standards axis reads only documents on how code is written by itself.
+  Name it in your `mattpocock-skills:code-review` call.
 
 ## Done when:
 - Commit to your branch. The orchestrator pushes and merges.
