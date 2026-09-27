@@ -105,6 +105,8 @@ For each ticket in the wave:
 1. `create_workspace` with `isolation: "worktree"`, `mode: "branch-off"`, `baseBranch` set to the integration branch, and `branchName` shaped `wave<N>/<NN>-<slug>`. Check that `git -C <worktree> rev-parse HEAD` equals the base commit; if the integration branch stays still while you spawn, every worktree in the wave shares one base.
 2. `create_agent` in that workspace, titled `[Wave N] <NN> <ticket name>`. The prompt holds exactly four things: the **absolute** path to the common rules in the integration branch's checkout (the file is the wave's live log and is not in the worktree), the path to the ticket, the private resources (database name, port, volume, temp directory; a distinct set per agent), and the **flow**.
 
+Take the shape of each `create_agent` call (required fields, optional fields, how the chosen profile maps onto it) from the `paseo` skill's reference loaded in step 1; do not guess parameters.
+
 The **flow** is the chain of skills the agent runs for that ticket. Read the ticket, then pick one row:
 
 | The ticket describes | Flow |
@@ -113,11 +115,11 @@ The **flow** is the chain of skills the agent runs for that ticket. Read the tic
 | Behaviour that should exist | `/mattpocock-skills:tdd` |
 | `Status: ready-for-human` | spawn no agent |
 
-Every flow ends the way Matt's `/implement` does: `/mattpocock-skills:code-review` with the ticket's base commit (its row's) as the fixed point, fix the findings (the refactor phase `tdd` hands to review lives here), then make the last commit and report. `code-review` opens fresh-context sub-agents for its two axes, so the reviewer stays independent of the agent.
+Every flow ends with `/mattpocock-skills:code-review` with the ticket's base commit (its row's) as the fixed point, then fixing the findings, the last commit, and the report.
 
-Symptom tickets go through `diagnosing-bugs` because that skill forces the agent to build a **tight** pass/fail loop that goes **red** on exactly that symptom, so the fix is proven to hit the right place instead of merely making the symptom disappear.
+For a symptom ticket, `/mattpocock-skills:diagnosing-bugs` must leave a loop in the report that goes **red** on exactly that symptom before the fix; step 5 checks it.
 
-Chaining another Matt Pocock skill means adding a row to this table, not a prose branch. Point only at **model-invocable** skills: `tdd`, `code-review`, `diagnosing-bugs`, `prototype`, `research`, `domain-modeling`, `codebase-design`, `resolving-merge-conflicts`, `wizard`. The rest (`implement`, `to-spec`, `to-tickets`, `grill-with-docs`, `triage`, `wayfinder`) carry the `disable-model-invocation` flag; only a human can type them, so an agent cannot run them.
+Chaining another Matt Pocock skill means adding a row to this table, not a prose branch. Before adding it, read that skill's `disable-model-invocation` frontmatter flag in the installed plugin: set to `true`, only a human can type the skill, so it cannot go in an agent's flow; absent or `false`, it can. Name every Matt skill as `mattpocock-skills:<name>`.
 
 If the wave's first agent reports it cannot find a skill, the plugin has not reached the worktree: paste the method straight into the prompts of the remaining agents, and record it in the traps section of the common rules.
 
