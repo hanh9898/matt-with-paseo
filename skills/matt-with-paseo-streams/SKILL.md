@@ -139,4 +139,44 @@ Placeholder for ticket #20; replace this line.
 
 ## 7. Warn when streams change the same file
 
-Placeholder for ticket #21; replace this line.
+Two streams in one repository may edit the same file on their integration branches; each pull request then merges cleanly alone and conflicts with the other. You look for that after each wave and tell the user, who decides. The warning never blocks.
+
+**When.** On a step 4 notification whose end-of-turn message reports a wave merged into the stream's integration branch; `git -C <worktree> log stream/<slug>` shows the merge. A message that reports no merged wave triggers no check.
+
+**Which streams.** The stream whose wave merged is compared with every other open stream in the same repository:
+
+| Test | Check |
+|---|---|
+| Open | the other stream has a row in the index and a worktree on `stream/<other>` (step 2) |
+| Same repository | `git -C <repository> remote get-url origin` prints the same URL for both rows; this also matches two checkouts of one remote |
+
+**The files.** In each of the two worktrees, list what its integration branch changed relative to its base:
+
+```
+git -C <worktree> fetch origin
+git -C <worktree> diff --name-only --no-renames <base ref>...stream/<slug>
+```
+
+`<base ref>` is the row's base branch as step 2 used it: `origin/<base>` when it exists on the remote, else `<base>`. The three dots diff from the merge base, so work that reached the base branch after the cut does not count; `--no-renames` lists both paths of a renamed file. The shared files are the lines both lists hold. None shared: no warning for that pair.
+
+**The warning.** Put one item per pair in the next question round, beside the stream agents' questions, headed with both stream slugs:
+
+```
+[<slug-a> × <slug-b>] Both integration branches change these shared files:
+- <path>
+- <path>
+Continue both, or pause one? If pausing, which one?
+```
+
+The next question round is the next time you present questions to the user (step 4). The message that reported the merge usually asks the user to approve the stream's next wave, so the warning joins that round; when no question is pending at all, the warning makes a round of its own, shown right away. This item is your own, not a stream agent's question: relaying the other questions of the round and sending their answers back never waits for it. When both streams merged a wave in the same round, the pair gets one item. Until the user answers, both streams keep running.
+
+**The user's answer.** A pause uses the gate the wave skill already has: it starts no wave before the user approves it (its step 2), and a running wave is never cut.
+
+| Answer | Action |
+|---|---|
+| Continue both | nothing; the next merged wave of either stream warns again with the list as it then stands |
+| Pause one | no prompt to any agent; the stream's running wave finishes. When its agent next asks to approve a wave, relay that question verbatim as step 4 says, noting under it that the user paused the stream over the overlap with `<other>`; the stream waits there until the user approves. Its status line reads: date, stage, waits on the user (paused, overlaps `<other>`) |
+
+You never pause, block or delay a stream without the user's answer, and never pick an answer for them.
+
+**Done when**: after every merged wave, each other open stream in the same repository has been compared, every pair with shared files has one item in the next question round naming both streams and the files, and a stream is paused only on the user's answer.
