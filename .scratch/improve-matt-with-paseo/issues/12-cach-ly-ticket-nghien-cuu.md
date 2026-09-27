@@ -1,7 +1,7 @@
 # 12 — Luật "mỗi ticket một worktree" có phủ ticket nghiên cứu không?
 
 Type: grilling
-Status: open
+Status: claimed
 
 ## Question
 

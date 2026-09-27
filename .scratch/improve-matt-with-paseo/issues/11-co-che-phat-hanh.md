@@ -1,7 +1,7 @@
 # 11 — 0.3.0 phát hành thế nào, và có đi trước upstream không?
 
 Type: grilling
-Status: open
+Status: claimed
 
 ## Question
 

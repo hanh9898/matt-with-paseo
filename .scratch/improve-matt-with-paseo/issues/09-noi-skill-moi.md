@@ -1,7 +1,7 @@
 # 09 — Nối skill nào vào đâu: retro, handoff, pr, claude-handoff
 
 Type: grilling
-Status: open
+Status: claimed
 Blocked by: 02
 
 ## Question

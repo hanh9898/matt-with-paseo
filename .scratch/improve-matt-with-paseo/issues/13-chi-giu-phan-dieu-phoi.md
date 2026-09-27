@@ -1,7 +1,7 @@
 # 13 — Áp luật "chỉ giữ phần điều phối" cho cả skill
 
 Type: grilling
-Status: open
+Status: claimed
 Blocked by: 04
 
 ## Question

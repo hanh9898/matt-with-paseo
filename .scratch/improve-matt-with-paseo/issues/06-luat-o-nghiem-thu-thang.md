@@ -1,7 +1,7 @@
 # 06 — Diễn đạt luật cho vấp #12: ô nghiệm thu thắng mục bàn giao
 
 Type: grilling
-Status: open
+Status: claimed
 Blocked by: 04
 
 ## Question

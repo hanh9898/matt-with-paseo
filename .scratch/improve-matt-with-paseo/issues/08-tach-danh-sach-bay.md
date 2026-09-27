@@ -1,7 +1,7 @@
 # 08 — Tách danh sách bẫy: đâu là phép thử, và bẫy máy móc sống ở đâu?
 
 Type: grilling
-Status: open
+Status: claimed
 Blocked by: 03
 
 ## Question

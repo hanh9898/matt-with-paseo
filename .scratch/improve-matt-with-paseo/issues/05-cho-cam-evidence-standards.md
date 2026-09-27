@@ -1,7 +1,7 @@
 # 05 — Chỗ cắm `evidence-standards.md`: đặt ở đâu trong luồng, hợp đồng là gì?
 
 Type: grilling
-Status: open
+Status: claimed
 
 ## Question
 
