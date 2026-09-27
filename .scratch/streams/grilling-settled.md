@@ -8,81 +8,39 @@ Bắt đầu 27/09/2026, `/grill-with-docs`, người dùng chạy `matt-with-pa
 - `matt-with-paseo` gắn với **một** checkout: đọc cấu hình tracker của repo đang đứng, lấy nhánh tích hợp bằng `git branch --show-current`. Hai bộ việc trong cùng repo hiện đã chạy song song được nếu mỗi bộ có phiên và checkout riêng; thiếu là chỗ đứng chung và luật chống va chạm giữa các bộ.
 - `matt-with-paseo` có `disable-model-invocation: true`: agent không tự gọi được. Phép đo L1 (27/09): agent con có `initialPrompt` bắt đầu bằng `/mattpocock-skills:ask-matt` trả lời bằng chữ gần nguyên văn của skill đó, nên nhiều khả năng lệnh `/…` trong prompt được mở ra; chưa có bằng chứng trực tiếp. Phép đo L2 (27/09): một skill thử có `disable-model-invocation: true`, thân chỉ chứa dấu hiệu ngẫu nhiên `PROBE-L2-QX7V-4417`; agent con Haiku nhận `initialPrompt` là `/probe-l2` và trả về đúng dấu hiệu đó. **Xác nhận: agent con chạy được skill chỉ-người-gõ khi lệnh nằm trong `initialPrompt`.** Skill thử đã xoá.
 
-## Quyết định đã chốt (người dùng duyệt 27/09)
 
-- **Nỗi đau:** cả chỗ đứng (phải mở phiên từng repo) lẫn phụ thuộc giữa các việc; cái đáng xây là phần phụ thuộc và điều phối chung.
-- **Người giao việc:** dự án có nhiều người giao việc. Mỗi người giao **nhiều đầu việc**, có thể không liên quan nhau (bug, feature). Việc của người khác là một bộ riêng chạy song song, không thêm wave vào bộ cũ.
-- **Từ mới: Stream** — toàn bộ đầu việc một người giao việc đưa vào, điều phối thành **một đồ thị ticket chạy theo wave riêng**. Chủ stream là người giao việc. Matt không có từ cho đơn vị này (`feature` là một spec, `effort` là bản đồ quyết định), nên được đặt từ mới. Đầu việc không liên quan trong cùng stream dùng chung đồ thị, tốt cho độ rộng.
-- **Tầng mới** điều phối **nhiều stream song song**.
-- **Hình dạng: điều phối lồng nhau.** Người dùng nói chuyện với một agent tầng trên; nó chỉ giữ chỉ mục các stream và phụ thuộc chéo, giao mỗi stream cho một agent Paseo chạy `matt-with-paseo` với cửa sổ ngữ cảnh riêng. Không có "một người điều phối lớn" (trần ngữ cảnh phía điều phối). Điều kiện này đã được phép đo L2 xác nhận.
-- **Phạm vi:** một skill riêng đứng cạnh `matt-with-paseo`; `matt-with-paseo` giữ vai tầng wave. Không nhét vào 0.3.x.
-- **Nguồn sự thật:** tầng trên chỉ **đọc** tracker của từng repo và giữ riêng danh sách phụ thuộc chéo; không chép ticket.
-- **Ai vận hành:** chỉ người dùng gõ lệnh và duyệt ở tầng trên. Người giao việc đưa đầu việc vào tracker và đọc báo cáo của stream mình. Giả định "một người chạy" vẫn đứng.
-- **Đầu việc vào stream:** bằng **nhãn trên tracker** (ví dụ `stream:<người>`), ticket nằm đúng chỗ tracker đặt. Đường vào giữ của Matt: đầu việc thô qua `triage`, đầu việc lớn qua `grill-with-docs`/`wayfinder` → `to-spec` → `to-tickets`.
-- **Nhánh tích hợp theo đầu việc**, không theo stream: ticket merge vào nhánh của đầu việc mình; đầu việc nào xong thì vào `develop` riêng. Hệ quả: một wave có **nhiều nhánh tích hợp**; bước 3 (base commit), 6 (merge), 7 (review chỗ nối) của `matt-with-paseo` phải đổi. Quyết định khó đảo ngược.
-- **Tài nguyên máy dùng chung:** tên tài nguyên riêng theo `<stream>-<ticket>` (hoặc tương đương) để hai người điều phối không cấp trùng; cổng do services của `paseo.json`; tầng trên giữ **một trần chung** số agent chạy cùng lúc, con số do người dùng đặt; chạm trần thì wave của stream sau chờ.
-- **Hai stream cùng sửa một file:** chỉ cảnh báo, không chặn. Tầng trên liệt kê file mà các nhánh tích hợp đang mở trên cùng repo đều đã sửa (so với `develop`), báo sau mỗi wave; người dùng quyết.
-- **Phạm vi, sửa lại (Q3'):** không phải skill riêng ngoài `matt-with-paseo`. Tầng stream là **một skill thứ hai trong cùng plugin** (ví dụ `skills/matt-with-paseo-streams/`), gọi bằng lệnh riêng, spawn agent con chạy `/matt-with-paseo <stream>`. Plugin và repo phát hành chung là `matt-with-paseo` **0.4.0** (xem V1 bên dưới). Drift check quét cả hai skill.
+## Quyết định hiện hành (người dùng duyệt 27/09)
 
-## Đề xuất chưa chốt (chờ đánh giá lại)
-
-- **Q12 nhánh đầu việc:** repo đích khai nhánh gốc và mẫu tên nhánh trong một mục cấu hình cạnh `## Agent skills`; không khai thì tách từ nhánh mặc định của remote, tên `<stream>/<đầu-việc>`. Skill không đoán quy ước repo.
-- **Q13 vào `develop`:** đầu việc xong thì tầng stream mở PR, dùng `mattpocock-skills:pr` viết thân; không tự merge.
-- **Q14 chỗ đứng:** một thư mục điều khiển riêng ngoài mọi repo (ví dụ `~/streams/`), chỉ chứa một file chỉ mục; mở phiên Paseo ở đó.
-- **Q15 duyệt qua hai tầng:** tầng trên chuyển nguyên văn câu hỏi của agent stream, gom theo vòng, không tự duyệt; trả lời bằng `send_agent_prompt` luôn bật `notifyOnFinish`; heartbeat ở cả hai tầng.
-- **Q16 ưu tiên khi chạm trần:** thứ tự do người dùng đặt trong chỉ mục, mặc định vào trước chạy trước; stream thấp chờ ở ranh giới wave kế tiếp.
-- **ADR đề xuất:** (1) nhánh tích hợp theo đầu việc thay vì theo stream; (2) điều phối lồng nhau thay vì một người điều phối lớn.
-
-## Cây quyết định sau khi áp khung (chốt 27/09, người dùng: "theo đề xuất", phiên bản 0.4.0)
-
-Khung: **DAG nhiều tầng, tầng trên là đồ thị thương của tầng dưới** (condensation), cộng sắp xếp topo / frontier (Kahn), đường găng (CPM), giới hạn WIP (Kanban, định luật Little). Kiến thức nền, nêu theo trí nhớ, chưa tra nguồn.
+Hai skill trong cùng plugin `matt-with-paseo` **0.4.0**:
 
 ```
-Tầng 3  STREAM   = tô màu các node tầng 2 theo người giao việc (không phải đồ thị)
-Tầng 2  ĐẦU VIỆC = đồ thị thương của tầng 1 (cạnh A→B khi một ticket của B bị chặn bởi một ticket của A)
-Tầng 1  TICKET   = DAG như 0.3.0; wave = frontier
+matt-with-paseo-streams  (MỚI)     quản lý nhiều stream song song
+   └─ mỗi stream = một agent chạy /matt-with-paseo <thư mục ticket> stream <slug> quota <N>
+matt-with-paseo          (0.3.0)   quản lý wave trong một stream, giữ nguyên cách vận hành
 ```
 
-**Sáu luật:** (1) cạnh tầng trên suy ra từ tầng dưới, không vẽ tay; (2) mọi tầng là DAG, chu trình giữa hai đầu việc thì dừng và báo người dùng gộp/tách; (3) frontier riêng mỗi tầng, cạnh mang nghĩa riêng (tầng 1: ticket chặn đã merge vào nhánh đầu việc; tầng 2: đầu việc chặn đã vào `develop`); (4) đường găng xếp thứ tự khi chạm trần, ưu tiên stream phá hoà; (5) một trần WIP toàn cục chia thành hạn mức theo đầu việc, wave không rộng hơn hạn mức; (6) mỗi tầng chỉ thấy đồ thị của mình, nói với tầng kề qua hợp đồng hẹp (xuống: nhánh gốc, hạn mức, "chờ đầu việc nào"; lên: trạng thái, file đã sửa, "xong, mở PR").
+- **T1 Stream.** Một bộ ticket ra chung **một nhánh tích hợp và một PR**. Người giao việc là thuộc tính của stream; một người muốn hai việc ra riêng thì mở hai stream. Không có phụ thuộc giữa các stream; phụ thuộc chỉ nằm giữa ticket trong một stream, do skill wave lo. (ADR 0001, 0003)
+- **T2 Việc của skill stream.**
+  1. Giữ **file chỉ mục** các stream: repo, chủ, chỗ ticket của stream (thư mục với tracker local, nhãn hoặc spec cha với GitHub), nhánh gốc, đích PR, trạng thái, ưu tiên. File nằm trong một **thư mục điều khiển ngoài mọi repo**; người dùng mở phiên ở đó.
+  2. Mỗi stream: tạo worktree tách từ nhánh gốc (đó là nhánh tích hợp), spawn một agent chạy `/matt-with-paseo <thư mục ticket> stream <slug> quota <N>` trong worktree đó.
+  3. Gom câu hỏi của mọi stream thành một vòng, chuyển nguyên văn cho người dùng, không tự duyệt; trả lời xuống đúng agent bằng `send_agent_prompt`, luôn bật `notifyOnFinish`.
+  4. Giữ **trần WIP** chung (người dùng đặt), chia hạn mức theo ưu tiên stream (mặc định vào trước chạy trước); chạm trần thì stream sau chờ ở ranh giới wave.
+  5. Cảnh báo khi hai stream cùng sửa một file trong cùng repo (`git diff` giữa các nhánh tích hợp), sau mỗi wave; người dùng quyết.
+  6. Stream tới stage G thì **mở PR vào đích PR** (thân viết bằng `mattpocock-skills:pr`), không tự merge; ghi link PR cho người giao việc. Mở lại tường minh quyết định ticket 09: điều kiện đã đổi, có người giao việc cần chỗ xem kết quả.
+  - Skill stream **không đọc file wave**. Interface đi lên chỉ gồm thứ đã công khai: trạng thái ticket trên tracker, tin nhắn cuối lượt của agent stream, `get_agent_status`/`get_agent_activity`, `git diff`. Muốn biết stream đang ở đâu thì hỏi agent stream (bước 0 định vị). (ADR 0002)
+- **T3 Sửa ở skill wave.** Hai tham số tuỳ chọn `stream <slug>` và `quota <N>`. Từ slug, skill wave tự suy ra nhãn `stream=<slug>`, tiền tố nhánh `<slug>/` và tiền tố tên tài nguyên riêng; bước 2 không lập wave rộng hơn `quota`. Ghi rõ tiền điều kiện: chạy trong checkout của nhánh tích hợp. Không truyền `stream` thì y hệt 0.3.0. Skill wave không biết nhánh gốc, đích PR, hay skill stream tồn tại.
+- **T4 Nhánh gốc và đích PR.** Khai theo stream trong file chỉ mục → không có thì mặc định repo khai (văn xuôi, cạnh `## Agent skills`) → không có thì nhánh mặc định của remote. Nhánh gốc gom việc dở của nhiều người (như `test`) thì cảnh báo, không chặn. Các chặng đẩy lên sau PR là quy trình của repo. (ADR 0003)
+- **T5 Heartbeat là vòng hoà giải.** Mỗi nhịp so trạng thái mong muốn (chỉ mục) với trạng thái quan sát (agent nhãn `stream=`, ticket, nhánh, PR), làm một việc idempotent để khớp. Phiên tầng trên chết thì phiên mới chạy một nhịp là dựng lại trạng thái. Bắt được lượt không có thông báo (A2). (ADR 0004)
+- **T6 Supervisor one-for-one.** Stream hỏng thì khởi động lại riêng stream đó, trong ngân sách (ví dụ 2 lần mỗi wave); vượt ngân sách thì dừng stream, đưa lên người dùng. (ADR 0004)
+- **T7 Demeter.** Skill stream chỉ nói chuyện với agent stream; không bao giờ `send_agent_prompt`/`archive_agent` lên agent ticket.
 
-**Thay thế:** Q5' (stream là một đồ thị) → stream là tô màu. Q11/Q7 (một wave nhiều nhánh) → mỗi đầu việc một agent, một nhánh. Q2 (lồng nhau theo stream) → lồng nhau theo đầu việc. Các mục "Đề xuất chưa chốt" ở trên được thay bằng danh sách dưới.
+**Còn đứng từ các vòng trước:** chỉ người dùng vận hành; tầng trên đọc tracker, không chép ticket; đường vào của Matt giữ nguyên (việc thô qua `triage`, việc lớn qua grill/wayfinder → `to-spec` → `to-tickets`); cổng do services của `paseo.json`; phép đo L2.
 
-### Tầng 3: Stream
-- **S1** Stream: mọi đầu việc một người giao việc đưa vào; để nhóm, ưu tiên, chia trần, báo cáo; không mang cạnh phụ thuộc. (ADR 0001)
-- **S2** Ưu tiên stream: người dùng đặt trong file chỉ mục, mặc định vào trước chạy trước; chỉ phá hoà sau đường găng.
-- **S3** Báo cáo cho người giao việc: một comment trên issue của đầu việc khi mở PR (kèm link), và một dòng tóm tắt stream trong file chỉ mục. Không kênh riêng.
+**Kiểm thử (mặt kiểm thử = interface):**
+- Skill wave: seam 1 như 0.3.0 (một wave thật), thêm phép kiểm "không truyền `stream` thì y hệt 0.3.0".
+- Skill stream: một lần chạy thật với **hai stream trong cùng một repo**, chứng minh không đụng nhãn/nhánh, câu hỏi gom một vòng, trần WIP được giữ, mỗi stream mở PR đúng đích.
+- Drift check: thêm skill stream vào `DEFAULT_TARGETS`.
 
-### Tầng 2: Đầu việc
-- **I1** Mỗi đầu việc một agent `matt-with-paseo`, worktree và nhánh riêng. (ADR 0002)
-- **I2** Cạnh đầu việc suy ra từ `Blocked by` vượt ranh giới; chu trình → dừng, báo người dùng.
-- **I3** B chờ tới khi A đã merge vào `develop`; nhánh của B gộp `develop` ở ranh giới wave. (ADR 0003)
-- **I4** Nhánh gốc và mẫu tên do repo đích khai trong một mục cấu hình; không khai thì nhánh mặc định của remote, tên `<stream>/<đầu-việc>`.
-- **I5** Đầu việc xong → mở PR, thân viết bằng `mattpocock-skills:pr`, không tự merge. Mở lại tường minh quyết định ticket 09 ("xem lại nếu một repo đích cần"): điều kiện đã đổi, có người giao việc cần mặt xem kết quả.
-- **I6** Đầu việc một ticket (một bug) cũng chạy qua `matt-with-paseo` như wave một ticket, để hợp đồng đi lên giống nhau.
+**Phát hành:** 0.4.0; cập nhật README, `plugin.json`. Skill stream trỏ khối từ của `matt-with-paseo`, chỉ định nghĩa thêm **Stream**; không có `GLOSSARY.md`.
 
-### Tầng 1: Ticket và wave (sửa nhỏ trong `matt-with-paseo`)
-- **W1** Đặt tên theo đầu việc: nhãn `item=<slug>` (cạnh `wave`, `ticket`), nhánh `<slug>/wave<N>/<NN>`, file wave nằm trong thư mục của đầu việc.
-- **W2** Bước 2 không lập wave rộng hơn hạn mức agent mà prompt cho phép.
-- **W3** Log của file wave ghi trạng thái đầu việc và danh sách file đã sửa; tầng trên chỉ đọc chỗ này.
-
-### Vận hành tầng trên
-- **X1** Thư mục điều khiển ngoài mọi repo, chứa file chỉ mục; tầng trên tạo worktree cho từng đầu việc rồi spawn agent đầu việc trong đó.
-- **X2** Câu hỏi của agent đầu việc: chuyển nguyên văn, gom theo vòng, không tự duyệt; trả lời bằng `send_agent_prompt` luôn bật `notifyOnFinish`; heartbeat tầng trên đọc log file wave để bù A2.
-- **X3** Trần WIP do người dùng đặt; chia hạn mức theo đường găng rồi theo ưu tiên stream.
-- **X4** Tài nguyên máy: tên `<đầu-việc>-<ticket>`; cổng do services của `paseo.json`.
-- **X5** Sau mỗi wave, spawn lại agent đầu việc; bước 0 của tầng wave tiếp nối.
-- **X6** Phiên tầng trên chết: phiên mới ở thư mục điều khiển đọc file chỉ mục và nhãn `item=`, dựng lại trạng thái.
-
-### Phát hành
-- **V1** **0.4.0** (người dùng chọn; thay "0.3.1" ở trên), theo semver và lịch sử tag.
-- **V2** Skill mới vào `DEFAULT_TARGETS` của drift check; cập nhật README, `plugin.json`; skill mới trỏ khối từ của `matt-with-paseo`, chỉ định nghĩa thêm Stream và đầu việc.
-- **ADR** 0001, 0002, 0003 trong `docs/adr/`.
-
-**Còn đứng từ vòng trước:** Q1, Q4, Q6, Q9, Q10, Q3' (skill thứ hai trong cùng plugin), L2.
-
-## Sửa sau prototype (27/09)
-
-- **Không có phụ thuộc giữa hai stream.** Phụ thuộc chỉ nằm giữa các đầu việc của cùng một người giao việc. Stream là tô màu và **không cạnh nào vượt ranh giới stream**; các stream chạy song song, tầng trên không giữ phụ thuộc chéo stream. ADR 0001 sửa tiền đề theo.
-- **Q18, phụ thuộc trong stream:** mặc định **gộp các đầu việc phụ thuộc nhau thành một đầu việc** (một nhánh, một PR, một đồ thị ticket; tầng wave 0.3.0 giữ nguyên). Chỉ khi người dùng muốn tách PR thì giữ hai đầu việc với một cạnh, và đầu việc sau chờ PR của đầu việc trước vào `develop` (I3 cũ). Loại: nhánh xếp chồng. ADR 0003 sửa theo.
-- Hệ quả: theo mặc định tầng 2 **không có cạnh**; cạnh chỉ xuất hiện trong một stream, khi người dùng chọn tách. Luật 1–3 (cạnh suy ra từ ticket, DAG, cạnh gỡ khi vào `develop`) chỉ áp cho trường hợp tách. Đường găng (luật 4) chủ yếu còn là chiều dài đồ thị ticket của từng đầu việc.
-- Việc gộp: khi `to-tickets` hoặc `triage` sinh ra ticket có `Blocked by` trỏ sang ticket của một đầu việc khác trong cùng stream, tầng trên đề xuất gộp hai đầu việc (hoặc tách, nếu người dùng muốn), người dùng quyết.
+**Đã thay (xem lịch sử git của file này):** tầng "đầu việc" và mọi quyết định theo nó (I1–I6, W1–W3, X1–X6, Q18 gộp/tách, Q19'–Q21, đường găng, đồ thị thương), "một đồ thị cho mỗi stream" ở Q5', đọc log file wave, "spawn lại sau mỗi wave".
