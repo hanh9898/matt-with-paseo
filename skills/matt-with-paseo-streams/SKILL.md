@@ -147,9 +147,9 @@ The stream's status line is the loop's only memory. Every action writes its outc
 | Stream agent waits on a question-type permission not yet shown to the user | Step 4 |
 | Stream agent idle on the message the status line records, the status line waiting on the user | None; the question is already shown, and a tick never shows it twice |
 | Stream agent failed | A restart, per "Supervise one-for-one" below |
-| Stream agent idle and its context past the respawn threshold | A respawn, per "Supervise one-for-one" below |
+| Stream agent idle on the message the status line records, and its context past the respawn threshold | A respawn, per "Supervise one-for-one" below; a newer message is handled by step 4 first |
 | Every ticket of the stream resolved or in the ready for human role, and the stream agent idle | Step 6 |
-| A `stream=<slug>` agent without a `wave` label for a row that should not run or a slug not in the index, two such agents for one slug, or an open pull request the status line does not record | Report it to the user and take no other action; the status line records that it was reported |
+| A `stream=<slug>` agent without a `wave` label for a row that should not run or a slug not in the index, two such agents for one slug, or an open pull request the status line does not record, and the status line does not yet record this finding as reported | Report it to the user and take no other action; the status line records that it was reported, so a later tick does not report it again |
 
 The loop's own heartbeat is reconciled in the same tick:
 
@@ -176,7 +176,7 @@ A **restart** touches only that stream's row, agent and worktree; the other stre
 
 The **restart budget** is two restarts per wave, unless the user sets another number. The status line counts it with the wave it belongs to, such as `restarts 1/2 in wave 3`; the wave number comes from the stream agent's end-of-turn messages (never from its wave files), and a new wave number starts the count again. When a stream would need a restart past its budget, it stops instead: spawn nothing, leave the failed agent and the worktree as they are for inspection, write `stopped: restart budget spent (2/2 in wave 3)` and the owner into the status line, and report it to the user, headed with the slug, with each failure as `get_agent_activity` shows it. A stopped stream should not run, so later ticks leave it alone; it runs again only when the user says so, which clears `stopped` and the count, and the next tick restarts it.
 
-A **respawn** replaces a stream agent whose context has grown large before it hits the ceiling. `get_agent_status` reports `lastUsage.contextWindowUsedTokens` against `contextWindowMaxTokens`; past the respawn threshold (for example 60% of the window, or what the user sets), wait until the agent is idle and no question of its waits on the user, then respawn it exactly as a restart: archive the old stream agent, spawn a new one per step 3 in the same workspace, and let the wave skill's recovery sweep resume the wave. A respawn spends no restart budget; the status line records it as `respawned for context`.
+A **respawn** replaces a stream agent whose context has grown large before it hits the ceiling. `get_agent_status` reports `lastUsage.contextWindowUsedTokens` against `contextWindowMaxTokens`; past the respawn threshold (for example 60% of the window, or what the user sets), wait until the agent is idle and no question of its waits on the user, then replace it as a restart does above, so the wave skill's recovery sweep resumes the wave. A respawn spends no restart budget; the status line records it as `respawned for context`.
 
 **Done when**: a tick has closed or reported every gap it found and a second tick right after it finds none, every stopped stream has been reported to the user, and this session holds a reconcile heartbeat with an expiry exactly while a stream runs.
 
