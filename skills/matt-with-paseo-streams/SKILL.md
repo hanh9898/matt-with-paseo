@@ -62,13 +62,13 @@ With no index yet, write `streams.md` with the cap line and the table header, as
 
 ### Split the cap into quotas
 
-A stream's quota is the `quota <N>` its stream agent's command carries: the most ticket agents its wave skill runs at once. A running stream takes one slot of the cap for its stream agent and its quota for its ticket agents. Split the cap again at every wave boundary (step 4) and whenever a stream starts or stops running:
+A stream's quota is the wave skill's `quota <N>` argument in its stream agent's command. A running stream takes one slot of the cap for its stream agent and its quota for its ticket agents. Split the cap again at every wave boundary (step 4) and whenever a stream starts or stops running, reading the cap and the priorities from `streams.md` afresh each time:
 
 1. Streams in a wave keep the slots they hold, their stream agent plus their current quota, until their own next wave boundary. Take those slots off the cap.
 2. Walk every other stream to run (not yet started, waiting on the cap, or at its wave boundary now) in priority order: the lowest Priority number first, then the rows without a number; ties and empty cells go in the order of rows, so first come first served is the default.
 3. While at least two slots are left, a stream takes one for its stream agent and a quota of its open tickets in the ready for agent role on its tracker (at least 1), but no more than the slots left minus one. A stream left with fewer than two slots waits on the cap, with no stream agent; it waits at its next wave boundary, never in the middle of a wave.
 
-A stream whose tickets are all resolved or waiting on a human holds only its stream agent's slot.
+A running stream with no ticket left for agents (every ticket resolved or waiting on a human) counts only its stream agent's slot and is left out of the walk: its wave skill plans no more waves, so its command is never changed.
 
 With the example above, billing-export having 3 ready tickets and login-bug 4, and neither started: billing-export takes 1 + quota 3, leaving 2; login-bug takes 1 + quota 1, leaving 0.
 
@@ -142,8 +142,8 @@ On each notification:
 | New quota | Do |
 |---|---|
 | Same | Nothing; the wave approval joins the round. |
-| Different, at least 1 | `archive_agent` the stream agent, then spawn a new one per step 3 with the new quota. Its wave skill resumes at its step 0 and asks the wave approval again, now planned within the new quota; that question joins a round. The old question is never shown. |
-| No room | `archive_agent` the stream agent and write "waits on the cap" in the status line. A later split that gives the stream room spawns it per step 3. |
+| Different, at least 1 | `archive_agent` the stream agent, then spawn a new one per step 3 with the new quota. Its wave skill resumes at its step 0, which first asks its own stage confirmation, then plans the wave within the new quota and asks the wave approval again; each question joins a round like any other. The old wave approval is never shown. |
+| No room (the split leaves the stream waiting on the cap) | `archive_agent` the stream agent and write "waits on the cap" in the status line. A later split that gives the stream room spawns it per step 3. |
 
 Capacity changes only here: you never prompt, cancel or archive a stream agent for capacity anywhere else, so a running wave is never cut. A split that frees slots (a stream archived here, or a stream with no ticket left for agents) gives them to the streams that wait on the cap, in priority order, each spawned per step 3.
 
