@@ -17,11 +17,12 @@ Without `stream`, every label, branch name and file name is the one the "Without
 
 **Precondition:** this skill runs in a checkout of its integration branch. It reads that branch from the checkout it stands in (step 1), so whoever calls it, human or agent, opens it there first.
 
-Three words used throughout:
+Four words used throughout:
 
 - **Wave**: a set of tickets run in parallel. A ticket joins a wave once every ticket it depends on is `resolved` and merged.
 - **Integration branch**: the branch collecting the results of every wave. Each wave branches its worktrees off a **base commit** pinned on this branch.
 - **Common rules**: what every agent of the wave needs to know that its own prompt does not carry. Written once per wave (step 3).
+- **Ticket agent**: the Paseo agent step 4 spawns to work one ticket, carrying that ticket's label. The review agent of step 7 is not one.
 
 ## Names this run writes
 
@@ -130,7 +131,7 @@ A trap's "how to check you avoided it" column tells its kind: a command with a c
 
 Write the `## Wave agents` heading and the table header row (ticket, agent id, workspace id, branch, base commit, private resources, cleaned) at the end of the common rules file **before** spawning the first agent. Write each agent's row as soon as it is spawned, so any session reopened midway can read which agents exist.
 
-**Quota.** With `quota <N>`, this rule gates every `create_agent` for ticket work in any step: the spawns below, a spawn from step 0's recovery sweep, rolling start (step 6), a fix agent in step 7, a new agent replacing a broken one ([`TROUBLESHOOTING.md`](TROUBLESHOOTING.md)). A ticket agent counts from its spawn until its report passes step 5 or it is recorded as failed, whatever `get_agent_status` shows in between, since a turn it starts on its own sends no notification. Spawn only while fewer than N ticket agents count; otherwise the ticket waits, and rolling start picks it up. The review agent of step 7 is not a ticket agent: it starts only once every ticket of the wave is merged.
+**Quota.** With `quota <N>`, this rule gates every ticket agent spawn in any step: the spawns below, a spawn from step 0's recovery sweep, rolling start (step 6), a new agent replacing a broken one ([`TROUBLESHOOTING.md`](TROUBLESHOOTING.md)). A ticket agent counts from its spawn until its report passes step 5 or it is recorded as failed, whatever `get_agent_status` shows in between, since a turn it starts on its own sends no notification. Spawn only while fewer than N ticket agents count; otherwise the ticket waits, and rolling start picks it up. Step 7 sends a finding back to a ticket agent under the same rule: that agent counts again until its fix is merged. The review agent and the cross-ticket fix agent of step 7 are not ticket agents; they start only once every ticket of the wave is merged.
 
 For each ticket in the wave, within the quota:
 
