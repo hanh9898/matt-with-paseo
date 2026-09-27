@@ -66,6 +66,12 @@ Nếu về sau có nhiều người cùng chạy một bản đồ thì giả đ
 
 Vấp phải vào `pitfalls.md` **khi vừa thấy**, không giữ trong hội thoại. Viết **triệu chứng** trước, đừng viết nguyên nhân — nguyên nhân có thể sai, triệu chứng thì không. Đây là hệ quả trực tiếp của việc mất 5/12 vấp.
 
+### Luật đứng: chỉ giữ phần điều phối
+
+**`SKILL.md` chỉ giữ phần điều phối. Cái gì thuộc về Matt thì trỏ tên skill hoặc đọc lúc chạy, không chép.** Phần điều phối là bước 1–8 (wave, worktree, merge, dọn, heartbeat): Matt không có tương đương. Mọi chỗ chép phương pháp của Matt là chỗ sẽ lệch khi Matt đổi; hai chỗ như vậy **đã lệch** (`SKILL.md:120`, dòng 26/27/51).
+
+Mọi ticket soi đề xuất của mình bằng câu: *Matt sửa thì bên này phải sửa theo bao nhiêu chỗ?* Ít chỗ thắng. Không đặt từ mới khi Matt đã có từ. *(ticket 04, Q9; áp cho cả skill ở ticket 13)*
+
 ### Cầu nối sang `/to-spec`
 
 `/to-spec` **không nhận đường dẫn**; nó tổng hợp từ hội thoại hiện tại và mã. Phiên chạy nó phải **đọc `map.md` và mọi `## Answer` vào hội thoại trước**, rồi mới gọi. Mỗi quyết định sống ở `## Answer` của ticket nó; bản đồ chỉ là chỉ mục. *(ticket 04, Q2)*
@@ -95,6 +101,7 @@ Vấp phải vào `pitfalls.md` **khi vừa thấy**, không giữ trong hội t
 
 - [01 — Plugin API có bắt được lúc agent idle không?](issues/01-paseo-plugin-api-agent-idle.md): không có hook `idle`; gần nhất là `agent.turn_ended`, chạy trong daemon. **Hệ quả:** gửi xuyên agent chưa ai chứng minh, nên ticket 07 chưa có tiền đề để chọn nhánh plugin.
 - [02 — Năm skill v1.3 làm gì?](issues/02-doc-than-5-skill-v13.md): `implement-spec` chạy subagent trong cùng một phiên, nên trần ngữ cảnh của nó là thật. **Hệ quả:** vị thế bậc A đứng vững; và bảng "chỗ nghi là hợp" của ticket 09 đã bị bác ba phần tư.
+- [04 — Chốt bảng từ](issues/04-bang-tu.md): không đặt từ mới; khối từ trong `SKILL.md` là nguồn duy nhất, bỏ danh từ *Done*, thêm *Common rules*; bảng bước 0 thu về E–G và trỏ `/ask-matt`. **Hệ quả:** không có `GLOSSARY.md` cho repo này; luật đứng "chỉ giữ phần điều phối" vào Notes; ticket 06 mở khoá và viết luật bằng mô tả, không bằng thuật ngữ *handoff*; ticket 13 mới; phần đổi tên tài liệu miền của ticket 11 tan.
 - [03 — Phân loại 12 vấp](issues/03-phan-loai-12-vap.md): danh sách chưa bao giờ ghi xuống đĩa, 5/12 mục không tìm lại được. **Hệ quả:** ticket 10 co xuống còn một ứng viên và phải đợi 07; luật đứng "ghi vấp ra đĩa ngay" đã vào Notes.
 
 ## Not yet specified

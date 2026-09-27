@@ -23,3 +23,5 @@ Cần chốt:
 Luật này đi vào `matt-with-paseo` chứ không vào repo đích: nó nói về cách chạy wave, không nói về mã.
 
 **Chặn bởi ticket 04** vì nó dùng thẳng hai từ mà 04 mới là nơi chốt nghĩa: *bàn giao* và *ô nghiệm thu*.
+
+**Từ ticket 04 (đã đóng):** không có thuật ngữ nào cho "mục bàn giao". Viết luật bằng mô tả (*chỉ dẫn mà một ticket trước để lại*), không gọi là *handover*/*handoff*: `/handoff` của Matt mang nghĩa khác (`engineering/ask-matt/SKILL.md:73`). "Ô nghiệm thu" là *acceptance criteria* của Matt (`engineering/to-tickets/SKILL.md:94`), dùng nguyên từ đó.

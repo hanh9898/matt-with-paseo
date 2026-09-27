@@ -1,7 +1,7 @@
 # 04 — Chốt bảng từ: wave, nhánh tích hợp, cửa, frontier, done
 
 Type: grilling
-Status: claimed
+Status: resolved
 
 ## Question
 
@@ -34,7 +34,7 @@ Ghi thẳng `GLOSSARY.md` ở gốc repo khi từng từ được chốt, không
 
 ## Answer
 
-*(Đang dở: vòng 1 đã chốt, vòng 2 đang hỏi. Ghi ngay theo luật đứng, không đợi hết ticket.)*
+**Tóm tắt:** không đặt từ mới nào. Khối từ của `SKILL.md` còn **Wave**, **Integration branch**, **Common rules**; bỏ danh từ **Done**. Và một luật đứng mới cho cả bản đồ (Q9): `SKILL.md` chỉ giữ phần điều phối, cái gì của Matt thì trỏ tới hoặc đọc lúc chạy, không chép.
 
 ### Phát hiện khi đối chiếu với mã
 
@@ -74,6 +74,49 @@ Hai lưu ý khi viết vào skill:
 
 **Hệ quả cho ticket 11:** phần "đi trước hay đợi upstream" **cho riêng việc đổi tên tài liệu miền** không còn phải quyết.
 
+> **Bị Q9 thay thế.** Q9 bỏ các dòng A–D khỏi bảng bước 0, nên dòng 26, 27, 51 **biến mất cùng bảng**, không cần cơ chế đọc `domain.md` hay fallback nào. Giữ phần trên làm lý lẽ, phòng khi Q9 bị đảo.
+
 ### Q4 — Ghi chú một ticket để lại cho ticket sau
 
-**Đặt tên cho khái niệm, nhưng không gọi là *handoff*/bàn giao.** `ask-matt/SKILL.md:73` đã dùng `/handoff` với nghĩa hẹp: *"a portable markdown file… only for a new harness, a new directory, a colleague, or forking a side task mid-phase"*. Tên cụ thể: đang hỏi ở vòng 2.
+**Không gọi là *handoff*/bàn giao.** `ask-matt/SKILL.md:73` đã dùng `/handoff` với nghĩa hẹp: *"a portable markdown file… only for a new harness, a new directory, a colleague, or forking a side task mid-phase"*. Chuyện có đặt tên hay không: xem Q5.
+
+### Q5 — Có đặt tên cho ghi chú đó không
+
+**Không. Không định nghĩa khái niệm mới.**
+
+Đề xuất ban đầu là mượn *context pointer* (`engineering/implement-spec/SKILL.md:15`) và đổi bản chất ghi chú: ticket trước ghi phát hiện vào `## Comments` của nó, ticket sau mang con trỏ. Người dùng bác theo tiêu chí "sửa ít": đó là thêm một khái niệm và đổi cách ticket nói chuyện với nhau. Mọi ticket **đã có** `## Comments` theo quy ước tracker của Matt, đủ dùng.
+
+**Hệ quả cho ticket 06:** không có từ nào được chốt cho "mục bàn giao". Ticket 06 viết luật bằng mô tả (*chỉ dẫn mà một ticket trước để lại*), không dùng *handover*/*handoff*/*context pointer* như một thuật ngữ.
+
+### Q6 — Hai nghĩa của "Done"
+
+**Bỏ danh từ "Done" khỏi khối từ.** Mọi đơn vị việc có một dòng *"Done when:"*, kể cả chỗ luật chung định nghĩa điểm dừng của agent.
+
+Lý do: *"Done when"* là thành ngữ của Matt (có trong `engineering/wayfinder`, `engineering/diagnosing-bugs`, `engineering/wizard`, `productivity/grilling`…); danh từ **Done** (`SKILL.md:17`) là từ tự đặt. Đổi cái tự đặt. Chi phí: một dòng.
+
+### Q7 — "Common rules"
+
+**Đưa vào khối từ, định nghĩa theo vai trò:** *thứ mọi agent của wave cần biết mà prompt riêng không mang* (gốc ở `SKILL.md:95`). Không định nghĩa theo nội dung, vì ticket 08 có thể rút bẫy máy móc ra khỏi file này. Matt không có từ tương đương.
+
+### Q8 — Từ của Matt hay từ của Paseo
+
+**Gọi tên API thì dùng từ của Paseo; nói về phương pháp thì dùng từ của Matt.** Áp vào: giữ `provider` (tham số của `create_agent`); không đưa *harness* vào (Matt dùng với hai nghĩa: `engineering/ask-matt/SKILL.md:29, 73` và `engineering/diagnosing-bugs/SKILL.md:31, 33`); giữ *orchestrator* (`SKILL.md:9`, Matt không có); không đưa *software factory* vào. Không sửa file nào.
+
+### Ô nghiệm thu
+
+**Không cần định nghĩa: dùng *acceptance criteria* của Matt.** Đó là heading chuẩn của ticket do `to-tickets` sinh (`engineering/to-tickets/SKILL.md:94`), và `SKILL.md:78` đã dùng đúng từ này.
+
+### Q9 — Luật đứng: chỉ giữ phần điều phối
+
+Người dùng đặt tiêu chí: skill **chủ yếu là điều phối**, sửa ít, và khi Matt đổi thì bên này tốn ít công nhất. Luật rút ra, đưa vào Notes của `map.md`:
+
+> **`SKILL.md` chỉ giữ phần điều phối. Cái gì thuộc về Matt thì trỏ tên skill hoặc đọc lúc chạy, không chép.**
+
+Phần điều phối là bước 1–8 (wave, worktree, merge, dọn, heartbeat): Matt không có tương đương. Hai chỗ đang chép, đã lệch với upstream `release/v1.3`:
+
+1. **`SKILL.md:120` liệt kê tay** skill nào agent gọi được. Đã sai: `resolving-merge-conflicts` không còn là skill, còn `pr` (gọi được) thì thiếu. **Quyết:** bỏ danh sách, thay bằng luật *đọc `disable-model-invocation` trong frontmatter của skill*.
+2. **Bảng bước 0, dòng A–D** (setup → grill → prototype → to-spec → to-tickets) là bản thu nhỏ của `/ask-matt`, bộ định tuyến của chính Matt. **Quyết: thu gọn.** Chỉ giữ E, F, G (giai đoạn của riêng skill này). Chưa có ticket thì báo chưa tới lượt điều phối và gợi ý người dùng gõ `/mattpocock-skills:ask-matt`. Chấp nhận mất khả năng chỉ đúng lệnh cho A–D.
+
+Kéo theo biến mất cùng bảng: dòng 26, 27, 51 (Q3), mục "Stage C always presents…" và "Two notes for stages C and D" (dòng 49–56).
+
+Việc còn lại (soát `TROUBLESHOOTING.md`, `COMMON-RULES-TEMPLATE.md` theo cùng luật; chốt câu chữ cho bước 0 mới): ticket 13.

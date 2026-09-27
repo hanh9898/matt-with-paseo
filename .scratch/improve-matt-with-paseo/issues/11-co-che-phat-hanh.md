@@ -28,3 +28,5 @@ Nên sửa theo v1.3 nghĩa là **đi trước upstream**. Quyết: đi trước
 Nếu 0.3.0 đổi từ vựng (`GLOSSARY.md`) hoặc đổi luật ô nghiệm thu (ticket 04, 06), thì `waveN-common-rules.md` **đã ghi bằng luật cũ** ở các repo khác thì sao?
 
 Đây không phải giả định: repo `resource-plan-billable` là **người dùng thật** của v0.2.x, vừa merge ticket 08 và ghi mục review đợt 7 bằng đúng luật sắp bị thay. Viết lại, hay chỉ áp luật mới từ wave kế tiếp?
+
+**Từ ticket 04 (đã đóng):** phần "đi trước hay đợi upstream" cho việc đổi `CONTEXT.md` → `GLOSSARY.md` **tan**: bảng bước 0 thu về E–G nên skill không còn nhắc tên tài liệu miền. Luật đứng "chỉ giữ phần điều phối" sẽ còn thu hẹp câu 1 tiếp; xem ticket 13. Câu 4 vẫn mở: đổi từ vựng (bỏ danh từ *Done*) vẫn chạm tới `waveN-common-rules.md` đã viết.
