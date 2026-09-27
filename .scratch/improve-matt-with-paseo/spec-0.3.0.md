@@ -122,3 +122,5 @@ Concretely, the skill stops routing me through setup, grilling, spec, and ticket
 - Decisions come from a wayfinder map of fifteen resolved decision tickets. Each decision lives in its ticket's answer; the map is the index.
 - Matt's v1.3 is an unreleased branch while the installed plugin reads 1.2.3; two caches labelled 1.2.3 already differ. This is why the skill reads Matt's state at run time rather than trusting version labels, and why the "go ahead of upstream or wait" question dissolved.
 - If Paseo fixes the silent-finish notification, the rule that turns an artifact-less finished report into a heartbeat can be removed.
+
+> **Đã đăng:** GitHub issue [#1](https://github.com/hanh9898/matt-with-paseo/issues/1), nhãn `ready-for-agent`, 27/09/2026.
