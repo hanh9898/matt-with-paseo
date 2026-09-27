@@ -2,23 +2,41 @@
   "schema_version": 1,
   "diagram_type": "architecture",
   "meta": {
-    "title": "matt-with-paseo 0.4.0: skill stream trên skill wave (prototype)",
+    "title": "matt-with-paseo 0.4.0: stream skill over wave skill",
+    "locale": "en",
     "quality_profile": "showcase",
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "Paseo agent running a skill"
+        },
+        "database": {
+          "label": "Git branch"
+        },
+        "external": {
+          "label": "Person"
+        },
+        "cloud": {
+          "label": "Issue tracker"
+        }
+      }
+    },
     "views": [
       {
         "id": "seam",
-        "label": "Seam giữa hai skill",
+        "label": "Seam",
         "focus": [
           "streams",
           "wave-a",
           "wave-b",
           "tracker"
         ],
-        "note": "Xuống: stream <slug>, quota <N>. Lên: tracker, tin nhắn cuối lượt, trạng thái agent, git diff. Không đọc file wave."
+        "note": "Down: stream <slug>, quota <N>. Up: tracker status, end-of-turn message, agent status, git diff. Never reads wave files."
       },
       {
         "id": "demeter",
-        "label": "Chỉ nói với con",
+        "label": "Children only",
         "focus": [
           "streams",
           "wave-a",
@@ -26,20 +44,22 @@
           "tickets-a",
           "tickets-b"
         ],
-        "note": "Skill stream chỉ nói với agent stream; agent ticket do skill wave lo, như 0.3.0."
+        "note": "The stream skill talks only to stream agents; ticket agents belong to the wave skill, as in 0.3.0."
       },
       {
-        "id": "streams",
-        "label": "Stream độc lập",
+        "id": "independent",
+        "label": "Independent streams",
         "focus": [
           "wave-a",
           "tickets-a",
+          "branch-a",
           "target-a",
           "wave-b",
           "tickets-b",
+          "branch-b",
           "target-b"
         ],
-        "note": "Không phụ thuộc giữa hai stream; mỗi stream một nhánh tích hợp, một PR vào đích của riêng nó."
+        "note": "No dependency between streams; each has one integration branch and one PR to its own target."
       }
     ]
   },
@@ -47,14 +67,14 @@
     {
       "id": "user",
       "type": "external",
-      "label": "Người dùng",
-      "sublabel": "một chỗ đứng",
+      "label": "User",
+      "sublabel": "one place to stand",
       "pos": [
         60,
-        70
+        60
       ],
       "size": [
-        160,
+        170,
         64
       ]
     },
@@ -62,24 +82,24 @@
       "id": "streams",
       "type": "backend",
       "label": "matt-with-paseo-streams",
-      "sublabel": "chỉ mục · trần WIP 6 · hoà giải",
+      "sublabel": "index · WIP cap 6 · reconcile loop",
       "pos": [
         430,
-        70
+        60
       ],
       "size": [
-        280,
+        300,
         64
       ]
     },
     {
       "id": "tracker",
-      "type": "external",
+      "type": "cloud",
       "label": "Tracker",
-      "sublabel": "trạng thái ticket",
+      "sublabel": "ticket status",
       "pos": [
-        920,
-        70
+        930,
+        60
       ],
       "size": [
         170,
@@ -89,56 +109,42 @@
     {
       "id": "wave-a",
       "type": "backend",
-      "label": "Stream A · matt-with-paseo",
+      "label": "matt-with-paseo",
       "sublabel": "stream a · quota 4",
       "pos": [
-        140,
+        90,
         220
       ],
       "size": [
-        260,
-        70
-      ]
-    },
-    {
-      "id": "wave-b",
-      "type": "backend",
-      "label": "Stream B · matt-with-paseo",
-      "sublabel": "stream b · quota 2",
-      "pos": [
-        740,
-        220
-      ],
-      "size": [
-        260,
-        70
+        230,
+        64
       ]
     },
     {
       "id": "tickets-a",
       "type": "backend",
-      "label": "Agent ticket A1–A4",
-      "sublabel": "wave như 0.3.0",
+      "label": "Ticket agents A1–A4",
+      "sublabel": "waves as in 0.3.0",
       "pos": [
-        140,
+        90,
         350
       ],
       "size": [
-        260,
+        230,
         64
       ]
     },
     {
-      "id": "tickets-b",
-      "type": "backend",
-      "label": "Agent ticket B1–B2",
-      "sublabel": "wave như 0.3.0",
+      "id": "branch-a",
+      "type": "database",
+      "label": "a/integration",
+      "sublabel": "cut from develop",
       "pos": [
-        740,
+        390,
         350
       ],
       "size": [
-        260,
+        170,
         64
       ]
     },
@@ -146,13 +152,55 @@
       "id": "target-a",
       "type": "database",
       "label": "test",
-      "sublabel": "đích PR của A",
+      "sublabel": "PR target of A",
       "pos": [
-        170,
+        390,
         500
       ],
       "size": [
-        200,
+        170,
+        64
+      ]
+    },
+    {
+      "id": "wave-b",
+      "type": "backend",
+      "label": "matt-with-paseo",
+      "sublabel": "stream b · quota 2",
+      "pos": [
+        650,
+        220
+      ],
+      "size": [
+        230,
+        64
+      ]
+    },
+    {
+      "id": "tickets-b",
+      "type": "backend",
+      "label": "Ticket agents B1–B2",
+      "sublabel": "waves as in 0.3.0",
+      "pos": [
+        650,
+        350
+      ],
+      "size": [
+        230,
+        64
+      ]
+    },
+    {
+      "id": "branch-b",
+      "type": "database",
+      "label": "b/integration",
+      "sublabel": "cut from develop",
+      "pos": [
+        950,
+        350
+      ],
+      "size": [
+        170,
         64
       ]
     },
@@ -160,13 +208,13 @@
       "id": "target-b",
       "type": "database",
       "label": "develop",
-      "sublabel": "đích PR của B",
+      "sublabel": "PR target of B",
       "pos": [
-        770,
+        950,
         500
       ],
       "size": [
-        200,
+        170,
         64
       ]
     }
@@ -174,18 +222,20 @@
   "boundaries": [
     {
       "kind": "region",
-      "label": "Stream A · worktree tách từ develop",
+      "label": "Stream A · own worktree",
       "wraps": [
         "wave-a",
-        "tickets-a"
+        "tickets-a",
+        "branch-a"
       ]
     },
     {
       "kind": "region",
-      "label": "Stream B · worktree tách từ develop",
+      "label": "Stream B · own worktree",
       "wraps": [
         "wave-b",
-        "tickets-b"
+        "tickets-b",
+        "branch-b"
       ]
     }
   ],
@@ -194,13 +244,13 @@
       "id": "user-streams",
       "from": "user",
       "to": "streams",
-      "label": "gom câu hỏi"
+      "label": "batched questions"
     },
     {
       "id": "streams-tracker",
       "from": "streams",
       "to": "tracker",
-      "label": "chỉ đọc"
+      "label": "read only"
     },
     {
       "id": "streams-a",
@@ -221,80 +271,96 @@
       "toSide": "top"
     },
     {
-      "id": "a-tickets",
+      "id": "a-spawn",
       "from": "wave-a",
       "to": "tickets-a",
       "label": "spawn",
       "fromSide": "bottom",
       "toSide": "top",
       "labelAt": [
-        270,
-        304
+        205,
+        310
       ]
     },
     {
-      "id": "b-tickets",
+      "id": "b-spawn",
       "from": "wave-b",
       "to": "tickets-b",
       "label": "spawn",
       "fromSide": "bottom",
       "toSide": "top",
       "labelAt": [
-        870,
-        304
+        765,
+        310
       ]
     },
     {
-      "id": "a-pr",
+      "id": "a-merge",
       "from": "tickets-a",
+      "to": "branch-a",
+      "label": "merge",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "b-merge",
+      "from": "tickets-b",
+      "to": "branch-b",
+      "label": "merge",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "a-pr",
+      "from": "branch-a",
       "to": "target-a",
-      "label": "PR, người merge",
+      "label": "PR, human merges",
       "fromSide": "bottom",
       "toSide": "top",
       "labelAt": [
-        270,
-        428
+        475,
+        462
       ]
     },
     {
       "id": "b-pr",
-      "from": "tickets-b",
+      "from": "branch-b",
       "to": "target-b",
-      "label": "PR, người merge",
+      "label": "PR, human merges",
       "fromSide": "bottom",
       "toSide": "top",
       "labelAt": [
-        870,
-        428
+        1035,
+        462
       ]
     }
   ],
   "cards": [
     {
       "dot": "violet",
-      "title": "Skill stream (mới)",
+      "title": "Stream skill (new)",
       "items": [
-        "Chỉ mục, nhánh gốc, đích PR",
-        "Trần WIP, gom câu hỏi",
-        "Hoà giải, restart có ngân sách"
+        "Index, base branch, PR target",
+        "WIP cap, batched questions",
+        "Opens PR, reconciles, restarts"
       ]
     },
     {
       "dot": "cyan",
       "title": "Seam",
       "items": [
-        "Xuống: stream, quota",
-        "Lên: tín hiệu công khai",
-        "Không đọc file wave"
+        "Down: stream, quota",
+        "Up: public signals only",
+        "Never reads wave files"
       ]
     },
     {
       "dot": "emerald",
-      "title": "Skill wave (0.3.0)",
+      "title": "Wave skill (0.3.0)",
       "items": [
-        "Giữ nguyên cách chạy wave",
-        "Không biết skill stream",
-        "Không stream thì y hệt 0.3.0"
+        "Runs waves unchanged",
+        "Knows nothing of the stream skill",
+        "No stream argument: exactly 0.3.0"
       ]
     }
   ]
