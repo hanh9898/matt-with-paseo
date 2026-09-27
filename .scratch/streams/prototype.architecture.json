@@ -5,272 +5,41 @@
     "title": "matt-with-paseo 0.4.0: ba tầng điều phối (prototype)",
     "quality_profile": "showcase",
     "views": [
-      {
-        "id": "critical-path",
-        "label": "Đường găng",
-        "focus": [
-          "item-y",
-          "develop",
-          "item-w"
-        ],
-        "note": "Y chạy 3 wave, PR của Y vào develop, rồi cạnh Y→W mới gỡ: chuỗi dài nhất, được cấp agent trước."
-      },
-      {
-        "id": "contracts",
-        "label": "Hợp đồng giữa các tầng",
-        "focus": [
-          "top",
-          "item-x",
-          "item-y",
-          "item-z",
-          "item-w"
-        ],
-        "note": "Xuống: nhánh gốc, hạn mức, chờ đầu việc nào. Lên: trạng thái, file đã sửa, xong thì mở PR."
-      },
-      {
-        "id": "streams",
-        "label": "Stream là tô màu",
-        "focus": [
-          "item-x",
-          "item-y",
-          "item-z",
-          "item-w"
-        ],
-        "note": "Hai vùng màu là hai người giao việc; cạnh phụ thuộc Y→W vẫn đi xuyên qua ranh giới stream."
-      }
+      { "id": "critical-path", "label": "Đường găng", "focus": ["item-yw", "develop", "item-u"], "note": "Y và W phụ thuộc nhau nên gộp một đầu việc; U được tách nên chờ PR của Y+W vào develop." },
+      { "id": "contracts", "label": "Hợp đồng giữa các tầng", "focus": ["top", "item-x", "item-yw", "item-u", "item-z", "item-v"], "note": "Xuống: nhánh gốc, hạn mức, chờ đầu việc nào. Lên: trạng thái, file đã sửa, xong thì mở PR." },
+      { "id": "streams", "label": "Stream độc lập", "focus": ["item-x", "item-yw", "item-u", "item-z", "item-v"], "note": "Không cạnh nào vượt ranh giới stream; stream B chạy song song, không chờ stream A." }
     ]
   },
   "components": [
-    {
-      "id": "user",
-      "type": "external",
-      "label": "Người dùng",
-      "sublabel": "duyệt, trả lời",
-      "pos": [
-        60,
-        70
-      ],
-      "size": [
-        150,
-        64
-      ]
-    },
-    {
-      "id": "top",
-      "type": "backend",
-      "label": "Tầng trên",
-      "sublabel": "chỉ mục · trần WIP 6",
-      "pos": [
-        420,
-        70
-      ],
-      "size": [
-        190,
-        64
-      ],
-      "tag": "heartbeat đọc log wave"
-    },
-    {
-      "id": "item-x",
-      "type": "backend",
-      "label": "Bug X",
-      "sublabel": "X1 · 1 wave",
-      "pos": [
-        300,
-        230
-      ],
-      "size": [
-        170,
-        70
-      ],
-      "tag": "hạn mức 1"
-    },
-    {
-      "id": "item-y",
-      "type": "backend",
-      "label": "Feature Y",
-      "sublabel": "Y1→{Y2,Y3}→Y4",
-      "pos": [
-        540,
-        230
-      ],
-      "size": [
-        170,
-        70
-      ],
-      "tag": "hạn mức 3"
-    },
-    {
-      "id": "item-z",
-      "type": "backend",
-      "label": "Bug Z",
-      "sublabel": "Z1 · 1 wave",
-      "pos": [
-        60,
-        230
-      ],
-      "size": [
-        170,
-        70
-      ],
-      "tag": "hạn mức 1"
-    },
-    {
-      "id": "item-w",
-      "type": "backend",
-      "label": "Feature W",
-      "sublabel": "W1→W2 · W2 chờ Y3",
-      "pos": [
-        820,
-        230
-      ],
-      "size": [
-        180,
-        70
-      ],
-      "tag": "hạn mức 1"
-    },
-    {
-      "id": "develop",
-      "type": "database",
-      "label": "develop",
-      "sublabel": "mỗi đầu việc một PR",
-      "pos": [
-        420,
-        420
-      ],
-      "size": [
-        190,
-        64
-      ]
-    }
+    { "id": "user", "type": "external", "label": "Người dùng", "sublabel": "duyệt, trả lời", "pos": [60, 70], "size": [150, 64] },
+    { "id": "top", "type": "backend", "label": "Tầng trên", "sublabel": "chỉ mục · trần WIP 6", "pos": [470, 70], "size": [200, 64] },
+    { "id": "item-x", "type": "backend", "label": "Bug X", "sublabel": "X1 · hạn mức 1", "pos": [60, 230], "size": [170, 70] },
+    { "id": "item-yw", "type": "backend", "label": "Feature Y+W (gộp)", "sublabel": "Y1→{Y2,Y3}→Y4→W2 · hạn mức 3", "pos": [270, 230], "size": [240, 70] },
+    { "id": "item-u", "type": "backend", "label": "Feature U (tách)", "sublabel": "U1→U2 · chờ Y+W", "pos": [550, 230], "size": [180, 70] },
+    { "id": "item-z", "type": "backend", "label": "Bug Z", "sublabel": "Z1 · hạn mức 1", "pos": [800, 230], "size": [160, 70] },
+    { "id": "item-v", "type": "backend", "label": "Feature V", "sublabel": "V1→V2 · hạn mức 1", "pos": [1000, 230], "size": [170, 70] },
+    { "id": "develop", "type": "database", "label": "develop", "sublabel": "mỗi đầu việc một PR", "pos": [470, 420], "size": [200, 64] }
   ],
   "boundaries": [
-    {
-      "kind": "region",
-      "label": "Stream A · người giao việc A",
-      "wraps": [
-        "item-x",
-        "item-y",
-        "item-z"
-      ]
-    },
-    {
-      "kind": "region",
-      "label": "Stream B · người giao việc B",
-      "wraps": [
-        "item-w"
-      ]
-    }
+    { "kind": "region", "label": "Stream A · người giao việc A", "wraps": ["item-x", "item-yw", "item-u"] },
+    { "kind": "region", "label": "Stream B · người giao việc B", "wraps": ["item-z", "item-v"] }
   ],
   "connections": [
-    {
-      "id": "user-top",
-      "from": "user",
-      "to": "top",
-      "label": "gom câu hỏi"
-    },
-    {
-      "id": "top-x",
-      "from": "top",
-      "to": "item-x",
-      "fromSide": "bottom",
-      "toSide": "top"
-    },
-    {
-      "id": "top-y",
-      "from": "top",
-      "to": "item-y",
-      "variant": "emphasis",
-      "fromSide": "bottom",
-      "toSide": "top"
-    },
-    {
-      "id": "top-z",
-      "from": "top",
-      "to": "item-z",
-      "fromSide": "bottom",
-      "toSide": "top"
-    },
-    {
-      "id": "top-w",
-      "from": "top",
-      "to": "item-w",
-      "label": "chờ Y",
-      "fromSide": "bottom",
-      "toSide": "top"
-    },
-    {
-      "id": "y-blocks-w",
-      "from": "item-y",
-      "to": "item-w",
-      "label": "Y3 chặn W2",
-      "variant": "dashed",
-      "fromSide": "right",
-      "toSide": "left"
-    },
-    {
-      "id": "x-pr",
-      "from": "item-x",
-      "to": "develop",
-      "label": "PR",
-      "fromSide": "bottom",
-      "toSide": "top"
-    },
-    {
-      "id": "y-pr",
-      "from": "item-y",
-      "to": "develop",
-      "label": "PR, người merge",
-      "variant": "emphasis",
-      "fromSide": "bottom",
-      "toSide": "top"
-    },
-    {
-      "id": "z-pr",
-      "from": "item-z",
-      "to": "develop",
-      "label": "PR",
-      "fromSide": "bottom",
-      "toSide": "top"
-    },
-    {
-      "id": "develop-w",
-      "from": "develop",
-      "to": "item-w",
-      "label": "gỡ cạnh, gộp develop",
-      "variant": "emphasis",
-      "fromSide": "right",
-      "toSide": "bottom"
-    }
+    { "id": "user-top", "from": "user", "to": "top", "label": "gom câu hỏi" },
+    { "id": "top-x", "from": "top", "to": "item-x", "fromSide": "bottom", "toSide": "top" },
+    { "id": "top-yw", "from": "top", "to": "item-yw", "variant": "emphasis", "fromSide": "bottom", "toSide": "top" },
+    { "id": "top-u", "from": "top", "to": "item-u", "fromSide": "bottom", "toSide": "top" },
+    { "id": "top-z", "from": "top", "to": "item-z", "fromSide": "bottom", "toSide": "top" },
+    { "id": "top-v", "from": "top", "to": "item-v", "fromSide": "bottom", "toSide": "top" },
+    { "id": "x-pr", "from": "item-x", "to": "develop", "label": "PR", "fromSide": "bottom", "toSide": "top" },
+    { "id": "yw-pr", "from": "item-yw", "to": "develop", "label": "PR, người merge", "variant": "emphasis", "fromSide": "bottom", "toSide": "top" },
+    { "id": "z-pr", "from": "item-z", "to": "develop", "label": "PR", "fromSide": "bottom", "toSide": "top" },
+    { "id": "v-pr", "from": "item-v", "to": "develop", "label": "PR", "fromSide": "bottom", "toSide": "top" },
+    { "id": "develop-u", "from": "develop", "to": "item-u", "label": "gỡ cạnh, gộp develop", "variant": "emphasis", "fromSide": "top", "toSide": "bottom" }
   ],
   "cards": [
-    {
-      "dot": "violet",
-      "title": "Tầng 3 · stream",
-      "items": [
-        "Tô màu theo người giao việc",
-        "Ưu tiên, trần, báo cáo",
-        "Không mang cạnh phụ thuộc"
-      ]
-    },
-    {
-      "dot": "cyan",
-      "title": "Tầng 2 · đầu việc",
-      "items": [
-        "Một agent matt-with-paseo, một nhánh",
-        "Cạnh suy ra từ ticket",
-        "Gỡ khi blocker vào develop"
-      ]
-    },
-    {
-      "dot": "emerald",
-      "title": "Tầng 1 · ticket",
-      "items": [
-        "DAG như 0.3.0",
-        "Wave = frontier",
-        "Wave ≤ hạn mức"
-      ]
-    }
+    { "dot": "violet", "title": "Tầng 3 · stream", "items": ["Tô màu theo người giao việc", "Không cạnh nào vượt ranh giới", "Ưu tiên, trần, báo cáo"] },
+    { "dot": "cyan", "title": "Tầng 2 · đầu việc", "items": ["Phụ thuộc nhau: gộp một nhánh, một PR", "Tách: chờ PR vào develop", "Một agent matt-with-paseo mỗi đầu việc"] },
+    { "dot": "emerald", "title": "Tầng 1 · ticket", "items": ["DAG như 0.3.0", "Wave = frontier", "Wave ≤ hạn mức"] }
   ]
 }
