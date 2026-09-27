@@ -1,6 +1,6 @@
 ---
 name: matt-with-paseo
-description: Locate where the work stands (setup, grill, spec, tickets, or an agent wave), suggest the next step, and orchestrate tickets in waves of parallel Paseo agents.
+description: Locate where the work stands (not configured, a spec without tickets, tickets, or an agent wave), send earlier work to `/mattpocock-skills:ask-matt`, and orchestrate tickets in waves of parallel Paseo agents.
 disable-model-invocation: true
 ---
 
@@ -18,21 +18,25 @@ Three words used throughout:
 
 ## 0. Locate the state and suggest the next step
 
-Read the signals below on the real repo. Walk the table from the bottom row up; the first row that matches is the current stage.
+Read the signals on the real repo through its tracker configuration: the `## Agent skills` section of `CLAUDE.md`/`AGENTS.md` and the documents it points to, which say where specs and tickets live and how a wayfinder map is stored. Settle the cases in this order:
+
+1. No tracker configuration: stage A of the table.
+2. A **wayfinder map**: a map file beside the tickets, or tickets carrying a ticket-type line or label, as the tracker configuration's wayfinding section describes. Say that it is a decision map, not yet through `/mattpocock-skills:to-spec`, propose no wave, and stop.
+3. No spec and no tickets: the work is not ready for orchestration. Suggest `/mattpocock-skills:ask-matt` to choose between `/mattpocock-skills:grill-with-docs`, `/mattpocock-skills:wayfinder` and `/mattpocock-skills:prototype`, as equal options, and stop. Once tickets exist, come back to this skill; do not use `/mattpocock-skills:implement-spec`.
+4. Otherwise walk the table from the bottom row up; the first row that matches is the current stage.
 
 | Stage | Observable signal | Next step |
 |---|---|---|
-| A. Not configured | No `docs/agents/issue-tracker.md`, and `CLAUDE.md`/`AGENTS.md` has no `## Agent skills` section | The user types `/mattpocock-skills:setup-matt-pocock-skills` |
-| B. Idea not sharp | No spec for the feature; the feature's terms are not in `CONTEXT.md` | `/mattpocock-skills:grill-with-docs`. Work too large for one session with no visible path: `/mattpocock-skills:wayfinder`. A raw issue someone else filed: `/mattpocock-skills:triage` |
-| C. Grilled, no spec | `CONTEXT.md` or an ADR records the feature's decisions; no spec file yet | Ask the user whether `/mattpocock-skills:prototype` is needed, then `/mattpocock-skills:to-spec`; both run in the **same session** that did the grilling. See the stage C notes below the table |
-| D. Spec, no tickets | A spec exists (location per `issue-tracker.md`); the feature's `issues/` folder is empty or missing | `/mattpocock-skills:to-tickets <spec path>`, run in the same session that wrote the spec |
-| E. Tickets, no wave run yet | Tickets exist; no `wave*-common-rules.md` file | A single ticket, or a pure chain where no two tickets can ever run side by side: `/mattpocock-skills:implement` in this session. Any width at all: step 1 of this skill |
-| F. Wave in progress | A `wave<N>-common-rules.md` file exists, and a ticket of that wave (listed in the file's title) is not yet `resolved`/`ready-for-human`; or the file has `## Wave agents` but no `## Review`, or the "cleaned" column is not fully checked | Resume at the missing step, see right below the table |
-| G. No work left for agents | At least one ticket exists, and every ticket is `resolved` or `ready-for-human` | Summarize per step 8; list the work waiting on humans |
+| A. Not configured | `CLAUDE.md`/`AGENTS.md` has no `## Agent skills` section, or the section points to no issue tracker | The user types `/mattpocock-skills:setup-matt-pocock-skills` |
+| B. Spec, no tickets | A spec exists where the tracker configuration puts specs; no ticket belongs to it yet | The user types `/mattpocock-skills:to-tickets <spec>`, in the same session that wrote the spec |
+| C. Tickets, no wave run yet | Tickets exist; no `wave*-common-rules.md` file | A single ticket, or a pure chain where no two tickets can ever run side by side: `/mattpocock-skills:implement` in this session. Any width at all: step 1 of this skill |
+| D. N waves done, tickets left | A `wave*-common-rules.md` file exists, no wave is in progress (stage E does not match), and at least one ticket is still open | Back to step 2, building the graph from the open tickets; run step 1 first if this session has not |
+| E. Wave in progress | A `wave<N>-common-rules.md` file exists, and a ticket of that wave (listed in the file's title) is not yet `resolved`/`ready-for-human`; or the file has `## Wave agents` but no `## Review`, or the "cleaned" column is not fully checked | Resume at the missing step, see right below the table |
+| F. No work left for agents | At least one ticket exists, and every ticket is `resolved` or `ready-for-human` | Summarize per step 8; list the work waiting on humans |
 
-Ticket status is the primary signal for stage F; the two log sections `## Wave agents` and `## Review` only tell you which step is missing. A wave file with no `## Wave agents` whose tickets are all done is an old, finished wave, not stage F.
+Ticket status is the primary signal for stage E; the two log sections `## Wave agents` and `## Review` only tell you which step is missing. A wave file with no `## Wave agents` whose tickets are all done is an old, finished wave, not stage E.
 
-For stage F, a previous session may have ended mid-step (a crash, a closed window), so run the **recovery sweep** first and report what it finds before resuming any step:
+For stage E, a previous session may have ended mid-step (a crash, a closed window), so run the **recovery sweep** first and report what it finds before resuming any step:
 
 - `paseo ls -g --label wave=<N> --json` lists the wave's agents by label (`list_agents` cannot filter by label; `-g` because the agents run in worktrees, not in this checkout). An agent with no row in the `## Wave agents` table was spawned but never logged; add its row before anything else.
 - The wave's workspaces are the ones its labelled agents run in: match each agent's `cwd` (printed with `~` for the home directory) against `list_workspaces` and `git worktree list`. A workspace or worktree of this wave with no row, or with no labelled agent in it, is an orphan of an interrupted spawn; a row whose workspace is gone is a cleanup already done.
@@ -46,16 +50,9 @@ Then take each unfinished ticket of the wave. Find its agent in the `## Wave age
 
 Once every ticket of the wave is done: a ticket branch still unmerged (`git branch --no-merged <integration branch>`) goes to step 5, reading its report from the ticket's comments, then step 6; no `## Review` yet goes to step 7; an uncleaned row goes to step 8.
 
-Stage C always presents the user with two options and waits for their choice, even when one option clearly fits better:
+A note for stage B: `/mattpocock-skills:to-tickets` synthesizes from the current conversation, as `/mattpocock-skills:to-spec` does, so it must run in the session that still holds the context that wrote the spec. If that session is gone, tell the user. Every command this step suggests outside this skill (stages A and B, `/mattpocock-skills:ask-matt`) is typed by the user only; this skill only suggests it.
 
-- **Prototype first**: a design question remains that grilling could not settle in words (is the state model or logic right, what should the UI look like). Run `/mattpocock-skills:prototype` first, record the conclusion in `CONTEXT.md` or an ADR, then `/mattpocock-skills:to-spec`.
-- **Straight to spec**: every design decision is settled. Run `/mattpocock-skills:to-spec` directly.
-
-Name any open design question you see in the grilling results, or state that you see none.
-
-Two notes for stages C and D: `to-spec` and `to-tickets` synthesize from the current conversation, so they must run in the session that still holds the grilling results. If that session is gone, tell the user, and suggest a short re-grill over the existing docs before writing the spec. The skills in stages A to D are typed by the user only; this skill only suggests the command.
-
-Present three things to the user: the current stage, the signals you saw with their paths, and **one** concrete next step (a command to type, or a step number of this skill); stage C gets the two options above instead. Wait for the user to agree.
+Present three things to the user: the current stage (or the case of the list above), the signals you saw with their paths, and **one** concrete next step (a command to type, or a step number of this skill). Wait for the user to agree.
 
 **Done when**: the user has confirmed the stage and the next step. If the next step lies outside this skill, stop here.
 

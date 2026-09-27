@@ -23,21 +23,25 @@ The wave file doubles as a log, so a new session can pick up a half-finished wav
 ## How it works
 
 ```
-idea ──► grill ──► spec ──► tickets ──► wave 1 ──► wave 2 ──► ... ──► done
-        (Matt's skills, typed by you)    (this skill + Paseo agents)
+grill-with-docs ─┐
+                 ├──► to-spec ──► to-tickets ──► wave 1 ──► wave 2 ──► ... ──► done
+wayfinder ───────┘   (Matt's skills, typed by you)  (this skill + Paseo agents)
 ```
 
-Each run starts by locating the current stage from what is on disk:
+Work reaches this skill through one of two equal on-ramps, `/mattpocock-skills:grill-with-docs` or `/mattpocock-skills:wayfinder`, which both merge at `/mattpocock-skills:to-spec`. The route up to the spec is Matt's, not this skill's: when there is no spec and no tickets yet, the skill sends you to `/mattpocock-skills:ask-matt` to pick the skill that fits, and stops. A wayfinder map is a set of decision tickets, not yet through `/mattpocock-skills:to-spec`, so the skill names it and starts no wave on it.
+
+Each run then locates the current stage from what the tracker holds:
 
 | Stage | Signal in the repo | Suggested next step |
 |---|---|---|
-| A. Not configured | no `docs/agents/issue-tracker.md` | `/mattpocock-skills:setup-matt-pocock-skills` |
-| B. Idea not sharp | no spec, terms missing from `CONTEXT.md` | `/mattpocock-skills:grill-with-docs` |
-| C. Grilled, no spec | decisions in `CONTEXT.md` or an ADR | `/mattpocock-skills:prototype` or `/mattpocock-skills:to-spec` |
-| D. Spec, no tickets | spec exists, `issues/` empty | `/mattpocock-skills:to-tickets` |
-| E. Tickets, no wave yet | tickets exist, no `wave*-common-rules.md` | start wave 1 |
-| F. Wave in progress | a wave file with unfinished tickets | resume the missing step |
-| G. Finished | every ticket `resolved` or `ready-for-human` | summary |
+| A. Not configured | no `## Agent skills` section pointing to an issue tracker | `/mattpocock-skills:setup-matt-pocock-skills` |
+| B. Spec, no tickets | a spec exists, no tickets for it | `/mattpocock-skills:to-tickets`, in the session that wrote the spec |
+| C. Tickets, no wave yet | tickets exist, no `wave*-common-rules.md` | start wave 1 |
+| D. N waves done, tickets left | earlier waves finished, some tickets still open | build the graph again for the next wave |
+| E. Wave in progress | a wave file with unfinished tickets | resume the missing step |
+| F. Finished | every ticket `resolved` or `ready-for-human` | summary |
+
+Once the tickets exist, come back to this skill rather than Matt's `/mattpocock-skills:implement-spec`.
 
 Each wave then goes through the same loop:
 
