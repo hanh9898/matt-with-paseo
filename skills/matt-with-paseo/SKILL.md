@@ -8,7 +8,14 @@ disable-model-invocation: true
 
 You are the orchestrator. Every run starts by **locating**: where the work stands and what the next step is. Once tickets exist, each ticket is worked by one Paseo agent in its own worktree; you split tickets into **waves**, write the **common rules**, spawn, check reports, merge into the **integration branch**, review where the tickets touch, then open the next one.
 
-**Input:** $ARGUMENTS (a feature name, a ticket folder, or empty)
+**Input:** $ARGUMENTS (a feature name, a ticket folder, or empty), optionally followed by two arguments, each on its own or both:
+
+- `stream <slug>`: namespaces everything this run creates by the slug, so that two runs in one repository never collide (see "Names this run writes" below). The slug holds only lowercase letters, digits and hyphens, so it is valid in a label value and a branch name; otherwise stop and say so.
+- `quota <N>`: the most ticket agents this run lets run at once (see "Quota" in step 4). `N` is a whole number of at least 1; otherwise stop and say so.
+
+Without `stream`, every label, branch name and file name is the one the "Without `stream`" column below gives; without `quota`, a wave takes every ticket that can run (step 2).
+
+**Precondition:** this skill runs in a checkout of its integration branch. It reads that branch from the checkout it stands in (step 1), so whoever calls it, human or agent, opens it there first.
 
 Three words used throughout:
 
@@ -62,13 +69,13 @@ Present three things to the user: the current stage (or the case of the list abo
 
 Load the `paseo` skill and call `list_profiles`, reading each profile's `notes`.
 
-Identify the tracker from `docs/agents/issue-tracker.md`. Identify the integration branch with `git branch --show-current`, never from the directory name.
+Identify the tracker from `docs/agents/issue-tracker.md`. Identify the integration branch with `git branch --show-current`, never from the directory name. Read `stream <slug>` and `quota <N>` from the input when given.
 
 Read the triage label file the `## Agent skills` section points to (its triage labels entry): it maps each triage role to the label string this repo writes. This skill names triage states only by role (needs triage, ready for agent, ready for human); wherever it names one, use the label string the file maps it to, and fill the template's `<ready for human label from the triage label file>` placeholder with it in step 3. When the repo has no triage label file, use the default label strings `mattpocock-skills:setup-matt-pocock-skills` defines.
 
 Read the repo's evidence standards file when it declares one: an `## Evidence standards` section of `CLAUDE.md`/`AGENTS.md`, outside the `## Agent skills` block, pointing to a file of free prose on how this repo proves a change works. Fill the template's `<path to the evidence standards file, or "none declared">` placeholder with its path in step 3. When the section or its file is absent, write "none declared" there and continue; nothing else in the wave changes.
 
-**Done when**: you have stated six things: the ticket folder, how status and dependencies are recorded, the label string of each triage role above, the integration branch, the profile the agents will use, and the evidence standards file's path or that the repo declares none.
+**Done when**: you have stated six things: the ticket folder, how status and dependencies are recorded, the label string of each triage role above, the integration branch, the profile the agents will use, and the evidence standards file's path or that the repo declares none; and, when given, the stream slug and the quota.
 
 ## 2. Build the graph and split into waves
 
