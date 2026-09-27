@@ -16,7 +16,7 @@ Each entry: the observable symptom, then how to handle it. When an incident expo
 
 **Conflict in a registration file**, caused by two tickets both adding lines to a manifest, package index, route table, or permission file. Keep both sides' lines, in ticket-number order.
 
-**Install is green but the real run fails.** For example, two modules register a helper under the same name and one silently shadows the other: installing reports nothing, only a real call fails. Fix it, then add the real-call check to the "Done when:" items and to the traps section of the next wave's common rules.
+**Install is green but the real run fails.** For example, two modules register a helper under the same name and one silently shadows the other: installing reports nothing, only a real call fails. Fix it, then add the real-call check to the "Done when:" section and to the traps section of the next wave's common rules.
 
 **Moving the result onto another branch** (for example a test branch that has drifted far from the main one). Create a new branch from the target, cherry-pick exactly the reviewed commits, then compare trees: `git diff <reviewed commit> <replayed commit> -- <feature paths>` must be empty. An automatic replay can duplicate lines in registration files; the tree comparison catches this.
 
