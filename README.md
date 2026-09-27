@@ -64,7 +64,7 @@ The skill asks for your approval at the decisions that are yours: the stage and 
 If the target repo commits a `paseo.json`, the skill uses it when spawning: with `worktree.setup` declared, it stops pasting environment setup into agent prompts; with services declared, it stops assigning ports and relies on the port Paseo gives each worktree. The skill never writes `paseo.json`; the target repo owns it. Notes for whoever maintains that file:
 
 - Do not declare a fixed `port` on a service. Every worktree then gets the same port; on Windows the processes all bind it without error, a worktree's proxy URL serves another worktree's files, and `health` still reports healthy. Leave `port` out and read the assigned one from `PASEO_PORT`.
-- On Windows, `worktree.setup` runs in Windows PowerShell, while `scripts` and terminals run in cmd. Write setup with `$env:PASEO_WORKTREE_PORT` and scripts with `%PASEO_PORT%`; the sh form `$VAR` from the Paseo docs expands to nothing in PowerShell and stays literal in cmd, with no error.
+- On Windows, `worktree.setup` runs in Windows PowerShell, while `scripts` and terminals run in cmd. The sh form `$VAR` used in the Paseo docs fails silently in both: it expands to nothing in PowerShell and stays literal in cmd. Use PowerShell syntax in setup (`$env:PASEO_WORKTREE_PORT`) and cmd syntax in scripts (`%PASEO_PORT%`).
 
 ## Installation
 
