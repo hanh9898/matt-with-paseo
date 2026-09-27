@@ -75,3 +75,14 @@ Ticket 01 đã ghi giả thuyết 1 như thể đã chốt. **Cần sửa lại*
 ### Việc phải làm ngay, không đợi ticket nào
 
 Từ giờ vấp phải ghi vào **một file trên đĩa** khi vừa phát hiện, không để trong hội thoại. Đề xuất: `.scratch/<effort>/pitfalls.md` trong repo đích, mỗi vấp một dòng kèm ngày và đợt phát hiện. Đây là loại luật thuộc `matt-with-paseo`, không thuộc repo đích.
+
+### Đính chính 27/09: danh sách vấp KHÔNG mất
+
+Kết luận "chưa bao giờ ghi xuống đĩa" và "mất 2, 3, 4, 5, 7" ở trên là **sai**. Phiên trước chỉ quét transcript, không tìm trong `.scratch/` của OPMS. Danh sách đầy đủ, kèm bằng chứng, nằm ở `resource-plan-billable/.scratch/test-infra/grilling-settled.md:24-36` (vấp 1–9) và `:103-108` (vấp 10–11). `pitfalls.md` đã điền lại theo nguồn này.
+
+Sửa theo:
+
+- Vấp #2 là `create_agent` không khớp tài liệu, vấp #3 là permission hết hạn: hai ứng viên "lỗi Paseo" **có** số hiệu và bằng chứng.
+- Vấp #9 của nguồn gốc là *876 dòng tích tụ ngoài git*; mục `git stash` trần mà bảng trên gọi là #9 đổi thành **9b**.
+- Hệ quả "ticket 09 mạnh hẳn lên" **rút lại**: không có gì mất, nên lập luận nối `/retro` vì lưu bền tắt hẳn (ticket 09 đã đóng: không nối).
+- Hệ quả "ticket 10 co còn một ứng viên" **rút lại**: xem ghi chú ở ticket 10.

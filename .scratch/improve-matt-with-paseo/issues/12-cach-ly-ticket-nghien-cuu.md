@@ -1,7 +1,7 @@
 # 12 — Luật "mỗi ticket một worktree" có phủ ticket nghiên cứu không?
 
 Type: grilling
-Status: claimed
+Status: resolved
 
 ## Question
 
@@ -19,3 +19,11 @@ Cần chốt:
 4. Paseo **không chặn** hai agent chung thư mục (đã xác nhận: ba `agentId` thật cùng `cwd`, chồng lấn thời gian). Nên luật phải nằm ở skill, không trông chờ công cụ chặn hộ.
 
 Liên quan ticket 09 — đừng quyết trùng: 09 cũng đụng `claude-handoff`, thứ cũng sinh agent nền.
+
+## Answer
+
+Bằng chứng và trích dẫn đầy đủ: [`drafts/12-proposal.md`](../drafts/12-proposal.md). Người dùng duyệt 27/09.
+
+**Không sửa `matt-with-paseo`.** Vấp #13 xảy ra ở giai đoạn `wayfinder`, trước khi skill này được gọi; hai agent va nhau là subagent Claude Code, không phải agent Paseo. Cách ly ticket nghiên cứu là việc của `engineering/wayfinder/SKILL.md:115` (nhánh `research/<name>`) và của kỷ luật vận hành khi chạy subagent song song (cấm git ghi, mỗi agent một file, người điều phối commit). Kỷ luật đó đã chạy sạch nhiều lần, kể cả đợt nháp 05-13 này.
+
+Đã làm: `pitfalls.md` đổi loại vấp #13 thành *kỷ luật vận hành (thuộc wayfinder)*.

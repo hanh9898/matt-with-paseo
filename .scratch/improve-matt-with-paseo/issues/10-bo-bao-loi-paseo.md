@@ -25,3 +25,5 @@ Ba ứng viên đã biết:
 - Permission hết hạn giữa chừng wave.
 
 Ticket này **không** gửi đi đâu cả: nó dừng ở chỗ có file gửi được. Gửi đi đâu là việc của người dùng.
+
+**Từ đính chính ticket 03 (27/09):** ba ứng viên đều có số hiệu và bằng chứng trong `pitfalls.md`: #2 (`create_agent`), #3 (permission), #8 (chưa phân định). #2 và #3 **không** phụ thuộc ticket 07; chỉ #8 phải đợi. Có bỏ ticket này khỏi bản đồ hay không: người dùng chưa quyết.

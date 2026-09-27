@@ -24,7 +24,7 @@ Nó **thay thế** ô cuối trong chuỗi `/wayfinder → /to-spec → /to-tick
 
 Bằng chứng đã kiểm (ticket 02): `implement-spec` chạy subagent **trong cùng một phiên** bằng Task tool, nên trần ngữ cảnh mà Matt tự chê là có thật và không tránh được. `matt-with-paseo` cho mỗi ticket một agent Paseo riêng với cửa sổ riêng, nên **không mắc trần đó ở phía agent làm việc**.
 
-**Nhưng nó mắc trần ở phía khác, và đã trả giá:** sổ của người điều phối sống trong hội thoại nhiều đợt, và việc đó đã làm **mất 5/12 vấp** khi ngữ cảnh bị nén (ticket 03). `pitfalls.md` vá được phần lưu bền; phần còn lại chưa đo được nhẹ hơn bao nhiêu. Giảm tải ngữ cảnh cho người điều phối qua nhiều wave là **câu hỏi mở**, đã gộp vào ticket 07 — cùng gốc với vấp #8: người điều phối không sống sót qua ranh giới phiên.
+**Phía người điều phối thì vẫn có rủi ro, nhưng chưa có bằng chứng mất dữ liệu.** Ticket 03 từng kết luận "mất 5/12 vấp"; kết luận đó **sai** (đính chính ở ticket 03): danh sách nằm ở một file khác repo mà bản đồ chưa liên kết. Bài học thật là **sổ phải nằm ở chỗ bản đồ trỏ tới**, việc `pitfalls.md` đã làm. Người điều phối không sống sót qua ranh giới phiên (vấp #8) vẫn là câu hỏi mở của ticket 07.
 
 Nguồn: <https://x.com/mattpocockuk/status/2090747462973571302> và <https://x.com/mattpocockuk/status/2090746680551383294>.
 
@@ -39,7 +39,7 @@ Mọi ticket phải soi `matt-with-paseo` bằng chính tiêu chí này.
 
 Trong 12 vấp, một số là **hành vi của Paseo** chứ không phải của skill.
 
-> **Cập nhật 27/09 (ticket 03):** con số "ba cái" không còn đứng được. Chỉ **vấp #8** còn số hiệu xác nhận, và nó đang có **ba giả thuyết chưa phân định**, trong đó một giả thuyết quy lỗi cho **chính skill**. Hai ứng viên kia (`create_agent`, permission hết hạn) đã **mất nội dung**, không khôi phục được số hiệu. Cái nào sửa được ở skill thì sửa; cái nào là lỗi Paseo thì **thành báo lỗi gửi ngược**, không dán băng bằng câu "dặn agent cẩn thận".
+> **Cập nhật 27/09 (đính chính ticket 03):** ba ứng viên đều **có bằng chứng**: vấp #2 (`create_agent` không khớp tài liệu), vấp #3 (permission hết hạn), vấp #8 (còn ba giả thuyết chưa phân định, một giả thuyết quy lỗi cho **chính skill**). Xem `pitfalls.md`. Cái nào sửa được ở skill thì sửa; cái nào là lỗi Paseo thì **thành báo lỗi gửi ngược**, không dán băng bằng câu "dặn agent cẩn thận".
 
 ### Luật tách đôi 2 — bẫy máy móc hay bẫy phán đoán
 
@@ -64,7 +64,7 @@ Nếu về sau có nhiều người cùng chạy một bản đồ thì giả đ
 
 ### Luật đứng: ghi vấp ra đĩa ngay lúc phát hiện
 
-Vấp phải vào `pitfalls.md` **khi vừa thấy**, không giữ trong hội thoại. Viết **triệu chứng** trước, đừng viết nguyên nhân — nguyên nhân có thể sai, triệu chứng thì không. Đây là hệ quả trực tiếp của việc mất 5/12 vấp.
+Vấp phải vào `pitfalls.md` **khi vừa thấy**, không giữ trong hội thoại. Viết **triệu chứng** trước, đừng viết nguyên nhân — nguyên nhân có thể sai, triệu chứng thì không. Lý do: một phiên từng tưởng danh sách vấp đã mất, chỉ vì nó nằm ở file bản đồ không trỏ tới (ticket 03, đính chính).
 
 ### Luật đứng: chỉ giữ phần điều phối
 
@@ -91,7 +91,8 @@ Mọi ticket soi đề xuất của mình bằng câu: *Matt sửa thì bên nà
 
 ### Nguồn bằng chứng nằm ngoài repo này
 
-- 12 vấp + 7 wave: `C:/Users/HBLAB_OPMS/.paseo/worktrees/3i6hfvb7/resource-plan-billable/.scratch/rp-billable-next/`
+- 7 wave: `C:/Users/HBLAB_OPMS/.paseo/worktrees/3i6hfvb7/resource-plan-billable/.scratch/rp-billable-next/`
+- Danh sách vấp 1–11 kèm bằng chứng, và quyết định `evidence-standards.md`: cùng repo, `.scratch/test-infra/grilling-settled.md`
 - 53 bài X + 100 lượt trả lời của Matt: cùng repo, `.scratch/mattpocock-x/`
 - Nguồn v1.3: `~/.claude/plugins/marketplaces/mattpocock/skills/`
 
@@ -101,8 +102,15 @@ Mọi ticket soi đề xuất của mình bằng câu: *Matt sửa thì bên nà
 
 - [01 — Plugin API có bắt được lúc agent idle không?](issues/01-paseo-plugin-api-agent-idle.md): không có hook `idle`; gần nhất là `agent.turn_ended`, chạy trong daemon. **Hệ quả:** gửi xuyên agent chưa ai chứng minh, nên ticket 07 chưa có tiền đề để chọn nhánh plugin.
 - [02 — Năm skill v1.3 làm gì?](issues/02-doc-than-5-skill-v13.md): `implement-spec` chạy subagent trong cùng một phiên, nên trần ngữ cảnh của nó là thật. **Hệ quả:** vị thế bậc A đứng vững; và bảng "chỗ nghi là hợp" của ticket 09 đã bị bác ba phần tư.
+- [03 — Phân loại 12 vấp](issues/03-phan-loai-12-vap.md): **đã đính chính** — danh sách không mất, nằm ở `test-infra/grilling-settled.md` của OPMS; `pitfalls.md` đã điền đủ. **Hệ quả:** ticket 10 có lại ba ứng viên có bằng chứng (#2, #3, #8); lập luận nối `/retro` vì "mất vấp" tắt; luật đứng "ghi vấp ra đĩa ngay" giữ nguyên.
 - [04 — Chốt bảng từ](issues/04-bang-tu.md): không đặt từ mới; khối từ trong `SKILL.md` là nguồn duy nhất, bỏ danh từ *Done*, thêm *Common rules*; bảng bước 0 thu về E–G và trỏ `/ask-matt`. **Hệ quả:** không có `GLOSSARY.md` cho repo này; luật đứng "chỉ giữ phần điều phối" vào Notes; ticket 06 mở khoá và viết luật bằng mô tả, không bằng thuật ngữ *handoff*; ticket 13 mới; phần đổi tên tài liệu miền của ticket 11 tan.
-- [03 — Phân loại 12 vấp](issues/03-phan-loai-12-vap.md): danh sách chưa bao giờ ghi xuống đĩa, 5/12 mục không tìm lại được. **Hệ quả:** ticket 10 co xuống còn một ứng viên và phải đợi 07; luật đứng "ghi vấp ra đĩa ngay" đã vào Notes.
+- [05 — Chỗ cắm evidence standards](issues/05-cho-cam-evidence-standards.md): ratify quyết định ở `test-infra`; repo đích khai `docs/agents/evidence-standards.md` **ngoài** khối `## Agent skills` của Matt, văn xuôi tự do, không có thì bỏ qua. **Hệ quả:** lời gọi `code-review` phải nhắc thêm file này; phần máy móc của nó theo 08.
+- [06 — Acceptance criteria thắng](issues/06-luat-o-nghiem-thu-thang.md): một câu luật; agent làm theo acceptance criteria rồi ghi lại, nghi chính acceptance criteria sai thì chuyển `ready-for-human`. **Hệ quả:** bước 3 đối chiếu bẫy cũ với acceptance criteria trước khi chép; nhãn **SAI** trong file bẫy.
+- [08 — Tách danh sách bẫy](issues/08-tach-danh-sach-bay.md): phân loại bằng cột "cách kiểm" đã có; bẫy máy móc giữ kèm lệnh, nối vào repo đích là ticket riêng của repo đích; bẫy phán đoán ở lại file từng wave. **Hệ quả:** chỉ sửa `SKILL.md:97` (lọc trước khi chép), không thêm artifact.
+- [09 — Nối skill mới](issues/09-noi-skill-moi.md): không nối `retro`, `handoff`, `claude-handoff`; không thêm bước PR. **Hệ quả:** 0.3.0 không có chỗ ghép nối mới với Matt.
+- [11 — Phát hành 0.3.0](issues/11-co-che-phat-hanh.md): câu đi trước upstream tan; đánh số như cũ, không CHANGELOG; cài tay thì copy kèm `plugin.json`. **Hệ quả:** README thêm hai dòng (copy `plugin.json`, trỏ luật lấy nhánh `SKILL.md:66`); không di trú wave cũ.
+- [12 — Cách ly ticket nghiên cứu](issues/12-cach-ly-ticket-nghien-cuu.md): không thuộc skill này, thuộc `wayfinder` và kỷ luật vận hành. **Hệ quả:** không sửa `SKILL.md`; vấp #13 đổi loại.
+- [13 — Chỉ giữ phần điều phối](issues/13-chi-giu-phan-dieu-phoi.md): bảng kiểm ba file; bước 0 mới (E–G + câu trỏ `ask-matt`, thêm ô vấp #5); nhãn triage đọc từ `triage-labels.md`; rút dòng 116/118 thành con trỏ; thêm script kiểm lệch upstream chạy trước phát hành. **Hệ quả:** `README.md:34-37` và `COMMON-RULES-TEMPLATE.md:23, 51` vào phạm vi spec.
 
 ## Not yet specified
 

@@ -1,7 +1,7 @@
 # 09 — Nối skill nào vào đâu: retro, handoff, pr, claude-handoff
 
 Type: grilling
-Status: claimed
+Status: resolved
 Blocked by: 02
 
 ## Question
@@ -31,3 +31,16 @@ Cần chốt cho từng cái:
 Ticket này phải dựng lập luận thứ hai cho tử tế, hoặc kết luận không nối.
 
 **Việc thứ hai:** ticket 02 phát hiện luật *mỗi ticket một worktree* **không phủ ticket nghiên cứu** do wayfinder tự sinh (vấp #13). Xem ticket 12 — đừng quyết trùng.
+
+## Answer
+
+Bằng chứng và trích dẫn đầy đủ: [`drafts/09-proposal.md`](../drafts/09-proposal.md). Người dùng duyệt 27/09.
+
+**Không nối skill nào, không thêm bước PR** trong 0.3.0. Mỗi chỗ nối là một chỗ phải sửa khi Matt đổi (luật đứng "chỉ giữ phần điều phối").
+
+| Skill | Quyết | Lý do |
+|---|---|---|
+| `retro` | Không nối | `disable-model-invocation`; `engineering/ask-matt/SKILL.md:32` đã chỉ người dùng gõ nó sau một build gập ghềnh. Lập luận "mất vấp" tắt hẳn (ticket 03 đính chính) |
+| `handoff` | Không nối | Cơ chế khác `waveN-common-rules.md` (ticket 02) |
+| `claude-handoff` | Không nối | Chưa đăng ký trong `plugin.json`, và là đường sinh agent thứ hai chồng lên `create_workspace`/`create_agent` |
+| `pr` | Không thêm bước | 7 wave thật chưa lần nào mở PR từ nhánh tích hợp. Xem lại nếu một repo đích cần |

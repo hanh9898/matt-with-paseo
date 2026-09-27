@@ -1,7 +1,7 @@
 # 06 — Diễn đạt luật cho vấp #12: ô nghiệm thu thắng mục bàn giao
 
 Type: grilling
-Status: claimed
+Status: resolved
 Blocked by: 04
 
 ## Question
@@ -25,3 +25,17 @@ Luật này đi vào `matt-with-paseo` chứ không vào repo đích: nó nói v
 **Chặn bởi ticket 04** vì nó dùng thẳng hai từ mà 04 mới là nơi chốt nghĩa: *bàn giao* và *ô nghiệm thu*.
 
 **Từ ticket 04 (đã đóng):** không có thuật ngữ nào cho "mục bàn giao". Viết luật bằng mô tả (*chỉ dẫn mà một ticket trước để lại*), không gọi là *handover*/*handoff*: `/handoff` của Matt mang nghĩa khác (`engineering/ask-matt/SKILL.md:73`). "Ô nghiệm thu" là *acceptance criteria* của Matt (`engineering/to-tickets/SKILL.md:94`), dùng nguyên từ đó.
+
+## Answer
+
+Bằng chứng và trích dẫn đầy đủ: [`drafts/06-proposal.md`](../drafts/06-proposal.md). Người dùng duyệt 27/09.
+
+Không skill nào của Matt có luật cho tình huống này, nên luật viết trong `matt-with-paseo` (phần điều phối). Câu chữ bám bài học đã kiểm ở `rp-billable-next/wave7-common-rules.md:164`.
+
+1. **Luật:** *Một bẫy hay chỉ dẫn từ ticket trước là hướng dẫn, không phải hợp đồng. Acceptance criteria của chính ticket là hợp đồng. Khi hai thứ mâu thuẫn, acceptance criteria thắng; ghi chỗ lệch và lý do vào `## Comments` của ticket.* Đặt cạnh mục bẫy của `COMMON-RULES-TEMPLATE.md`. Không dùng thuật ngữ *handoff* (ticket 04).
+2. **Khi mâu thuẫn:** agent cứ làm theo acceptance criteria rồi ghi lại, không dừng hỏi. Giữ width; như wave 7 đã làm.
+3. **Chiều người điều phối:** thêm vào "Done when" của bước 3: khi chép một bẫy cũ sang, đọc nhanh acceptance criteria của ticket nó chạm; lệch thì sửa bẫy tại chỗ.
+4. **Ghi chỗ lệch:** ngay trong `waveN-common-rules.md` đang chạy, nhãn **SAI** (khác "cũ"); bước 3 của wave sau không chép nguyên văn phần sai. Khuôn file bẫy theo ticket 08.
+5. **Khi nghi chính acceptance criteria sai:** agent không tự sửa. Dừng phần đó, ghi bằng chứng vào `## Comments`, chuyển ticket sang vai trò `ready-for-human` (chuỗi nhãn đọc từ `triage-labels.md`, ticket 13). Nhất quán với `engineering/triage/SKILL.md:41` và `SKILL.md:78`.
+
+**Chưa đo:** mẫu hình 2 và 5 mới có một điểm dữ liệu (một agent chạy một mình). Quan sát ở wave đầu tiên có từ hai ticket song song.

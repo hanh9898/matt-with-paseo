@@ -2,21 +2,22 @@
 
 Ghi ngay lúc phát hiện. Không giữ trong hội thoại.
 
-Lý do có file này: danh sách vấp trước đây sống trong hội thoại qua 7 đợt và **mất 5 trên 12 mục** khi ngữ cảnh bị nén. Xem ticket 03.
+Lý do có file này: danh sách vấp nằm ở một file **khác repo**, không được liên kết từ bản đồ, nên một phiên đã tưởng nó mất (ticket 03, đã đính chính). Nguồn gốc vấp 1–11, kèm bằng chứng: `C:/Users/HBLAB_OPMS/.paseo/worktrees/3i6hfvb7/resource-plan-billable/.scratch/test-infra/grilling-settled.md:24-36` (vấp 1–9) và `:103-108` (vấp 10–11).
 
 Mỗi dòng: số hiệu, ngày, đợt phát hiện, triệu chứng, và loại. Viết **triệu chứng** trước, đừng viết nguyên nhân — nguyên nhân có thể sai, triệu chứng thì không.
 
 | # | Phát hiện | Đợt | Triệu chứng | Loại |
 |---|---|---|---|---|
-| 1 | — | — | *nội dung đã mất; chỉ còn dấu vết "vào skill"* | không rõ |
-| 2 | — | — | *đã mất* | không rõ |
-| 3 | — | — | *đã mất* | không rõ |
-| 4 | — | — | *đã mất* | không rõ |
-| 5 | — | — | *đã mất; dấu vết: "thêm dòng bảng bước 0"* | không rõ |
+| 1 | — | 6, 7 | Commit file luật chung đẩy HEAD sau khi base commit đã ghi vào luật; phải `sed` sửa cả hai lần. | sửa ở skill |
+| 2 | — | — | Bước 4 không nói hình dạng tham số thật của `create_agent`; 2 lỗi validation (`provider`, `initialPrompt`, không có `thinkingOptionId`/`mode`). | sửa ở skill + ứng viên báo lỗi Paseo (tài liệu) |
+| 3 | — | — | Permission của agent hết hạn; trả bằng `respond_to_permission`+`updatedInput` thì agent đọc mơ hồ, 2 lần phải bồi `send_agent_prompt`. | ứng viên báo lỗi Paseo |
+| 4 | — | 6 | Agent ghi vào `.git/info/exclude`, file dùng chung mọi worktree; điều phối gỡ tay. | sửa ở skill |
+| 5 | — | — | Bảng bước 0 không có ô "đã xong N wave, quay lại bước 2"; mỗi lần mở lại phiên phải tự suy. | sửa ở skill (ticket 13, bước 0 mới) |
 | 6 | ~đợt 7 | 7 | Danh sách bẫy lên 21 mục và vẫn dài ra. Agent không đọc kỹ hết. | thiếu phép kiểm + phán đoán |
-| 7 | — | — | *đã mất; dấu vết: "vào TROUBLESHOOTING.md"* | không rõ |
+| 7 | — | — | Index git tranh chấp giữa worktree, `git commit` treo quá 120 giây; 1 lần. | môi trường (git) |
 | 8 | ~đợt 6–7 | 6, 7 | Agent làm xong, chuyển `idle`. Người điều phối không nhận thông báo. Xảy ra **hai lần trên cùng một ticket**. | **chưa phân định** |
-| 9 | — | — | Dùng `git stash` trần trong worktree dùng chung. Phiên khác có thể pop mất. | sửa ở skill |
+| 9 | — | — | 876 dòng nằm ngoài git 2 ngày (335 dòng test, 253 dòng trong 2 file chưa theo dõi); không gì chặn, điều phối chỉ kiểm khi agent đã báo về. | thiếu phép kiểm |
+| 9b | — | — | Dùng `git stash` trần trong worktree dùng chung. Phiên khác có thể pop mất. *(Ticket 03 từng gán số 9; trùng số với vấp 9 của nguồn gốc nên đổi thành 9b.)* | sửa ở skill |
 | 10 | 27/09 | — | Skill liệt kê `/resolving-merge-conflicts` để nối chuỗi. Upstream đã xoá skill đó. | sửa ở skill |
 | 11 | 27/09 | — | Skill bảo tạo `CONTEXT.md`. Upstream đã đổi sang `GLOSSARY.md`. | sửa ở skill |
 | 12 | 27/09 | 7 | Mục bàn giao của ticket trước mâu thuẫn ô nghiệm thu của ticket sau. Agent phải tự chọn bên nào thắng. | sửa ở skill |
@@ -33,8 +34,8 @@ Ticket 07 phân định. **Không viết nguyên nhân vào skill trước khi p
 
 | # | Phát hiện | Đợt | Triệu chứng | Loại |
 |---|---|---|---|---|
-| 13 | 27/09 | — | Hai agent nghiên cứu của wayfinder chạy chung một thư mục, giẫm lên nhánh HEAD của nhau. Commit rơi nhầm nhánh. | sửa ở skill |
+| 13 | 27/09 | — | Hai agent nghiên cứu của wayfinder chạy chung một thư mục, giẫm lên nhánh HEAD của nhau. Commit rơi nhầm nhánh. | kỷ luật vận hành (thuộc wayfinder, không thuộc `matt-with-paseo`; ticket 12) |
 
-Vấp 13: luật "mỗi ticket một worktree" của skill **không phủ ticket nghiên cứu của wayfinder**. Lỗi thuộc người điều phối, nhưng chỗ hở thuộc skill.
+Vấp 13: xảy ra ở giai đoạn `wayfinder`, trước khi `matt-with-paseo` được gọi; skill này không có mã nào chạy lúc đó. Ticket 12 kết luận chỗ hở **không thuộc skill**.
 
 **Phân biệt quan trọng:** hai agent va nhau là **subagent của Claude Code** (Agent tool), **không phải agent Paseo**. Nên chỗ hở không nằm ở phần skill quản agent Paseo. Lần thứ hai người điều phối **cấm agent đụng git** và cho mỗi agent ghi đúng một file riêng — hai agent chạy song song, không va chạm nào. Xem ticket 12.
