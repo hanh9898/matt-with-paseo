@@ -1,5 +1,7 @@
 # matt-with-paseo 0.4.0: a stream skill above the wave skill
 
+Published: https://github.com/hanh9898/matt-with-paseo/issues/15
+
 ## Problem Statement
 
 I run work for several requesters at once. Each requester hands me their own set of tickets (bugs, features, sometimes unrelated to each other), and each set must run and ship on its own, in parallel with the others, often in the same repository. Today `matt-with-paseo` orchestrates exactly one ticket set from the checkout it is standing in. To run a second set I open another session in another checkout, and to follow both I move between sessions: I relay their questions by hand, I keep in my head how many agents are running in total, I notice by myself when two sets edit the same file, and when a set is done I push its branch and open its pull request by hand. Two orchestrators in one repository also collide: they use the same wave labels and the same wave branch names, so one wave's recovery sweep and cleanup can see the other wave's agents.
