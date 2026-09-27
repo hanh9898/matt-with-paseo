@@ -1,8 +1,8 @@
 # 10 — Viết bộ báo lỗi gửi ngược cho Paseo
 
 Type: task
-Status: open
-Blocked by: 03, 07
+Status: resolved
+Blocked by: 03
 
 ## Question
 
@@ -27,3 +27,20 @@ Ba ứng viên đã biết:
 Ticket này **không** gửi đi đâu cả: nó dừng ở chỗ có file gửi được. Gửi đi đâu là việc của người dùng.
 
 **Từ đính chính ticket 03 (27/09):** ba ứng viên đều có số hiệu và bằng chứng trong `pitfalls.md`: #2 (`create_agent`), #3 (permission), #8 (chưa phân định). #2 và #3 **không** phụ thuộc ticket 07; chỉ #8 phải đợi. Có bỏ ticket này khỏi bản đồ hay không: người dùng chưa quyết.
+
+## Answer
+
+Ba file sẵn gửi dưới [`bug-reports/`](../bug-reports/), viết bằng tiếng Anh vì gửi cho đội Paseo. **Chưa gửi đi đâu**; gửi là việc của người dùng. Bằng chứng đo: [`probes-07.md`](../probes-07.md).
+
+| File | Vấp | Loại | Tái hiện |
+|---|---|---|---|
+| `01-autonomous-turn-no-finish-notification.md` | #8 | lỗi hành vi | tất định 10/10 |
+| `02-question-permission-answer-shape-undocumented.md` | #3 | thiếu tài liệu | có (P3) |
+| `03-windows-setup-and-scripts-use-different-shells.md` | mới (ticket 14, B2) | lỗi hành vi + tài liệu | có (B2) |
+
+Đã loại, có lý do:
+
+- **Vấp #2 (`create_agent`) không phải lỗi Paseo.** `paseo/SKILL.md:54-56` mô tả đúng hình dạng tham số; người điều phối tự đoán `prompt`, `model`, `mode`, và Paseo trả lỗi validation rõ ràng. Sửa ở skill: bước 4 trỏ tới tài liệu đó.
+- **"Permission hết hạn sau 5 phút" không tái hiện**: sau 6 phút 10 giây yêu cầu vẫn chờ. Ghi ở cuối báo lỗi 02.
+
+Trước khi gửi, người dùng soát lại id agent và đường dẫn trong ba file.

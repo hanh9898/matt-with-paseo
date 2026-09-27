@@ -9,8 +9,8 @@ Mỗi dòng: số hiệu, ngày, đợt phát hiện, triệu chứng, và loạ
 | # | Phát hiện | Đợt | Triệu chứng | Loại |
 |---|---|---|---|---|
 | 1 | — | 6, 7 | Commit file luật chung đẩy HEAD sau khi base commit đã ghi vào luật; phải `sed` sửa cả hai lần. | sửa ở skill |
-| 2 | — | — | Bước 4 không nói hình dạng tham số thật của `create_agent`; 2 lỗi validation (`provider`, `initialPrompt`, không có `thinkingOptionId`/`mode`). | sửa ở skill + ứng viên báo lỗi Paseo (tài liệu) |
-| 3 | — | — | Permission của agent hết hạn; trả bằng `respond_to_permission`+`updatedInput` thì agent đọc mơ hồ, 2 lần phải bồi `send_agent_prompt`. | ứng viên báo lỗi Paseo |
+| 2 | — | — | Bước 4 không nói hình dạng tham số thật của `create_agent`; 2 lỗi validation (`provider`, `initialPrompt`, không có `thinkingOptionId`/`mode`). | sửa ở skill (tài liệu `paseo/SKILL.md:54-56` đúng; người điều phối đoán tham số; ticket 10) |
+| 3 | — | — | Permission của agent hết hạn; trả bằng `respond_to_permission`+`updatedInput` thì agent đọc mơ hồ, 2 lần phải bồi `send_agent_prompt`. | thiếu tài liệu Paseo: phải gửi `updatedInput.answers` (P3, báo lỗi 02); "hết hạn" không tái hiện |
 | 4 | — | 6 | Agent ghi vào `.git/info/exclude`, file dùng chung mọi worktree; điều phối gỡ tay. | sửa ở skill |
 | 5 | — | — | Bảng bước 0 không có ô "đã xong N wave, quay lại bước 2"; mỗi lần mở lại phiên phải tự suy. | sửa ở skill (ticket 13, bước 0 mới) |
 | 6 | ~đợt 7 | 7 | Danh sách bẫy lên 21 mục và vẫn dài ra. Agent không đọc kỹ hết. | thiếu phép kiểm + phán đoán |

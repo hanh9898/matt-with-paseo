@@ -1,7 +1,7 @@
 # 07 — Phát hiện hoàn thành: heartbeat thành bước chính thức, hay hook plugin?
 
 Type: grilling
-Status: open
+Status: resolved
 Blocked by: 01
 
 ## Question
@@ -33,3 +33,14 @@ Tiền đề đã đủ. Chi tiết và bằng chứng: [`probes-07.md`](../prob
 - **A1:** thông báo hoàn thành tới **agent đã gửi prompt kèm `notifyOnFinish`** cho lượt đó, không tới agent cha. Mỗi lượt có người nhận riêng.
 - **A2:** vòng lặp đỏ **có, tất định, 10/10**. Agent đẩy việc xuống lệnh nền rồi kết thúc lượt; lượt tự mở sau đó làm xong việc thật nhưng **không có thông báo nào** (0/10), `attentionTimestamp` cũng không đổi. Đây là giả thuyết 4, mới; không cần Paseo khởi động lại.
 - **E4:** `agents.ref(id).send()` **chạy xuyên agent**; `agent.turn_ended` **bắn cả cho lượt tự mở** (`turnId` = `autonomous-turn-N`) và mang `parentAgentId`. Nhánh plugin mở được. Giới hạn daemon khởi động lại (mục 2) vẫn còn, nhưng không liên quan tới giả thuyết 4.
+
+## Answer
+
+Người dùng duyệt 27/09, dựa trên kết quả đo ở trên. Chọn theo luật đứng "chỉ giữ phần điều phối": ít chỗ phụ thuộc Paseo nhất.
+
+1. **Luật cho agent (common rules):** không kết thúc lượt khi việc còn chạy nền; đợi nó xong trong cùng lượt. Chặn giả thuyết 4 ngay tại nguồn.
+2. **Luật cho người điều phối (bước 5):** mở rộng điều kiện heartbeat đang có. Hiện chỉ dùng khi agent do phiên khác tạo. Thêm: một báo cáo "finished" mà kiểm hiện vật (bước 5 đã kiểm) chưa thấy việc xong thì coi là agent còn đang làm, bật heartbeat, xoá khi agent dừng thật.
+3. **Không đưa plugin vào skill.** Plugin `turn_ended` gửi về `parentAgentId` chạy được (E4), nhưng thêm một chỗ phụ thuộc API plugin của Paseo và bắt người dùng tự cài. Giữ làm phương án dự phòng nếu 1 và 2 không đủ.
+4. **Báo lỗi cho Paseo** rằng lượt tự mở không sinh thông báo: ticket 10. Paseo sửa được thì luật 2 thành thừa, gỡ đi.
+
+Câu 4 cũ (người điều phối sống sót qua ranh giới phiên): A1 cho thấy phiên mới chỉ nhận thông báo cho lượt nó tự gửi prompt; luật heartbeat của bước 5 cho agent do phiên khác tạo đã phủ trường hợp đó, không cần yêu cầu mới. Câu 5–8 (lọc `failed`, nhịp, điều kiện dừng, kiểm gì) thuộc heartbeat hiện có; để `/to-spec` viết câu chữ, không có quyết định mới.

@@ -66,3 +66,46 @@ W `d5ad0dee` nhận **cả hai** tin, mở lượt mới cho mỗi tin (activity
 **Giới hạn còn nguyên (ticket 07, mục 2):** hook chạy trong tiến trình daemon. Nếu daemon khởi động lại giữa lượt thì hook chết theo. Nhưng giả thuyết 4 (lượt tự mở) không cần daemon khởi động lại, và đợt đo này không thấy daemon nào khởi động lại (`startedAt` 02:45, trước mọi phép đo).
 
 Dọn: `paseo plugin remove probe-e4`, archive mọi agent nhãn `probe`.
+
+# Phép đo cho ticket 14
+
+## B6. `create_terminal` / `capture_terminal`
+
+X tạo terminal `probe-B6`, gửi một lệnh chạy khoảng 10 giây bằng `send_terminal_keys`, đọc lại bằng `capture_terminal`.
+
+- **Terminal trên Windows là `cmd.exe`**, không phải PowerShell. Lệnh viết theo PowerShell (`;`, `$(...)`) chạy sai mà không báo lỗi. Cú pháp đúng: `lệnh1 & lệnh2`. `%TIME%` được thay lúc gõ lệnh, không phải lúc chạy xong.
+- Lệnh chạy xong, `capture_terminal` đọc được dòng kết quả.
+- **Một agent khác** (`[probe B6] reader`, không tạo terminal) đọc được đúng terminal đó chỉ bằng `terminalId`: `B6-READ: B6-DONE 14:43:57.74`.
+- **Terminal không sinh thông báo khi lệnh xong.** Muốn biết xong thì phải gọi `capture_terminal` lại.
+
+**Kết luận B6:** terminal là nơi chạy lệnh dài mà người điều phối và agent **cùng nhìn được**, sống ngoài lượt của agent. Nó **không** chữa vấp #8: không có thông báo hoàn thành, nên agent vẫn phải tự đợi trong lượt (luật ticket 07).
+
+## B2. `paseo.json`: `worktree.setup`, `scripts`, `teardown`
+
+Nhánh tạm `probe/b2` (đã xoá) commit một `paseo.json` có `worktree.setup`, `worktree.teardown` và một script `probe`; mỗi lệnh in biến môi trường theo **cả hai** cú pháp `%VAR%` (cmd) và `$VAR` (sh/PowerShell). `create_workspace` với `baseBranch: probe/b2`.
+
+- **`setup` chạy tự động** khi tạo worktree. Nhưng trên Windows nó chạy bằng **Windows PowerShell**: file ra UTF-16, `%VAR%` giữ nguyên chữ, `$PASEO_WORKTREE_PORT` ra **rỗng** (PowerShell cần `$env:PASEO_WORKTREE_PORT`). Ví dụ trong tài liệu (`paseo.sh/docs/worktrees.md`) viết `$PASEO_…` kiểu sh, nên **chép nguyên ví dụ sang Windows thì hỏng mà không báo lỗi**.
+- **`scripts` chạy bằng cmd**: `%PASEO_WORKTREE_PORT%` ra `53449`, `$PASEO_…` giữ nguyên chữ. `start_workspace_script` trả `terminalId`; `list_workspace_scripts` thấy script.
+- Terminal (`create_terminal`, B6) cũng là cmd. **Ba nơi chạy lệnh, hai shell khác nhau trên cùng một máy.**
+- `archive_workspace` trả `removedDirectory: false` khi worktree có file chưa theo dõi, và không thấy dấu vết `teardown` chạy. Khớp luật bước 8 của skill (kiểm `status --porcelain` rỗng trước khi archive).
+
+**Kết luận B2:** `worktree.setup` thay được bước dựng môi trường chép tay, và cấu hình nằm ở repo đích, đúng luật "trỏ, không chép". Nhưng người viết `paseo.json` trên Windows phải biết `setup` là PowerShell, `scripts` là cmd.
+
+## P3. Permission có tự hết hạn không? (vấp #3)
+
+Agent `[probe P3]` ở chế độ `default` gọi `AskUserQuestion`; X nhận thông báo "needs permission", **đợi 6 phút 10 giây** rồi mới trả lời.
+
+- Sau 6 phút, `list_pending_permissions` **vẫn còn** yêu cầu: không hết hạn trong khoảng đó.
+- Trả lời bằng `respond_to_permission` với `behavior: allow` và `updatedInput` gồm `questions` **cộng `answers: {"<câu hỏi>": "Beta"}`** → agent nhận rõ: `P3-GOT: Beta`.
+
+**Kết luận P3:** không tái hiện được "hết hạn". Lần 24/09 báo `No pending permission request` sau 5 phút 13 giây chưa rõ nguyên nhân (có thể người dùng đã trả lời trên giao diện). Còn chuyện "agent đọc câu trả lời mơ hồ" thì khớp với hình dạng câu trả lời: hai lần 24–25/09 gửi `selectedActionId` và `updatedInput.questions` **không có `answers`**. Skill `paseo` không mô tả cách trả lời một permission loại `question`, nên đây là lỗ hổng tài liệu, không phải lỗi hành vi.
+
+## B3. `set_agent_mode` trên agent đang sống
+
+Agent `[probe B3]` tạo ở `default`.
+
+- `echo` (chỉ đọc) chạy **không** xin quyền; `Write` thì xin quyền. Mốc đúng.
+- Trong lúc yêu cầu `Write` đang chờ, X gọi `set_agent_mode(bypassPermissions)` → `success`. Yêu cầu đang chờ **không tự được duyệt**; X phải `respond_to_permission(allow)`.
+- Lần `Write` tiếp theo chạy **không xin quyền** (`B3-WROTE-2`).
+
+**Kết luận B3:** đổi chế độ giữa chừng được, có hiệu lực từ lần gọi tool kế tiếp. Yêu cầu nào đang chờ lúc đổi thì vẫn phải trả lời tay. Yêu cầu `Write` kèm sẵn `suggestions` (`setMode: acceptEdits`, `addDirectories`) cho người duyệt.
