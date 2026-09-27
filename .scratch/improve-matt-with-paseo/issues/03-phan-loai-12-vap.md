@@ -1,7 +1,7 @@
 # 03 — Phân loại 12 vấp: lỗi skill, lỗi Paseo, hay thiếu phép kiểm?
 
 Type: task
-Status: open
+Status: claimed
 
 ## Question
 
