@@ -46,7 +46,7 @@ Once the tickets exist, come back to this skill rather than Matt's `/mattpocock-
 
 Each wave then goes through the same loop:
 
-1. **Prepare**: read Paseo profiles, the ticket tracker, and the integration branch. The branch is read with `git branch --show-current`, never from the directory name, since a Paseo worktree directory is named by a slug (the rule in step 1 of `SKILL.md`).
+1. **Prepare**: read Paseo profiles, the ticket tracker, and the integration branch. The branch is read with `git branch --show-current`, never from the directory name (the rule in step 1 of `SKILL.md`).
 2. **Split**: draw the dependency graph and put every ticket that can run now into the wave. It also lists what is costing width (a ticket waiting on a human, a `Blocked by` that is only a shared file) with the one question that would unblock it. You approve it.
 3. **Common rules**: pin a base commit and write `wave<N>-common-rules.md` from the template.
 4. **Spawn**: one worktree and one agent per ticket. Symptom tickets run `mattpocock-skills:diagnosing-bugs` then `mattpocock-skills:tdd`; behaviour tickets run `mattpocock-skills:tdd`. Every flow ends with `mattpocock-skills:code-review`, as `/mattpocock-skills:implement` does.
