@@ -1,7 +1,7 @@
 # 01 — Plugin API của Paseo có bắt được lúc agent chuyển idle không?
 
 Type: research
-Status: open
+Status: claimed
 
 ## Question
 

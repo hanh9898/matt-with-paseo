@@ -1,7 +1,7 @@
 # 02 — Năm skill v1.3 thật sự làm gì và giả định những gì?
 
 Type: research
-Status: open
+Status: claimed
 
 ## Question
 
