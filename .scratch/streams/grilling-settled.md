@@ -6,7 +6,7 @@ Bắt đầu 27/09/2026, `/grill-with-docs`, người dùng chạy `matt-with-pa
 
 - Paseo cho một phiên điều khiển repo khác: `create_workspace` nhận `path` tới checkout bất kỳ. Phiên grill này đã đọc OPMS và đăng issue lên fork Paseo mà không đổi chỗ.
 - `matt-with-paseo` gắn với **một** checkout: đọc cấu hình tracker của repo đang đứng, lấy nhánh tích hợp bằng `git branch --show-current`. Hai bộ việc trong cùng repo hiện đã chạy song song được nếu mỗi bộ có phiên và checkout riêng; thiếu là chỗ đứng chung và luật chống va chạm giữa các bộ.
-- `matt-with-paseo` có `disable-model-invocation: true`: agent không tự gọi được. Phép đo L1 (27/09): agent con có `initialPrompt` bắt đầu bằng `/mattpocock-skills:ask-matt` trả lời bằng chữ gần nguyên văn của skill đó, nên nhiều khả năng lệnh `/…` trong prompt được mở ra; chưa có bằng chứng trực tiếp. Phép đo L2 (dấu hiệu không đoán được): xem dưới.
+- `matt-with-paseo` có `disable-model-invocation: true`: agent không tự gọi được. Phép đo L1 (27/09): agent con có `initialPrompt` bắt đầu bằng `/mattpocock-skills:ask-matt` trả lời bằng chữ gần nguyên văn của skill đó, nên nhiều khả năng lệnh `/…` trong prompt được mở ra; chưa có bằng chứng trực tiếp. Phép đo L2 (27/09): một skill thử có `disable-model-invocation: true`, thân chỉ chứa dấu hiệu ngẫu nhiên `PROBE-L2-QX7V-4417`; agent con Haiku nhận `initialPrompt` là `/probe-l2` và trả về đúng dấu hiệu đó. **Xác nhận: agent con chạy được skill chỉ-người-gõ khi lệnh nằm trong `initialPrompt`.** Skill thử đã xoá.
 
 ## Quyết định đã chốt (người dùng duyệt 27/09)
 
@@ -14,7 +14,7 @@ Bắt đầu 27/09/2026, `/grill-with-docs`, người dùng chạy `matt-with-pa
 - **Người giao việc:** dự án có nhiều người giao việc. Mỗi người giao **nhiều đầu việc**, có thể không liên quan nhau (bug, feature). Việc của người khác là một bộ riêng chạy song song, không thêm wave vào bộ cũ.
 - **Từ mới: Stream** — toàn bộ đầu việc một người giao việc đưa vào, điều phối thành **một đồ thị ticket chạy theo wave riêng**. Chủ stream là người giao việc. Matt không có từ cho đơn vị này (`feature` là một spec, `effort` là bản đồ quyết định), nên được đặt từ mới. Đầu việc không liên quan trong cùng stream dùng chung đồ thị, tốt cho độ rộng.
 - **Tầng mới** điều phối **nhiều stream song song**.
-- **Hình dạng: điều phối lồng nhau.** Người dùng nói chuyện với một agent tầng trên; nó chỉ giữ chỉ mục các stream và phụ thuộc chéo, giao mỗi stream cho một agent Paseo chạy `matt-with-paseo` với cửa sổ ngữ cảnh riêng. Không có "một người điều phối lớn" (trần ngữ cảnh phía điều phối). *Điều kiện:* phép đo L2 xác nhận agent con chạy được `/matt-with-paseo`.
+- **Hình dạng: điều phối lồng nhau.** Người dùng nói chuyện với một agent tầng trên; nó chỉ giữ chỉ mục các stream và phụ thuộc chéo, giao mỗi stream cho một agent Paseo chạy `matt-with-paseo` với cửa sổ ngữ cảnh riêng. Không có "một người điều phối lớn" (trần ngữ cảnh phía điều phối). Điều kiện này đã được phép đo L2 xác nhận.
 - **Phạm vi:** một skill riêng đứng cạnh `matt-with-paseo`; `matt-with-paseo` giữ vai tầng wave. Không nhét vào 0.3.x.
 - **Nguồn sự thật:** tầng trên chỉ **đọc** tracker của từng repo và giữ riêng danh sách phụ thuộc chéo; không chép ticket.
 - **Ai vận hành:** chỉ người dùng gõ lệnh và duyệt ở tầng trên. Người giao việc đưa đầu việc vào tracker và đọc báo cáo của stream mình. Giả định "một người chạy" vẫn đứng.
