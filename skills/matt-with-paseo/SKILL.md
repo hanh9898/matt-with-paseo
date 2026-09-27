@@ -34,11 +34,11 @@ Ticket status is the primary signal for stage F; the two log sections `## Wave a
 
 For stage F, a previous session may have ended mid-step (a crash, a closed window), so run the **recovery sweep** first and report what it finds before resuming any step:
 
-- `git worktree list` and `list_workspaces` against the `## Wave agents` table: a workspace or worktree of this wave with no row is an orphan of an interrupted spawn; a row whose workspace is gone is a cleanup already done.
-- `list_agents` for titles `[Wave N]`: an agent with no row was spawned but never logged; add its row before anything else.
+- `paseo ls -g --label wave=<N> --json` lists the wave's agents by label (`list_agents` cannot filter by label; `-g` because the agents run in worktrees, not in this checkout). An agent with no row in the `## Wave agents` table was spawned but never logged; add its row before anything else.
+- The wave's workspaces are the ones its labelled agents run in: match each agent's `cwd` (printed with `~` for the home directory) against `list_workspaces` and `git worktree list`. A workspace or worktree of this wave with no row, or with no labelled agent in it, is an orphan of an interrupted spawn; a row whose workspace is gone is a cleanup already done.
 - Every background job or heartbeat the previous session started: its output, if any, may hold a report nobody processed.
 
-Then take each unfinished ticket of the wave. Find its agent in the `## Wave agents` table, or else with `list_agents` by the title `[Wave N] NN`:
+Then take each unfinished ticket of the wave. Find its agent in the `## Wave agents` table, or else with `paseo ls -g --label wave=<N> --label ticket=<NN>`:
 
 - No agent: step 4, spawning only for that ticket.
 - Agent still running (`get_agent_status`): wait, then step 5. If this session did not spawn the agent it will not receive the agent's notification, so create a heartbeat per step 5.
@@ -106,8 +106,8 @@ Write the `## Wave agents` heading and the table header row (ticket, agent id, w
 
 For each ticket in the wave:
 
-1. `create_workspace` with `isolation: "worktree"`, `mode: "branch-off"`, `baseBranch` set to the integration branch, and `branchName` shaped `wave<N>/<NN>-<slug>`. Check that `git -C <worktree> rev-parse HEAD` equals the base commit; if the integration branch stays still while you spawn, every worktree in the wave shares one base.
-2. `create_agent` in that workspace, titled `[Wave N] <NN> <ticket name>`. The prompt holds exactly four things: the **absolute** path to the common rules in the integration branch's checkout (the file is the wave's live log and is not in the worktree), the path to the ticket, the private resources (database name, port, volume, temp directory; a distinct set per agent), and the **flow**.
+1. `create_workspace` with `isolation: "worktree"`, `mode: "branch-off"`, `baseBranch` set to the integration branch, and `branchName` shaped `wave<N>/<NN>-<slug>`. Check that `git -C <worktree> rev-parse HEAD` equals the base commit; if the integration branch stays still while you spawn, every worktree in the wave shares one base. Paseo's MCP tools and CLI cannot label a workspace (workspace labels exist only in the app's sidebar), so the workspace itself stays unlabelled and is found through the labelled agent that runs in it.
+2. `create_agent` in that workspace, titled `[Wave N] <NN> <ticket name>`, with `labels: { wave: "<N>", ticket: "<NN>" }`; the labels, not the title, are how step 0 finds the wave's agents again. The prompt holds exactly four things: the **absolute** path to the common rules in the integration branch's checkout (the file is the wave's live log and is not in the worktree), the path to the ticket, the private resources (database name, port, volume, temp directory; a distinct set per agent), and the **flow**.
 
 Take the shape of each `create_agent` call (required fields, optional fields, how the chosen profile maps onto it) from the `paseo` skill (loaded in step 1); do not guess parameters.
 
@@ -179,7 +179,9 @@ Append a `## Review` section to the end of the common rules file: the fixed poin
 - `git -C <worktree> status --porcelain` is empty;
 - the ticket's branch appears in `git branch --merged <integration branch>`.
 
-With all three, `archive_agent`, `archive_workspace`, clean up the non-Paseo resources listed in the private resources column, then check the "cleaned" column. If any is missing, leave the row as is and see [`TROUBLESHOOTING.md`](TROUBLESHOOTING.md). Delete every heartbeat created for the wave.
+The clean-worktree check is mandatory, never skipped: Paseo archives a worktree with uncommitted or untracked files without warning and deletes them with it.
+
+With all three, `archive_agent`, `archive_workspace`, clean up the non-Paseo resources listed in the private resources column, then check the "cleaned" column. If any is missing, leave the row as is and see [`TROUBLESHOOTING.md`](TROUBLESHOOTING.md). Delete every heartbeat created for the wave. Then `paseo ls -g --label wave=<N>` must list nothing; an agent still listed has no row in the table, so check and clean it the same way.
 
 Return to step 2 with the new base commit. When no open ticket can join a wave, report a summary: which tickets are `resolved`, which wait on a human, and which remain open and what blocks them.
 
