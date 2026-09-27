@@ -69,12 +69,14 @@ Wayfinder mặc định chỉ đẻ ra quyết định. Bản đồ này **cho p
 ## Decisions so far
 
 - [01 — Plugin API của Paseo có bắt được lúc agent chuyển idle không?](issues/01-paseo-plugin-api-agent-idle.md): không có hook `idle`; gần nhất là `agent.turn_ended`, chạy trong daemon. Nhưng phát hiện lớn hơn nằm ngoài câu hỏi: `notifyOnFinish` đã có sẵn và mặc định bật — thông báo bị buộc vào **agent cha đã tạo worker**, nên bàn giao làm đứt nó. **Vấp #8 là lỗi thiết kế của skill, không phải lỗi Paseo.**
+- [02 — Năm skill v1.3 thật sự làm gì và giả định những gì?](issues/02-doc-than-5-skill-v13.md): `implement-spec` chạy subagent **trong cùng một phiên** (Task tool), không phải agent Paseo thật — nên trần ngữ cảnh của nó là có thật và **vị thế bậc A đứng vững**. `claude-handoff` không đăng ký trong `plugin.json`; `pr` chưa có chỗ cắm; `retro` chưa được gọi ở đâu.
 
 ## Not yet specified
 
 - **`AGENTS.md` và `CODING_STANDARDS.md` cho chính repo này.** Bảng từ thì cần ngay (ticket 04), nhưng hai file kia chỉ có nghĩa khi có agent viết mã trong repo — hiện chưa có. Xem lại khi 0.3.0 đã có hình.
 - **Sửa phía Paseo bằng plugin thay vì chờ upstream.** Ticket 01 sẽ cho biết plugin API có bắt được sự kiện "agent chuyển idle" hay không. Nếu có, đây thành một nhánh mới.
 - **Cơ chế phát hành**: đánh số phiên bản, cài lại từ cache plugin, và cái bẫy "thư mục worktree không phải tên nhánh". Chưa sắc đủ để thành ticket.
+- **Cách ly cho ticket nghiên cứu của wayfinder.** Hai agent nghiên cứu vừa giẫm lên nhau vì chạy chung thư mục. Luật "mỗi ticket một worktree" của skill không phủ loại ticket này. Chưa rõ nên sửa ở `matt-with-paseo` hay chỉ là luật vận hành.
 - **Căn từ vựng với hệ của Matt**: *software factory*, *harness*, *deterministic orchestrator*. Chưa rõ nên mượn tới đâu.
 
 ## Out of scope
