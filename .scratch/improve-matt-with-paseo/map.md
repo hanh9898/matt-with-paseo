@@ -68,7 +68,7 @@ Wayfinder mặc định chỉ đẻ ra quyết định. Bản đồ này **cho p
 
 ## Decisions so far
 
-<!-- rỗng: chỉ ghi khi có ticket đóng -->
+- [01 — Plugin API của Paseo có bắt được lúc agent chuyển idle không?](issues/01-paseo-plugin-api-agent-idle.md): không có hook `idle`; gần nhất là `agent.turn_ended`, chạy trong daemon. Nhưng phát hiện lớn hơn nằm ngoài câu hỏi: `notifyOnFinish` đã có sẵn và mặc định bật — thông báo bị buộc vào **agent cha đã tạo worker**, nên bàn giao làm đứt nó. **Vấp #8 là lỗi thiết kế của skill, không phải lỗi Paseo.**
 
 ## Not yet specified
 
