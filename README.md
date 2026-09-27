@@ -156,6 +156,14 @@ Issues and pull requests are welcome. The skill follows Matt Pocock's [`writing-
 
 When a fix comes from a real incident, describe the symptom you saw in the pull request.
 
+Before a release, run the drift check by hand (Python 3, standard library only):
+
+```
+python scripts/drift-check.py
+```
+
+It lists every `mattpocock-skills:<name>` reference in `skills/matt-with-paseo/` and this README and compares each one with the Matt plugin installed on your machine, not with a pinned version: it reads the user-scope `mattpocock-skills` entry of `~/.claude/plugins/installed_plugins.json` (pass `--plugin-root <dir>` to compare against another copy). A reference fails when the plugin's manifest does not ship that skill, or when it sits in an agent flow (step 4 of `SKILL.md`, or anywhere in `COMMON-RULES-TEMPLATE.md`) and the skill sets `disable-model-invocation`. Each failure prints one line and the script exits 1; a clean run prints nothing and exits 0; exit 2 means it could not run (no plugin found, or `SKILL.md` has no `## 4.` step). The check only sees prefixed names, so always name Matt's skills as `mattpocock-skills:<name>`. Its tests: `python -m unittest discover -s scripts`.
+
 ## Acknowledgements
 
 - [Matt Pocock](https://github.com/mattpocock) for the [skills](https://github.com/mattpocock/skills) this orchestrates (MIT).
