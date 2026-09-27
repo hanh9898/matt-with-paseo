@@ -59,6 +59,13 @@ The skill asks for your approval at the decisions that are yours: the stage and 
 - [Matt Pocock's skills](https://github.com/mattpocock/skills), installed as the `mattpocock-skills` Claude Code plugin. The skill suggests commands in the plugin's namespaced form, `/mattpocock-skills:<skill>`; if you installed Matt's skills another way, type the same skill without the prefix (`/<skill>`).
 - A git repository whose tracker is configured by `/mattpocock-skills:setup-matt-pocock-skills`
 
+### Target repo `paseo.json` (optional)
+
+If the target repo commits a `paseo.json`, the skill uses it when spawning: with `worktree.setup` declared, it stops pasting environment setup into agent prompts; with services declared, it stops assigning ports and relies on the port Paseo gives each worktree. The skill never writes `paseo.json`; the target repo owns it. Notes for whoever maintains that file:
+
+- Do not declare a fixed `port` on a service. Every worktree then gets the same port; on Windows the processes all bind it without error, a worktree's proxy URL serves another worktree's files, and `health` still reports healthy. Leave `port` out and read the assigned one from `PASEO_PORT`.
+- On Windows, `worktree.setup` runs in Windows PowerShell, while `scripts` and terminals run in cmd. Write setup with `$env:PASEO_WORKTREE_PORT` and scripts with `%PASEO_PORT%`; the sh form `$VAR` from the Paseo docs expands to nothing in PowerShell and stays literal in cmd, with no error.
+
 ## Installation
 
 The repo follows the [Agent Skills](https://agentskills.io/specification) layout (`skills/matt-with-paseo/SKILL.md`) and is also a Claude Code plugin marketplace, so any of these works. Pick one; installing twice gives you two copies of the command.
