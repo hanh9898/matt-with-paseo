@@ -34,11 +34,11 @@ Ticket status is the primary signal for stage F; the two log sections `## Wave a
 
 For stage F, a previous session may have ended mid-step (a crash, a closed window), so run the **recovery sweep** first and report what it finds before resuming any step:
 
-- `git worktree list` and `list_workspaces` against the `## Wave agents` table: a workspace or worktree of this wave with no row is an orphan of an interrupted spawn; a row whose workspace is gone is a cleanup already done.
-- `list_agents` for titles `[Wave N]`: an agent with no row was spawned but never logged; add its row before anything else.
+- `paseo ls -g --label wave=<N> --json` lists the wave's agents by label (`list_agents` cannot filter by label; `-g` because the agents run in worktrees, not in this checkout). An agent with no row in the `## Wave agents` table was spawned but never logged; add its row before anything else.
+- The wave's workspaces are the ones its labelled agents run in: match each agent's `cwd` (printed with `~` for the home directory) against `list_workspaces` and `git worktree list`. A workspace or worktree of this wave with no row, or with no labelled agent in it, is an orphan of an interrupted spawn; a row whose workspace is gone is a cleanup already done.
 - Every background job or heartbeat the previous session started: its output, if any, may hold a report nobody processed.
 
-Then take each unfinished ticket of the wave. Find its agent in the `## Wave agents` table, or else with `list_agents` by the title `[Wave N] NN`:
+Then take each unfinished ticket of the wave. Find its agent in the `## Wave agents` table, or else with `paseo ls -g --label wave=<N> --label ticket=<NN>`:
 
 - No agent: step 4, spawning only for that ticket.
 - Agent still running (`get_agent_status`): wait, then step 5. If this session did not spawn the agent it will not receive the agent's notification, so create a heartbeat per step 5.
