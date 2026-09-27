@@ -141,7 +141,7 @@ A stream ships through one pull request from its integration branch to its PR ta
 
 | Signal | Shows the last stage when |
 |---|---|
-| The stream agent's end-of-turn message | it reports the wave skill's stage F (no work left for agents): its summary lists every ticket as `resolved` or waiting on a human |
+| The stream agent's end-of-turn message | it reports stage F of the wave skill's step 0 table |
 | Ticket status on the tracker, read through the tracker configuration in the stream's worktree | every ticket of the stream's Tickets is `resolved` or in the ready for human role |
 
 Either signal alone is not the last stage. When they disagree, prompt the stream agent "where does the stream stand?" and read both again on its answer. Check this on each end-of-turn message of step 4 and on each tick of step 5. A stream at its last stage whose integration branch holds no commit beyond the PR target (`git -C <worktree> log --oneline origin/<PR target>..stream/<slug>` prints nothing) has nothing to ship: say so in the status line and stop here.
@@ -170,7 +170,7 @@ Any answer other than yes keeps the stream unshipped; write what the user said i
 | GitHub | A comment on the stream's parent spec issue when Tickets names one; otherwise a comment on each ticket of the stream |
 | Local markdown | A comment in the spec file, or in each ticket file when the stream has no spec, as the tracker configuration writes comments. It is a file change in the stream's worktree: commit it on `stream/<slug>` and push again, so the open pull request carries it |
 
-Then write the link into the stream's status line: date, shipped, the pull request's URL, and that the stream waits on the repository's reviewers. The pull request stays open for them; you never merge it, approve it, or close it.
+Then write the link into the stream's status line: date, shipped, the pull request's URL, and that the stream waits on the repository's reviewers. The pull request stays open for them; you never merge it.
 
 **Done when**: the stream is at its last stage by both signals, the user said yes in a question round before anything was pushed, one pull request goes from `stream/<slug>` to the stream's PR target with a description written with `/mattpocock-skills:pr`, its link is posted on the stream's spec or tickets and written in the status line, and nothing was merged.
 
