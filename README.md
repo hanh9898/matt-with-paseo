@@ -6,13 +6,13 @@ You write the tickets with Matt's skills. `matt-with-paseo` runs them in **waves
 
 ## Why
 
-Matt Pocock's skills take a feature from a vague idea to a set of small, dependency-ordered tickets. Running those tickets is still sequential by default: `/implement` works through them one at a time in a single session.
+Matt Pocock's skills take a feature from a vague idea to a set of small, dependency-ordered tickets. Running those tickets is still sequential by default: `/mattpocock-skills:implement` works through them one at a time in a single session.
 
 Paseo can run many agents in parallel, each in its own worktree. What it does not know is which tickets are safe to run together, what each agent needs to be told, or how to check and merge the results.
 
 `matt-with-paseo` fills that gap with one skill:
 
-- It **locates** where your work stands (not configured, grilling, spec, tickets, a wave in progress, finished) and suggests one next step.
+- It **locates** where your work stands (not configured, no spec yet, spec, tickets, a wave in progress, finished) and suggests one next step.
 - It **splits** tickets into waves from their `Blocked by` lines, so only independent tickets run side by side.
 - It writes one **common rules** file per wave, so every agent gets the same context and each prompt stays four lines long.
 - It **checks** each agent's work against the real artifacts (commits, ticket status, a re-run of the key claim) instead of trusting the report.
@@ -39,7 +39,7 @@ Each run then locates the current stage from what the tracker holds:
 | C. Tickets, no wave yet | tickets exist, no `wave*-common-rules.md` | start wave 1 |
 | D. N waves done, tickets left | earlier waves finished, some tickets still open | build the graph again for the next wave |
 | E. Wave in progress | a wave file with unfinished tickets | resume the missing step |
-| F. Finished | every ticket `resolved` or `ready-for-human` | summary |
+| F. Finished | every ticket `resolved` or in the ready for human role | summary |
 
 Once the tickets exist, come back to this skill rather than Matt's `/mattpocock-skills:implement-spec`.
 
@@ -48,10 +48,10 @@ Each wave then goes through the same loop:
 1. **Prepare**: read Paseo profiles, the ticket tracker, and the integration branch.
 2. **Split**: draw the dependency graph and put every ticket that can run now into the wave. It also lists what is costing width (a ticket waiting on a human, a `Blocked by` that is only a shared file) with the one question that would unblock it. You approve it.
 3. **Common rules**: pin a base commit and write `wave<N>-common-rules.md` from the template.
-4. **Spawn**: one worktree and one agent per ticket. Symptom tickets run `diagnosing-bugs` then `tdd`; behaviour tickets run `tdd`. Every flow ends with `code-review`, as Matt's `/implement` does.
+4. **Spawn**: one worktree and one agent per ticket. Symptom tickets run `mattpocock-skills:diagnosing-bugs` then `mattpocock-skills:tdd`; behaviour tickets run `mattpocock-skills:tdd`. Every flow ends with `mattpocock-skills:code-review`, as `/mattpocock-skills:implement` does.
 5. **Check**: verify each report against commits, ticket status, and a re-run of its key claim.
 6. **Merge**: one `--no-ff` merge per ticket as soon as its report is checked, with a cheap verification after each; any ticket that merge unblocks starts right away in the same wave (rolling start).
-7. **Review the seams**: for waves of two or more tickets, one `code-review` pass over where the tickets touch; findings go back to the owning agent or get fixed on the integration branch.
+7. **Review the seams**: for waves of two or more tickets, one `mattpocock-skills:code-review` pass over where the tickets touch; findings go back to the owning agent or get fixed on the integration branch.
 8. **Clean up**: archive agents and worktrees that are stopped, clean, and merged; then open the next wave.
 
 The skill asks for your approval at the decisions that are yours: the stage and next step, the wave plan, and any question a review raises.
@@ -153,19 +153,19 @@ Files in this repo:
 - **Every step ends on a checkable "done when".** The orchestrator can tell finished from unfinished without judgement calls.
 - **Check artifacts, not reports.** An agent's "all green" only covers what it checked.
 - **Red before green.** A bug fix counts only if its test failed on the symptom before the fix.
-- **Review per ticket, then the seams.** Each agent ends with Matt's `code-review` before its last commit, as `/implement` does; the orchestrator reviews only where tickets collide once merged, and skips that pass for one-ticket waves.
+- **Review per ticket, then the seams.** Each agent ends with `mattpocock-skills:code-review` before its last commit, as `/mattpocock-skills:implement` does; the orchestrator reviews only where tickets collide once merged, and skips that pass for one-ticket waves.
 - **Nothing destructive without three checks.** A worktree is archived only when its agent has stopped, its tree is clean, and its branch is merged.
 - **State lives on disk.** Ticket status and the wave file are enough for a fresh session to resume.
 
 ## Limitations
 
 - Tested with Claude Code on one project. Other agent providers that Paseo supports should work as long as they can load Matt Pocock's skills, but have not been tried.
-- Agents can only run model-invocable skills. `implement`, `to-spec`, `to-tickets`, `grill-with-docs`, `triage`, and `wayfinder` are user-only, so the orchestrator suggests them and you type them.
-- The ticket tracker is whatever `setup-matt-pocock-skills` configured; the skill reads it but does not create one.
+- Agents can only run model-invocable skills. A Matt skill whose `disable-model-invocation` frontmatter flag is `true` can only be typed by a human (the rule in step 4 of `SKILL.md`), so the orchestrator suggests it and you type it.
+- The ticket tracker is whatever `mattpocock-skills:setup-matt-pocock-skills` configured; the skill reads it but does not create one.
 
 ## Contributing
 
-Issues and pull requests are welcome. The skill follows Matt Pocock's [`writing-for-agents`](https://github.com/mattpocock/skills) guidance, so a good change usually:
+Issues and pull requests are welcome. The skill follows Matt Pocock's [`mattpocock-skills:writing-for-agents`](https://github.com/mattpocock/skills) guidance, so a good change usually:
 
 - adds a row to a table rather than a new prose branch (new flows go in the step 4 flow table);
 - gives every step a checkable completion criterion;

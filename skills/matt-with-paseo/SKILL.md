@@ -48,7 +48,9 @@ Then take each unfinished ticket of the wave. Find its agent in the `## Wave age
 - Agent still running (`get_agent_status`): wait, then step 5. If this session did not spawn the agent it will not receive the agent's notification, so create a heartbeat per step 5.
 - Agent stopped with the ticket unfinished: handle it per "Agent stops midway" in [`TROUBLESHOOTING.md`](TROUBLESHOOTING.md). This ticket's branch is not merged yet.
 
-Once every ticket of the wave is done: a ticket branch still unmerged (`git branch --no-merged <integration branch>`) goes to step 5, reading its report from the ticket's comments, then step 6; no `## Review` yet goes to step 7; an uncleaned row goes to step 8.
+A `## Wave agents` row whose ticket is `review` is step 7's review agent; it carries only the `wave` label, so its row is the only way to find it. Still running: wait, with a heartbeat per step 5 if this session did not spawn it (its ticks check only `get_agent_status`, since it has no ticket branch), then continue step 7 with its findings. Stopped with no `## Review` yet: continue step 7 with its findings. It has no ticket branch to merge.
+
+Once every ticket of the wave is done: a ticket branch still unmerged (`git branch --no-merged <integration branch>`) goes to step 5, which reads its report, then step 6; no `## Review` yet goes to step 7; an uncleaned row goes to step 8.
 
 A note for stage B: `/mattpocock-skills:to-tickets` synthesizes from the current conversation, as `/mattpocock-skills:to-spec` does, so it must run in the session that still holds the context that wrote the spec. If that session is gone, tell the user. Every command this step suggests outside this skill (stages A and B, `/mattpocock-skills:ask-matt`) is typed by the user only; this skill only suggests it.
 
@@ -143,7 +145,7 @@ Each time an agent reports done, check the real artifacts, not the report's word
 - the commits sit on the ticket's own branch (`git log <branch>`);
 - the ticket's status has changed, and its comments carry verification evidence;
 - the report's most decisive claim is re-run once by you (call the endpoint, open the screen, look at the screenshot);
-- the ticket's comments carry the `code-review` result: the number of findings per axis and the outcome of each. Missing means the agent did not finish its flow;
+- the ticket's comments carry the `mattpocock-skills:code-review` result: the number of findings per axis and the outcome of each. Missing means the agent did not finish its flow;
 - symptom tickets: the report shows the loop **red before** the fix and green after. Green alone does not tell you whether the fix hit the right place or only masked the symptom;
 - private resources are cleaned up, or kept for a stated reason.
 
@@ -159,7 +161,7 @@ Agent stopped midway or report incomplete: see [`TROUBLESHOOTING.md`](TROUBLESHO
 
 Merge each ticket as soon as its report passes step 5, while the rest of the wave keeps running: steps 5 and 6 interleave. One merge commit per ticket: `git merge --no-ff <ticket branch> -m "Merge ticket NN (<name>) into <integration branch>"`. After each merge, run the cheapest verification the repo has (install, build, lint, test).
 
-**Rolling start.** After each green merge, re-read the graph: a ticket whose `Blocked by` is now fully merged and which is in the ready for agent role joins the current wave at once, without waiting for the rest of it. Spawn it per step 4, with the integration branch's new head as its base commit, written in its row and named in its prompt; append it to the wave file's title and graph. Its agent's `code-review` uses that base commit.
+**Rolling start.** After each green merge, re-read the graph: a ticket whose `Blocked by` is now fully merged and which is in the ready for agent role joins the current wave at once, without waiting for the rest of it. Spawn it per step 4, with the integration branch's new head as its base commit, written in its row and named in its prompt; append it to the wave file's title and graph. Its agent's `mattpocock-skills:code-review` uses that base commit.
 
 Conflict, failure after a merge, or a test count after the merge that does not match the test files git tracks: see [`TROUBLESHOOTING.md`](TROUBLESHOOTING.md).
 
