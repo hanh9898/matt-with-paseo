@@ -44,3 +44,5 @@ Ba file sẵn gửi dưới [`bug-reports/`](../bug-reports/), viết bằng ti�
 - **"Permission hết hạn sau 5 phút" không tái hiện**: sau 6 phút 10 giây yêu cầu vẫn chờ. Ghi ở cuối báo lỗi 02.
 
 Trước khi gửi, người dùng soát lại id agent và đường dẫn trong ba file.
+
+**Đã gửi (27/09):** người dùng chọn đăng lên bản fork `hanh9898/paseo` (fork của `getpaseo/paseo`, bật Issues để đăng), để tự sửa bằng `matt-with-paseo`: [#1](https://github.com/hanh9898/paseo/issues/1) lượt tự mở không thông báo · [#2](https://github.com/hanh9898/paseo/issues/2) cách trả lời permission loại câu hỏi · [#3](https://github.com/hanh9898/paseo/issues/3) shell trên Windows và port service cố định · [#4](https://github.com/hanh9898/paseo/issues/4) nhãn workspace (báo lỗi mới, `bug-reports/04-…`).
