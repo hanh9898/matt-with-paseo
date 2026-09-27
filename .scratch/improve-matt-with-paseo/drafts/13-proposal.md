@@ -40,7 +40,7 @@ Không có dòng nào gọi tên skill của Matt, quy ước tracker, hay nhãn
 
 | Dòng | Trích | Upstream hiện tại | Tình trạng | Verdict |
 |---|---|---|---|---|
-| 23 | "`<glossary / CONTEXT.md>`" | `rename-context-to-glossary.md` (đổi tên toàn hệ) | Đã lệch, y hệt vấp đã sửa ở `SKILL.md` (Q3, ticket 04) | **Sửa**: đổi placeholder thành `<glossary — tên file theo issue-tracker.md của repo đích>`, không hardcode `GLOSSARY.md` (đây là mẫu điền tay cho từng wave, không phải chỗ code đọc file, nên không cần cơ chế fallback — chỉ cần chữ không lệch tên) |
+| 23 | "`<glossary / CONTEXT.md>`" | `rename-context-to-glossary.md` (đổi tên toàn hệ) | Đã lệch, y hệt vấp đã sửa ở `SKILL.md` (Q3, ticket 04) | **Sửa**: đổi placeholder thành `<glossary — tên file theo `docs/agents/domain.md` của repo đích>`, không hardcode `GLOSSARY.md` (đây là mẫu điền tay cho từng wave, không phải chỗ code đọc file, nên không cần cơ chế fallback — chỉ cần chữ không lệch tên) |
 | 47 | heading "## Done means" | — | Thuộc phạm vi Q6 của ticket 04, không phải chỗ mới của 13 | Ghi nhận, không xử lý ở đây |
 | 49 | "`/mattpocock-skills:code-review`" | — | Cùng verdict với `SKILL.md:116/160` | **Giữ** |
 | 51 | "`resolved` if fully done, `ready-for-human` for the part a human must do" | cùng hai nguồn đã trích ở hàng trên: `resolved` từ wayfinding cục bộ, `ready-for-human` từ `triage-labels.md` | Hai chữ trong cùng một câu nhưng khác họ, giống hệt tình huống ở `SKILL.md` | **Tách đôi, khớp Q2:** giữ `resolved`; `ready-for-human` đổi thành chỗ điền theo `triage-labels.md` khi người điều phối viết `waveN-common-rules.md` (bước 1 đã có bảng ánh xạ lúc đó) |
