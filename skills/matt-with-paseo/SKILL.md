@@ -98,7 +98,7 @@ Filter each trap from earlier waves before copying it and check it against the a
 
 A trap's "how to check you avoided it" column tells its kind: a command with a clear result makes it mechanical, prose makes it a judgement call (the split `mattpocock-skills:retro` draws). A mechanical trap stays in the list together with its command. Wiring that command into the target repo's own checks is a separate ticket for that repo, proposed to the user; this skill never edits the target repo's checks itself.
 
-**Done when**: every section of the template has content or reads "not applicable", and every trap from earlier waves has been filtered and checked against the acceptance criteria as above before it was copied.
+**Done when**: every section of the template has content or reads "not applicable", every trap from earlier waves has been filtered and checked against the acceptance criteria as above before it was copied, and no trap marked **wrong** in an earlier wave's log is copied as written.
 
 ## 4. Spawn
 
