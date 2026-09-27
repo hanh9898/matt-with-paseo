@@ -47,6 +47,10 @@ Write setup in PowerShell syntax and scripts in cmd syntax, per platform; a `pas
 
 Either run all three with one documented shell per platform (or let `paseo.json` choose one), or document which shell each uses on Windows, with a Windows example.
 
+## Also noticed: a fixed service `port` is shared by every worktree
+
+With `"port": 8765` on a `type: "service"` script, two worktrees of the same project both got `port: 8765`. On Windows both processes bound it without error, and the proxy URL of worktree B served worktree A's files (`B/marker-b.txt` → 404, `B/marker-a.txt` → 200) while both services reported `health: healthy`. Without `port`, Paseo assigned 52120 and 52121 and routing was correct. The docs example shows `"port": 3000` next to `--port $PASEO_PORT`, which reads as if the fixed value were only a default.
+
 ## Also noticed
 
-`archive_workspace` returned `removedDirectory: false` for a worktree with untracked files, and no sign that `worktree.teardown` ran. Keeping a dirty worktree is sensible; the docs say teardown "runs during archive before deletion", so it is unclear whether teardown is skipped when deletion is skipped.
+`archive_workspace` is inconsistent about dirty worktrees: once it returned `removedDirectory: false` (untracked files present, no sign `worktree.teardown` ran); later it returned `removedDirectory: true` for two worktrees that had untracked files and a modified `paseo.json`, deleting them. Deleting uncommitted work without a warning risks data loss.

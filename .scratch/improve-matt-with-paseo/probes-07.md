@@ -87,7 +87,7 @@ Nhánh tạm `probe/b2` (đã xoá) commit một `paseo.json` có `worktree.setu
 - **`setup` chạy tự động** khi tạo worktree. Nhưng trên Windows nó chạy bằng **Windows PowerShell**: file ra UTF-16, `%VAR%` giữ nguyên chữ, `$PASEO_WORKTREE_PORT` ra **rỗng** (PowerShell cần `$env:PASEO_WORKTREE_PORT`). Ví dụ trong tài liệu (`paseo.sh/docs/worktrees.md`) viết `$PASEO_…` kiểu sh, nên **chép nguyên ví dụ sang Windows thì hỏng mà không báo lỗi**.
 - **`scripts` chạy bằng cmd**: `%PASEO_WORKTREE_PORT%` ra `53449`, `$PASEO_…` giữ nguyên chữ. `start_workspace_script` trả `terminalId`; `list_workspace_scripts` thấy script.
 - Terminal (`create_terminal`, B6) cũng là cmd. **Ba nơi chạy lệnh, hai shell khác nhau trên cùng một máy.**
-- `archive_workspace` trả `removedDirectory: false` khi worktree có file chưa theo dõi, và không thấy dấu vết `teardown` chạy. Khớp luật bước 8 của skill (kiểm `status --porcelain` rỗng trước khi archive).
+- `archive_workspace` trả `removedDirectory: false` ở lần này, và không thấy dấu vết `teardown` chạy. **Đính chính (phép đo SVC):** không phải vì worktree bẩn; ở SVC, hai worktree có file chưa theo dõi và `paseo.json` bị sửa vẫn bị xoá (`removedDirectory: true`). Nguyên nhân lần B2 chưa rõ.
 
 **Kết luận B2:** `worktree.setup` thay được bước dựng môi trường chép tay, và cấu hình nằm ở repo đích, đúng luật "trỏ, không chép". Nhưng người viết `paseo.json` trên Windows phải biết `setup` là PowerShell, `scripts` là cmd.
 
@@ -109,3 +109,23 @@ Agent `[probe B3]` tạo ở `default`.
 - Lần `Write` tiếp theo chạy **không xin quyền** (`B3-WROTE-2`).
 
 **Kết luận B3:** đổi chế độ giữa chừng được, có hiệu lực từ lần gọi tool kế tiếp. Yêu cầu nào đang chờ lúc đổi thì vẫn phải trả lời tay. Yêu cầu `Write` kèm sẵn `suggestions` (`setMode: acceptEdits`, `addDirectories`) cho người duyệt.
+
+## SVC. Services trong `paseo.json`: mỗi worktree có cổng riêng không?
+
+Nhánh tạm `probe/svc` (đã xoá), service `web`: `python -m http.server %PASEO_PORT%` (cú pháp cmd, vì `scripts` chạy bằng cmd). Hai workspace `probe-svc-a`, `probe-svc-b` từ cùng nhánh. Mỗi worktree đặt một file đánh dấu riêng (`marker-a.txt`, `marker-b.txt`) để biết proxy chuyển yêu cầu tới đâu.
+
+**Lần 1, khai `"port": 8765`:**
+
+- Cả hai service nhận `port: 8765`. Windows cho **hai tiến trình cùng nghe 8765** (PID 18220, 15176), không báo lỗi.
+- Proxy của **b** trả file của **a**: `b/marker-a.txt: 200`, `b/marker-b.txt: 404`. Yêu cầu đi nhầm worktree một cách âm thầm.
+- `health` của cả hai vẫn báo `healthy`.
+
+**Lần 2, bỏ trường `port`** (sửa thẳng `paseo.json` trong worktree, chưa commit, rồi khởi động lại):
+
+- Paseo **tự cấp cổng riêng**: a `52120`, b `52121`.
+- Proxy chuyển đúng: `a/marker-a.txt: 200`, `a/marker-b.txt: 404`; `b/marker-a.txt: 404`, `b/marker-b.txt: 200`.
+- `scripts` đọc `paseo.json` **của worktree lúc chạy**, không chỉ bản đã commit trên nhánh gốc (khác `worktree.setup`, theo tài liệu đọc bản đã commit).
+
+**Dọn:** `archive_workspace` cả hai trả `removedDirectory: true` **dù worktree có file chưa theo dõi và `paseo.json` đã sửa**. Tức là archive xoá worktree bẩn. Luật bước 8 của skill (kiểm `status --porcelain` rỗng trước khi archive) là cần thiết thật, không thừa.
+
+**Kết luận SVC:** services thay được việc tự chia cổng cho mỗi ticket, **với điều kiện không khai `port` cố định**. Khai cố định thì mọi worktree dùng chung cổng và trên Windows yêu cầu đi nhầm mà health vẫn xanh.
