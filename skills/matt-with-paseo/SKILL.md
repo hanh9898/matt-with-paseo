@@ -23,6 +23,20 @@ Three words used throughout:
 - **Integration branch**: the branch collecting the results of every wave. Each wave branches its worktrees off a **base commit** pinned on this branch.
 - **Common rules**: what every agent of the wave needs to know that its own prompt does not carry. Written once per wave (step 3).
 
+## Names this run writes
+
+This table is the only place the naming rule lives; the steps point here. With `stream <slug>`, the slug is written `<stream>`; `<slug>` in a branch name stays the ticket's short name.
+
+| Name | Without `stream` | With `stream` |
+|---|---|---|
+| Ticket agent labels (step 4) | `labels: { wave: "<N>", ticket: "<NN>" }` | `labels: { stream: "<stream>", wave: "<N>", ticket: "<NN>" }` |
+| Review agent labels (step 7) | `labels: { wave: "<N>" }` | `labels: { stream: "<stream>", wave: "<N>" }` |
+| Label filter of every `paseo ls` (steps 0 and 8) | the `wave` (and `ticket`) labels only | the same, plus `--label stream=<stream>` |
+| Ticket branch (step 4) | `wave<N>/<NN>-<slug>` | `<stream>/wave<N>/<NN>-<slug>` |
+| Private resource names: database, volume, temp directory (step 4) | as the ticket needs them | each starts with `<stream>-` |
+
+The common rules file (`wave<N>-common-rules.md`), its sections and the agent titles are the same in both columns: the file sits in the checkout of this run's integration branch, which no other run shares.
+
 ## 0. Locate the state and suggest the next step
 
 Read the signals on the real repo through its tracker configuration: the `## Agent skills` section of `CLAUDE.md`/`AGENTS.md` and the documents it points to, which say where specs and tickets live and how a wayfinder map is stored. Settle the cases in this order:
@@ -55,7 +69,7 @@ Then take each unfinished ticket of the wave. Find its agent in the `## Wave age
 - Agent still running (`get_agent_status`): wait, then step 5. If this session did not spawn the agent it will not receive the agent's notification, so create a heartbeat per step 5.
 - Agent stopped with the ticket unfinished: handle it per "Agent stops midway" in [`TROUBLESHOOTING.md`](TROUBLESHOOTING.md). This ticket's branch is not merged yet.
 
-A `## Wave agents` row whose ticket is `review` is step 7's review agent; it carries only the `wave` label, so its row is the only way to find it. Still running: wait, with a heartbeat per step 5 if this session did not spawn it (its ticks check only `get_agent_status`, since it has no ticket branch), then continue step 7 with its findings. Stopped with no `## Review` yet: continue step 7 with its findings. It has no ticket branch to merge.
+A `## Wave agents` row whose ticket is `review` is step 7's review agent; it carries no `ticket` label, so its row is the only way to find it. Still running: wait, with a heartbeat per step 5 if this session did not spawn it (its ticks check only `get_agent_status`, since it has no ticket branch), then continue step 7 with its findings. Stopped with no `## Review` yet: continue step 7 with its findings. It has no ticket branch to merge.
 
 Once every ticket of the wave is done: a ticket branch still unmerged (`git branch --no-merged <integration branch>`) goes to step 5, which reads its report, then step 6; no `## Review` yet goes to step 7; an uncleaned row goes to step 8.
 
@@ -116,8 +130,8 @@ Write the `## Wave agents` heading and the table header row (ticket, agent id, w
 
 For each ticket in the wave:
 
-1. `create_workspace` with `isolation: "worktree"`, `mode: "branch-off"`, `baseBranch` set to the integration branch, and `branchName` shaped `wave<N>/<NN>-<slug>`. Check that `git -C <worktree> rev-parse HEAD` equals the base commit; if the integration branch stays still while you spawn, every worktree in the wave shares one base. Paseo's MCP tools and CLI cannot label a workspace (workspace labels exist only in the app's sidebar), so the workspace itself stays unlabelled and is found through the labelled agent that runs in it.
-2. `create_agent` in that workspace, titled `[Wave N] <NN> <ticket name>`, with `labels: { wave: "<N>", ticket: "<NN>" }`; the labels, not the title, are how step 0 finds the wave's agents again. The prompt holds exactly four things: the **absolute** path to the common rules in the integration branch's checkout (the file is the wave's live log and is not in the worktree), the path to the ticket, the private resources (database name, port when no service is declared, volume, temp directory; a distinct set per agent), and the **flow**.
+1. `create_workspace` with `isolation: "worktree"`, `mode: "branch-off"`, `baseBranch` set to the integration branch, and `branchName` shaped as the ticket branch in "Names this run writes". Check that `git -C <worktree> rev-parse HEAD` equals the base commit; if the integration branch stays still while you spawn, every worktree in the wave shares one base. Paseo's MCP tools and CLI cannot label a workspace (workspace labels exist only in the app's sidebar), so the workspace itself stays unlabelled and is found through the labelled agent that runs in it.
+2. `create_agent` in that workspace, titled `[Wave N] <NN> <ticket name>`, with the ticket agent labels of "Names this run writes"; the labels, not the title, are how step 0 finds the wave's agents again. The prompt holds exactly four things: the **absolute** path to the common rules in the integration branch's checkout (the file is the wave's live log and is not in the worktree), the path to the ticket, the private resources (database name, port when no service is declared, volume, temp directory; a distinct set per agent, named per "Names this run writes"), and the **flow**.
 
 Before writing the private resources into the prompt, read the target repo's `paseo.json` in the integration branch's checkout, and never create or edit it: declared `worktree.setup` means Paseo runs that setup in each new worktree, so the prompt carries no environment setup; declared services (scripts with `"type": "service"`) mean Paseo gives each worktree its own port, so no port goes in the private resources; a service with a fixed `port` breaks this (see the README), so tell the user before spawning.
 
@@ -180,7 +194,7 @@ Each ticket was already reviewed by its agent in step 4. This pass targets only 
 
 - A one-ticket wave has no seam: write `## Review` as "not applicable: one-ticket wave, reviewed by its agent", then go to step 8.
 - A wave of two or more tickets: run `mattpocock-skills:code-review` with the wave's first base commit (step 3) as the fixed point, so tickets started by rolling start are covered too, stating in the call that each ticket was already reviewed on its own and only seam findings should be reported, and naming the evidence standards file when the repo declares one. Present the Standards and Spec axes separately.
-- When a profile read in step 1 has `notes` saying it is for review, run that review in an agent launched with that profile, on a fresh workspace from the integration branch, taking the `create_agent` shape from the `paseo` skill as in step 4, with `labels: { wave: "<N>" }` and its own row in `## Wave agents` (ticket column `review`) so step 8 cleans it up; otherwise run it in this session.
+- When a profile read in step 1 has `notes` saying it is for review, run that review in an agent launched with that profile, on a fresh workspace from the integration branch, taking the `create_agent` shape from the `paseo` skill as in step 4, with the review agent labels of "Names this run writes" and its own row in `## Wave agents` (ticket column `review`) so step 8 cleans it up; otherwise run it in this session.
 
 Fix each finding. Before sending new work into an existing worktree, fast-forward its branch to the integration branch (`git -C <worktree> merge --ff-only <integration branch>`), so the agent reads the latest ticket comments and its merge comes back without conflicts. The coordinator writes into a ticket file only while no agent holds that ticket; decisions for a held ticket go to its agent with `send_agent_prompt`. A finding contained in one ticket's zone goes back to that same agent via `send_agent_prompt`. A finding cutting across several tickets goes to one agent on a fresh workspace from the integration branch; the coordinator edits files itself only when the user assigns that fix to it in the decision round, and says so in `## Review`. Gather every question that needs a human decision into one round, present it, then record the decisions in the comments of the tickets involved, so the next wave can read them.
 
