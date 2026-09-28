@@ -59,7 +59,7 @@ Write invoices as CSV.
 - [x] Write invoices as CSV works end to end.
 
 ## Comments
-- Resolved: `invoiceColumns` lists the CSV columns; tests green.
+- Resolved: CSV columns added; tests green.
 EOF
 cat > .scratch/export/issues/02-month-filter.md <<'EOF'
 # 02: Filter invoices by month
@@ -73,7 +73,7 @@ Filter invoices by month.
 - [x] Filter invoices by month works end to end.
 
 ## Comments
-- Resolved: `invoiceColumns` gains the month column the filter reads; tests green.
+- Resolved: month filter, its test and its doc page; tests green.
 EOF
 cat > .scratch/export/issues/03-export-button.md <<'EOF'
 # 03: Export button in the invoice list
@@ -107,7 +107,9 @@ export const invoiceColumns = [
 EOF
 git commit -q -am "feat: CSV columns (01)"
 git checkout -q main
-git checkout -q -b wave1/02-month-filter
+git merge -q --no-ff wave1/01-csv-writer -m "Merge ticket 01 (Write invoices as CSV) into main"
+git checkout -q -b wave1/02-month-filter "$base"
+mkdir -p src test
 cat > src/invoices.js <<'EOF'
 export const invoiceColumns = [
   "number",
@@ -115,12 +117,29 @@ export const invoiceColumns = [
   "month",
 ];
 EOF
-git commit -q -am "feat: month column (02)"
+cat > src/filter.js <<'EOF'
+export const inMonth = (invoice, month) => invoice.month === month;
+EOF
+cat > test/filter.test.js <<'EOF'
+import { inMonth } from "../src/filter.js";
+if (!inMonth({ month: "2026-09" }, "2026-09")) throw new Error("inMonth");
+EOF
+git add -A
+git commit -q -m "feat: month filter (02)"
+# Ticket 02's agent caught up with main, hit the conflict, and committed the file with its markers still in it.
+git merge --no-ff main -m "Merge main into wave1/02-month-filter" >/dev/null 2>&1 || true
+git add -A
+git commit -q -m "Merge main into wave1/02-month-filter"
+cat > docs/month-filter.md <<'EOF'
+# Month filter
+
+The invoice list filters on the `month` column, written as `YYYY-MM`.
+EOF
+git add -A
+git commit -q -m "docs: month filter (02)"
 git checkout -q main
-git merge -q --no-ff wave1/01-csv-writer -m "Merge ticket 01 (Write invoices as CSV) into main"
-# A previous session started merging 02, hit the conflict, and staged the file with its markers still in it.
-git merge --no-ff --no-commit wave1/02-month-filter >/dev/null 2>&1 || true
-git add src/invoices.js
+# A previous session started merging 02; git merged it without a conflict and stopped before committing.
+git merge -q --no-ff --no-commit wave1/02-month-filter >/dev/null 2>&1
 
 cat > .scratch/export/wave1-common-rules.md <<EOF
 # Common rules for wave 1 (tickets 01, 02)
@@ -138,7 +157,7 @@ cat > .scratch/export/wave1-common-rules.md <<EOF
 - Your worktree branches off \`main\` at \`$base\`.
 
 ## File zones
-- Shared file \`src/invoices.js\`: add only your own lines, and keep the order of the existing lines.
+- Shared files: add only your own lines, and keep the order of the existing lines.
 
 ## Wave agents
 
