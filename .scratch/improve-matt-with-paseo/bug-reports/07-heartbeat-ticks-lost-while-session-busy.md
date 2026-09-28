@@ -2,7 +2,7 @@
 
 ## Summary
 
-A 15-minute heartbeat created from an orchestrating session delivered its ticks regularly while that session was idle between turns. Ticks that fell while the session was in the middle of a turn were not delivered later, and from one such moment on the heartbeat stopped delivering altogether: no tick reached the session for about four and a half hours, although the heartbeat had not expired and the session was idle for long stretches in that window. Nothing told the session or the operator that ticks were being dropped, and `list_schedules` does not list heartbeats, so the session could not check.
+A 15-minute heartbeat created from an orchestrating session delivered its ticks regularly while that session was idle between turns. Ticks that fell while the session was in the middle of a turn were not delivered later, and from one such moment on the heartbeat stopped delivering altogether: no tick reached the session for about four hours, although the heartbeat had not expired and the session was idle for long stretches in that window. Nothing told the session or the operator that ticks were being dropped, and `list_schedules` does not list heartbeats, so the session could not check.
 
 ## Reproduce
 
@@ -20,7 +20,7 @@ Reproduction pending: the timing below is from the run; the steps are proposed a
 | | Expected | Actual |
 |---|---|---|
 | Tick due while the session is mid-turn | delivered after the turn, or coalesced into one | not delivered |
-| Ticks due while the session is idle, before expiry | delivered | none delivered for about 4 h 30 min (17 ticks) |
+| Ticks due while the session is idle, before expiry | delivered | none delivered for about 4 h 10 min (16 ticks, 05:30 to 09:15) |
 | Caller can see the heartbeat's state | some list or status shows next fire, last fire, or skipped ticks | `list_schedules` does not list heartbeats; no skip is reported |
 
 ## Evidence
