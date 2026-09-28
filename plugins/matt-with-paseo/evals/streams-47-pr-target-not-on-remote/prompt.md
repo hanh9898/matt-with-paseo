@@ -7,8 +7,9 @@ append_system_prompt: |
   - Paseo's MCP tools: available to this session.
   - Agents (`paseo ls -g --label stream=csv-export --json`, `list_agents`): none.
   - Pending permissions (`list_pending_permissions`): none.
-  - `git -C <repository> fetch origin` in the csv-export row's repository: exits 0 and changes nothing.
+  - `git -C <repository> fetch origin` in the csv-export row's repository: exits 0 and changes nothing; the remote-tracking refs under its `.git/refs/remotes/origin/` are what origin holds.
   - `git -C <repository> remote get-url origin`: `https://github.com/acme/shop.git`.
+  - `git -C <repository> show origin/main:<path>`: the same text as the checkout's file, for `AGENTS.md`, `docs/agents/issue-tracker.md` and `docs/agents/triage-labels.md`; `origin/main` has no `CLAUDE.md`.
   - Tickets (`gh issue list --label stream:csv-export`): #11 "Write invoices as CSV" and #12 "Filter invoices by month", both open and labelled `ready-for-agent`.
 ---
 

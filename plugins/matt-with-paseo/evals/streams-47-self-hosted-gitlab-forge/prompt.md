@@ -10,6 +10,7 @@ append_system_prompt: |
   - `git -C <repository> fetch origin` in the csv-export row's repository: exits 0 and changes nothing; the remote-tracking refs under its `.git/refs/remotes/origin/` are what origin holds.
   - `git -C <repository> remote get-url origin`: `git@code.acme.test:shop/shop.git`.
   - `git -C <repository> ls-remote --heads origin`: `refs/heads/main`, `refs/heads/develop`.
+  - `git -C <repository> show origin/main:<path>`: the same text as the checkout's file, for `AGENTS.md`, `docs/agents/issue-tracker.md` and `docs/agents/triage-labels.md`; `origin/main` has no `CLAUDE.md`.
   - Tickets (`glab issue list --label stream:csv-export`): #11 "Write invoices as CSV" and #12 "Filter invoices by month", both open and labelled `ready-for-agent`.
 ---
 
