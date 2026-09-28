@@ -8,8 +8,9 @@ import sys
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
-DEFAULT_TARGETS = [REPO / "skills" / "matt-with-paseo", REPO / "skills" / "matt-with-paseo-streams",
-                   REPO / "README.md"]
+PLUGIN = REPO / "plugins" / "matt-with-paseo"
+DEFAULT_TARGETS = [PLUGIN / "skills" / "matt-with-paseo", PLUGIN / "skills" / "matt-with-paseo-streams",
+                   PLUGIN / "README.md", REPO / "README.md"]
 REFERENCE = re.compile(r"mattpocock-skills:([a-z0-9][a-z0-9-]*)")
 
 

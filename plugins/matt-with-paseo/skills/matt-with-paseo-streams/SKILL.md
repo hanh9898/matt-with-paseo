@@ -39,7 +39,7 @@ The index is `streams.md` at the root of the control folder: one line for the ca
 | Slug | The stream's name, lowercase letters, digits and `-`; unique in the index. The wave skill derives its label and branch prefix from it |
 | Repository | Absolute path to a local checkout of the target repository |
 | Owner | The requester the stream works for; the rest of this skill calls them the owner |
-| Tickets | Where the stream's tickets live: a folder, for a local-markdown tracker; a label or a parent spec issue, for GitHub. It is passed to the wave skill as written |
+| Tickets | Where the stream's tickets live: a folder, for a local-markdown tracker; a label or a parent spec issue, for GitHub or GitLab. It is passed to the wave skill as written |
 | Base branch | The branch the integration branch is cut from; empty means resolve per step 1 |
 | PR target | The branch the stream's pull request goes to; empty means resolve per step 1 |
 | Priority | A number, 1 first; empty means the order of rows (first come first served) |

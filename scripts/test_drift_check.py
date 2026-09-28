@@ -14,7 +14,8 @@ import unittest
 from pathlib import Path
 
 SCRIPT = Path(__file__).with_name("drift-check.py")
-STREAM_SKILL = SCRIPT.resolve().parent.parent / "skills" / "matt-with-paseo-streams"
+PLUGIN = SCRIPT.resolve().parent.parent / "plugins" / "matt-with-paseo"
+STREAM_SKILL = PLUGIN / "skills" / "matt-with-paseo-streams"
 
 SKILL_MD = """\
 ---
@@ -181,8 +182,9 @@ class DriftCheck(unittest.TestCase):
         paths = {re.match(r"(.*?):\d+: mattpocock-skills:", line).group(1)
                  for line in result.stdout.splitlines()}
         repo = SCRIPT.resolve().parent.parent
-        self.assertIn(str(repo / "skills" / "matt-with-paseo" / "SKILL.md"), paths)
+        self.assertIn(str(PLUGIN / "skills" / "matt-with-paseo" / "SKILL.md"), paths)
         self.assertIn(str(repo / "README.md"), paths)
+        self.assertIn(str(PLUGIN / "README.md"), paths)
         self.assertIn(str(STREAM_SKILL / "SKILL.md"), paths)
 
     def copy_stream_skill(self, *extra):

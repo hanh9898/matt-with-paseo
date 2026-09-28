@@ -169,9 +169,9 @@ The stream skill is user-invoked only, like the wave skill, and runs from a **co
 The index is `streams.md` at the root of that folder. With no index yet, the skill writes it and asks you for its fields:
 
 - the **agent cap**, above the table: the most agents running at once across every stream;
-- one row per stream: its slug, the absolute path of a local checkout of its repository, its owner, where its tickets live (a folder for a local-markdown tracker; a label or a parent spec issue for GitHub), its base branch, its pull-request target, its priority, and a status line the skill keeps current.
+- one row per stream: its slug, the absolute path of a local checkout of its repository, its owner, where its tickets live (a folder for a local-markdown tracker; a label or a parent spec issue for GitHub or GitLab), its base branch, its pull-request target, its priority, and a status line the skill keeps current.
 
-An empty base branch or target falls back to the default the target repository declares next to its `## Agent skills` section, then to the remote's default branch. A base branch that gathers several people's unfinished work, such as a shared `test` branch, draws a warning, never a block. The index only says where each stream's tickets live; the tracker stays the one source of truth for them. The field table and an example are in [The index](skills/matt-with-paseo-streams/SKILL.md#the-index).
+An empty base branch or target falls back to the default the target repository declares next to its `## Agent skills` section, then to the remote's default branch. A base branch that gathers several people's unfinished work, such as a shared `test` branch, draws a warning, never a block. The index only says where each stream's tickets live; the tracker stays the one source of truth for them. The field table and an example are in [The index](plugins/matt-with-paseo/skills/matt-with-paseo-streams/SKILL.md#the-index).
 
 **How the cap is split.** Each running stream uses one slot for its stream agent plus its quota, the number of ticket agents it may run at once. Streams take slots in priority order, first come first served by default, so a cap below 2 runs no stream. A stream left without room waits on the cap and starts at a later wave boundary; a running wave is never cut for capacity.
 
@@ -189,6 +189,8 @@ The stream agent runs the wave skill with two optional arguments, which you can 
 The wave skill runs in a checkout of its integration branch, whoever calls it. Without `stream` it behaves exactly as in 0.3.0; without `quota` a wave takes every ticket that can run.
 
 ## Requirements
+
+Claude Code only: the skills need a shell, git and the Paseo MCP server. What the plugin runs and sends is listed in [the plugin README](plugins/matt-with-paseo/README.md#what-the-plugin-runs).
 
 - [Claude Code](https://claude.com/claude-code)
 - [Paseo](https://paseo.sh), with its MCP server available to the orchestrating session and its `paseo` skill installed
@@ -210,7 +212,7 @@ The wave skill reads the file while preparing a wave, points every agent to it f
 
 ## Installation
 
-The repo follows the [Agent Skills](https://agentskills.io/specification) layout (`skills/matt-with-paseo/SKILL.md`, `skills/matt-with-paseo-streams/SKILL.md`) and is also a Claude Code plugin marketplace, so any of these works. Every option installs both skills side by side, since the stream skill points to files of the wave skill's folder. Pick one; installing twice gives you two copies of each command.
+The plugin lives in [`plugins/matt-with-paseo/`](plugins/matt-with-paseo/), which follows the [Agent Skills](https://agentskills.io/specification) layout (`plugins/matt-with-paseo/skills/matt-with-paseo/SKILL.md`, `plugins/matt-with-paseo/skills/matt-with-paseo-streams/SKILL.md`), and the repo root is a Claude Code plugin marketplace that lists it, so any of these works. Only that folder is installed: design notes, ADRs and scripts stay in the repo. Every option installs both skills side by side, since the stream skill points to files of the wave skill's folder. Pick one; installing twice gives you two copies of each command.
 
 ### Option 1: Claude Code plugin
 
@@ -235,7 +237,7 @@ npx skills add hanh9898/matt-with-paseo --skill '*' -g -a claude-code
 gh skill install hanh9898/matt-with-paseo --all --agent claude-code --scope user
 ```
 
-`--all` takes both skills. This resolves the latest tagged release; add `--pin v0.4.0` to fix a version. The commands are `/matt-with-paseo` and `/matt-with-paseo-streams`.
+`--all` takes both skills. This resolves the latest tagged release; add `--pin v0.4.1` to fix a version. The commands are `/matt-with-paseo` and `/matt-with-paseo-streams`.
 
 ### Option 4: Manual copy
 
@@ -243,18 +245,18 @@ macOS / Linux:
 
 ```bash
 git clone https://github.com/hanh9898/matt-with-paseo.git
-cp -r matt-with-paseo/skills/matt-with-paseo matt-with-paseo/skills/matt-with-paseo-streams ~/.claude/skills/
-cp matt-with-paseo/.claude-plugin/plugin.json ~/.claude/skills/matt-with-paseo/
-cp matt-with-paseo/.claude-plugin/plugin.json ~/.claude/skills/matt-with-paseo-streams/
+cp -r matt-with-paseo/plugins/matt-with-paseo/skills/matt-with-paseo matt-with-paseo/plugins/matt-with-paseo/skills/matt-with-paseo-streams ~/.claude/skills/
+cp matt-with-paseo/plugins/matt-with-paseo/.claude-plugin/plugin.json ~/.claude/skills/matt-with-paseo/
+cp matt-with-paseo/plugins/matt-with-paseo/.claude-plugin/plugin.json ~/.claude/skills/matt-with-paseo-streams/
 ```
 
 Windows (PowerShell):
 
 ```powershell
 git clone https://github.com/hanh9898/matt-with-paseo.git
-Copy-Item -Recurse matt-with-paseo\skills\matt-with-paseo, matt-with-paseo\skills\matt-with-paseo-streams "$env:USERPROFILE\.claude\skills\"
-Copy-Item matt-with-paseo\.claude-plugin\plugin.json "$env:USERPROFILE\.claude\skills\matt-with-paseo\"
-Copy-Item matt-with-paseo\.claude-plugin\plugin.json "$env:USERPROFILE\.claude\skills\matt-with-paseo-streams\"
+Copy-Item -Recurse matt-with-paseo\plugins\matt-with-paseo\skills\matt-with-paseo, matt-with-paseo\plugins\matt-with-paseo\skills\matt-with-paseo-streams "$env:USERPROFILE\.claude\skills\"
+Copy-Item matt-with-paseo\plugins\matt-with-paseo\.claude-plugin\plugin.json "$env:USERPROFILE\.claude\skills\matt-with-paseo\"
+Copy-Item matt-with-paseo\plugins\matt-with-paseo\.claude-plugin\plugin.json "$env:USERPROFILE\.claude\skills\matt-with-paseo-streams\"
 ```
 
 The last two copies put the plugin manifest next to each skill, so a hand-installed copy carries its version: read the `version` field of `plugin.json` in either skill folder to see which release you run. To use them in one project only, copy both skills into that project's `.claude/skills/` and the manifest into each of their folders instead. The commands are `/matt-with-paseo` and `/matt-with-paseo-streams`.
@@ -282,11 +284,12 @@ Files in this repo:
 
 | File | Purpose |
 |---|---|
-| [`skills/matt-with-paseo/SKILL.md`](skills/matt-with-paseo/SKILL.md) | The orchestrator: locate, then steps 1 to 8 |
-| [`skills/matt-with-paseo/COMMON-RULES-TEMPLATE.md`](skills/matt-with-paseo/COMMON-RULES-TEMPLATE.md) | The frame for each wave's common rules |
-| [`skills/matt-with-paseo/TROUBLESHOOTING.md`](skills/matt-with-paseo/TROUBLESHOOTING.md) | Symptoms and fixes for stopped agents, merge conflicts, and cleanup |
-| [`skills/matt-with-paseo-streams/SKILL.md`](skills/matt-with-paseo-streams/SKILL.md) | The stream orchestrator: the index, then steps 0 to 7 |
-| [`.claude-plugin/`](.claude-plugin/) | Marketplace and plugin manifests for the Claude Code plugin install |
+| [`plugins/matt-with-paseo/skills/matt-with-paseo/SKILL.md`](plugins/matt-with-paseo/skills/matt-with-paseo/SKILL.md) | The orchestrator: locate, then steps 1 to 8 |
+| [`plugins/matt-with-paseo/skills/matt-with-paseo/COMMON-RULES-TEMPLATE.md`](plugins/matt-with-paseo/skills/matt-with-paseo/COMMON-RULES-TEMPLATE.md) | The frame for each wave's common rules |
+| [`plugins/matt-with-paseo/skills/matt-with-paseo/TROUBLESHOOTING.md`](plugins/matt-with-paseo/skills/matt-with-paseo/TROUBLESHOOTING.md) | Symptoms and fixes for stopped agents, merge conflicts, and cleanup |
+| [`plugins/matt-with-paseo/skills/matt-with-paseo-streams/SKILL.md`](plugins/matt-with-paseo/skills/matt-with-paseo-streams/SKILL.md) | The stream orchestrator: the index, then steps 0 to 7 |
+| [`.claude-plugin/marketplace.json`](.claude-plugin/marketplace.json) | The marketplace that lists the plugin |
+| [`plugins/matt-with-paseo/`](plugins/matt-with-paseo/) | The plugin itself: its manifest, both skills, its listing README and license; the only folder an install copies |
 | [`docs/adr/`](docs/adr/) | Architecture decisions behind the stream skill: streams share no dependencies, one wave-skill agent per stream, one integration branch per stream, the reconcile loop |
 | [`scripts/`](scripts/) | The drift check against Matt's installed skills, and its tests |
 
@@ -325,7 +328,7 @@ Before a release, run the drift check by hand (Python 3, standard library only):
 python scripts/drift-check.py
 ```
 
-It lists every `mattpocock-skills:<name>` reference in both skills (`skills/matt-with-paseo/`, `skills/matt-with-paseo-streams/`) and this README and compares each one with the Matt plugin installed on your machine, not with a pinned version: it reads the user-scope `mattpocock-skills` entry of `~/.claude/plugins/installed_plugins.json` (pass `--plugin-root <dir>` to compare against another copy). A reference fails when the plugin's manifest does not ship that skill, or when it sits in an agent flow (step 4 of the wave skill's `SKILL.md`, or anywhere in `COMMON-RULES-TEMPLATE.md`; the stream skill spawns only the wave skill, so it has none) and the skill sets `disable-model-invocation`. The check only sees prefixed names, so always name Matt's skills as `mattpocock-skills:<name>`.
+It lists every `mattpocock-skills:<name>` reference in both skills (`plugins/matt-with-paseo/skills/matt-with-paseo/`, `plugins/matt-with-paseo/skills/matt-with-paseo-streams/`), the plugin's README and this README and compares each one with the Matt plugin installed on your machine, not with a pinned version: it reads the user-scope `mattpocock-skills` entry of `~/.claude/plugins/installed_plugins.json` (pass `--plugin-root <dir>` to compare against another copy). A reference fails when the plugin's manifest does not ship that skill, or when it sits in an agent flow (step 4 of the wave skill's `SKILL.md`, or anywhere in `COMMON-RULES-TEMPLATE.md`; the stream skill spawns only the wave skill, so it has none) and the skill sets `disable-model-invocation`. The check only sees prefixed names, so always name Matt's skills as `mattpocock-skills:<name>`.
 
 | Exit | Output | Meaning |
 |---|---|---|
@@ -343,3 +346,5 @@ Its tests: `python -B -m unittest discover -s scripts`.
 ## License
 
 [MIT](LICENSE)
+
+Matt with Paseo is an independent project. It is not affiliated with or endorsed by Matt Pocock, Paseo, or Anthropic.
