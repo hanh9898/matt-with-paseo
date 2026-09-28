@@ -300,8 +300,8 @@ When the two sources disagree, or neither names GitHub or GitLab (any other forg
    | Kind | The changed paths that are |
    |---|---|
    | Kept in | paths the user kept in at an earlier answer (`keeps <path>` in the status line) |
-   | Binary evidence | shown as binary (`-	-`) by `git -C <worktree> diff --numstat origin/<PR target>...stream/<slug>`: never committed to the ship branch, attached to the pull request instead |
-   | Wave files | named `wave*-common-rules.md`, anywhere; a match on the name, not a read of the file |
+   | Binary evidence | shown as binary (`-	-`) by `git -C <worktree> diff --numstat origin/<PR target>...stream/<slug>`: never committed to the ship branch, attached to the pull request instead; a binary the ticket really delivers ships only when the user keeps it in |
+   | Wave files | named as the wave skill names the files it writes to record a wave (today `wave*-common-rules.md`, its step 3), anywhere; a match on the name, not a read of the file |
    | Ticket folder | inside the folder the tracker configuration gives the stream's spec and tickets: for a local-markdown tracker, the feature folder holding the Tickets folder (`.scratch/<feature>/` for `.scratch/<feature>/issues/`). A GitHub or GitLab tracker has none |
    | Tracker configuration | the `CLAUDE.md`/`AGENTS.md` holding the `## Agent skills` section, and each file that section points to |
    | Ships | every other path |
@@ -321,7 +321,7 @@ When the two sources disagree, or neither names GitHub or GitLab (any other forg
 
 ```
 [<slug>] Ship <slug>? Pull request from stream/<slug>-ship (cut at <head>) to <PR target> (from <source of step 1>), on <forge>, repository <repository>.
-Commits: <each line of git log --oneline origin/<PR target>..stream/<slug>>
+Commits: <n>, <oldest short hash>..<head> (git log --oneline origin/<PR target>..stream/<slug> lists them)
 Left out, restored to <PR target>'s version: <path> (<kind>), …  (none: say none)
 Evidence to attach to the pull request, not committed: <path>, …
 Kept in at your word: <path>, …
@@ -331,13 +331,19 @@ Shipping unresolved, waiting on a human: <tickets>.
 Answer yes, no, or yes keeping <path> in.
 ```
 
-Any answer other than yes keeps the stream unshipped; write what the user said beside the ship question in the status line. "Yes keeping `<path>` in" writes `keeps <path>` into the status line and is a yes: cut the ship branch again with that path in the kept row, and check the merge again before pushing. Ask again only when the user brings it up or the integration branch's head moves (a later wave merged), since the status line then records no ship question for the current head.
+| Answer | Do |
+|---|---|
+| Yes | "Push and open" below |
+| Yes keeping `<path>` in | Write `keeps <path>` into the status line; cut the ship branch again with that path in the kept row, check its merge again, then "Push and open" |
+| Anything else | The stream stays unshipped; write what the user said beside the ship question in the status line |
+
+Ask again only when the user brings it up or the integration branch's head moves (a later wave merged), since the status line then records no ship question for the current head.
 
 **Push and open.** On the user's yes, in this order:
 
 1. `git -C <worktree> status --porcelain` must be empty and `git -C <worktree> branch --show-current` must print `stream/<slug>`; otherwise tell the user and stop.
 2. `git -C <worktree> fetch origin`, then check the PR target still exists (`git -C <worktree> rev-parse --verify origin/<PR target>`). When the integration branch's head is no longer the one the question named, or the PR target moved, cut the ship branch again and check its merge; a conflict now is reported as "The ship branch" says, with no push.
-3. `git -C <worktree> push --force-with-lease -u origin stream/<slug>-ship`: the ship branch is cut afresh each time, so its history is rewritten. Push only the ship branch, never the integration branch, the base branch, or a wave or ticket branch.
+3. `git -C <worktree> push --force-with-lease -u origin stream/<slug>-ship`, forced because every cut rewrites it. Push only the ship branch, never the integration branch, the base branch, or a wave or ticket branch.
 4. Look for a pull request this stream already has, run in the worktree: on GitHub `gh pr list --head stream/<slug>-ship --base <PR target> --state open --json url`, on GitLab `glab mr list --source-branch stream/<slug>-ship --target-branch <PR target>` (open merge requests only, by default). When one is listed, the push has updated it: skip to the link below, never open a second one. When the forge's CLI cannot resolve the remote as a repository of that forge, the pull request cannot be opened this way; tell the user and stop.
 5. Write the pull request's description with `/mattpocock-skills:pr`, from public signals only: `git -C <worktree> diff origin/<PR target>...stream/<slug>-ship`, the commit log above, and the tickets and their comments on the tracker for the evidence. Save it to a file outside the worktree, so it never lands in the branch.
 6. Open it, run in the worktree, with the title a line naming the stream's work. On GitHub `gh pr create --head stream/<slug>-ship --base <PR target> --title "<title>" --body-file <that file>`, adding `--attach <path>` for each image or video of the evidence; on GitLab `glab mr create --source-branch stream/<slug>-ship --target-branch <PR target> --title "<title>" --description-file <that file> --yes`. Each prints the URL. Evidence the command cannot attach (every file on GitLab, anything but an image or video on GitHub) goes to the user as a list, to attach on the pull request's page.

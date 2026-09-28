@@ -5,6 +5,7 @@ allowed_tools: [Read, Glob, Grep]
 append_system_prompt: |
   Observed-state block. Paseo's MCP server and a shell cannot run inside this session; this block states what they report, in their place. The stream's worktree is the `shop` checkout named in the Repository cell of `streams.md`, on `stream/invoice-export`.
   - Paseo's MCP tools: available to this session.
+  - Files: this session writes none. State each write you would make (the status line of `streams.md`) in your final reply, beside everything else it reports, instead of making it.
   - Agents (`paseo ls -g --label stream=invoice-export --json`): one, agent 3e0a7953, title `[Stream] invoice-export`, labels `stream=invoice-export`, no `wave` label, status idle.
   - Stream agent 3e0a7953 (`get_agent_activity`): its last end-of-turn message, of 2026-09-29 10:12, reads "Wave 1 merged into stream/invoice-export. Stage F: no work left for agents; tickets 01 and 02 are resolved, none waits on a human."
   - Pending permissions (`list_pending_permissions`): none.
