@@ -8,11 +8,34 @@ disable-model-invocation: true
 
 You are the stream orchestrator. You run in a control folder outside every repository, keep the streams in its index, and give each stream one worktree on its own integration branch and one stream agent that runs the wave skill there. The stream agent orchestrates the stream's waves; you relay its questions to the user and keep the stream's status line current.
 
-**Input:** $ARGUMENTS (a stream slug from the index, or empty to list the index)
+**Input:** $ARGUMENTS (a stream slug from the index, or empty to list the index; anything else stops at "Entry guards")
 
-Words: every word of the wave skill's words block ([`matt-with-paseo`](../matt-with-paseo/SKILL.md), top of the file) holds here with the same meaning. This skill adds one:
+Words: every word of the wave skill's words block ([`matt-with-paseo`](../matt-with-paseo/SKILL.md), top of the file) holds here with the same meaning. This skill adds three:
 
 - **Stream**: one ticket set that ships through one integration branch and one pull request (a merge request on GitLab; this skill says pull request for both). Its owner is an attribute of it. No dependency crosses a stream boundary; dependencies between tickets stay inside the stream, where the wave skill runs them.
+- **Intake agent**: a Paseo agent you spawn only when the user names a Matt intake skill (triage, grilling, wayfinder, and the spec and ticket steps that follow); its initial prompt starts with that skill's slash command, and it counts against the agent cap. It is the only way a spec or ticket gets written from the control folder (ADR 0005).
+- **Pause**: every stream held (the wave skill's **Hold**) until no agent runs, recorded as `paused` in each status line, so the machine can restart; resuming is one tick (ADR 0006).
+
+## Entry guards
+
+Run both guards first, in this order. A guard that fails stops the skill with its message, before you write a file, create a workspace or an agent, or run a tick.
+
+1. **The argument.** Compare $ARGUMENTS, trimmed, with the Slug column of `streams.md` (reading it writes nothing):
+
+   | Argument | Do |
+   |---|---|
+   | Empty | Go on; step 0 lists the index, or sets it up when there is none |
+   | Exactly one row's Slug | Go on with that row |
+   | Anything else: free text, a task, a slug not in the index, any argument while there is no `streams.md` | Stop. Say that the command takes nothing (to list or set up the index) or one slug of the index, and list the index's slugs. Never map the text onto a stream whose name looks close, and never take it as a task to work on |
+
+2. **Paseo's tools.** This skill needs the `paseo` MCP server's tools (`create_workspace`, `create_agent`, `get_agent_status`, `get_agent_activity`, `send_agent_prompt`, `list_pending_permissions`, `create_heartbeat` and the rest). They count as available when this session's tool list holds them, or when this session's instructions carry an **observed-state block**: what those tools would report, stated in their place (an eval run does this, since Paseo's MCP server cannot run inside one). A block stands in only for what it states; an action that needs a call it does not state goes no further than saying what it would do. With neither, stop and tell the user how to enable them:
+   - set `daemon.mcp.injectIntoAgents` to `true` in Paseo's `config.json` (in `~/.paseo/` by default);
+   - reload the daemon: `paseo daemon reload`;
+   - start a new agent in this control folder and run the command there: tools are injected when an agent starts, so this session does not gain them.
+
+   Offer no `paseo` CLI commands in place of the MCP tools; this skill uses the CLI only where its steps name it.
+
+**Done when**: the argument is empty or one row's slug, and Paseo's tools are in the tool list or stated by an observed-state block; or the skill stopped with the failing guard's message and wrote nothing.
 
 ## Inputs: public signals only
 
