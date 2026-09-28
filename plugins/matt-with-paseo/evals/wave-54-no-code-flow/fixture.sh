@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 exec bash -c "$(sed 's/\r$//' "$0" | tail -n +3)" "$0" # strip CRs from a CRLF checkout, then run the rest
 set -euo pipefail
-# Wave 1 has its rules and an empty agents table: 01 builds behaviour, 02 changes only the README.
+# Wave 1 has its rules (uncommitted, so the base commit stays the head) and an empty agents table:
+# 01 builds behaviour, 02 changes only the README.
 git init -q -b main .
 mkdir -p docs/agents
 cat > AGENTS.md <<'EOF'
@@ -132,6 +133,3 @@ cat > .scratch/export/wave1-common-rules.md <<EOF
 | Ticket | Agent id | Workspace id | Branch | Base commit | Private resources | Cleaned |
 |---|---|---|---|---|---|---|
 EOF
-
-git add -A
-git -c user.name=eval -c user.email=eval@example.com commit -q -m "docs: wave 1 rules"
