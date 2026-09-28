@@ -1,6 +1,0 @@
-schema_version: "1.1"
-name: streams-49-ship-left-out-paths
-description: A stream with a local markdown tracker at its last stage. The ship question must offer a pull request from the ship branch and list the stream's ticket folder and wave file as left out, while the code ships.
-tags: [ship, streams]
-context:
-  scaffold_script: fixture.sh

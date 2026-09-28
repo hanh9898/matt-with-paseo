@@ -10,11 +10,12 @@ You are the stream orchestrator. You run in a control folder outside every repos
 
 **Input:** $ARGUMENTS (a stream slug from the index, or empty to list the index; anything else stops at "Entry guards")
 
-Words: every word of the wave skill's words block ([`matt-with-paseo`](../matt-with-paseo/SKILL.md), top of the file) holds here with the same meaning. This skill adds three:
+Words: every word of the wave skill's words block ([`matt-with-paseo`](../matt-with-paseo/SKILL.md), top of the file) holds here with the same meaning. This skill adds four:
 
 - **Stream**: one ticket set that ships through one integration branch and one pull request (a merge request on GitLab; this skill says pull request for both). Its owner is an attribute of it. No dependency crosses a stream boundary; dependencies between tickets stay inside the stream, where the wave skill runs them.
 - **Intake agent**: a Paseo agent you spawn only when the user names a Matt intake skill (triage, grilling, wayfinder, and the spec and ticket steps that follow); its initial prompt starts with that skill's slash command, and it counts against the agent cap. It is the only way a spec or ticket gets written from the control folder (ADR 0005).
 - **Pause**: every stream held (the wave skill's **Hold**) until no agent runs, recorded as `paused` in each status line, so the machine can restart; resuming is one tick (ADR 0006).
+- **Ship branch**: `stream/<slug>-ship`, cut afresh from the integration branch's head at each ship, plus one commit that restores the agent-only paths (the ticket folder, wave files, tracker configuration, binary evidence), except those the user keeps in, to the PR target's version; the stream's pull request comes from it, and the integration branch keeps everything (ADR 0007).
 
 ## Entry guards
 
@@ -273,7 +274,7 @@ A **respawn** replaces a stream agent whose context has grown large before it hi
 
 ## 6. Ship the stream
 
-A stream ships through one pull request to its PR target, from a ship branch `stream/<slug>-ship` that leaves agent-only paths out (ADR 0007); the integration branch keeps everything, so the next wave and a later ship see the same history. You open the pull request; you never merge it. Merging it, and any later promotion (such as `test` to `develop`), belongs to the repository's own process and its reviewers.
+A stream ships through one pull request from its **Ship branch** to its PR target; the integration branch keeps everything, so the next wave and a later ship see the same history. You open the pull request; you never merge it. Merging it, and any later promotion (such as `test` to `develop`), belongs to the repository's own process and its reviewers.
 
 **The last stage.** A stream reaches its last stage when two public signals agree:
 
@@ -293,7 +294,7 @@ Either signal alone is not the last stage. When they disagree, prompt the stream
 
 When the two sources disagree, or neither names GitHub or GitLab (any other forge), the stream cannot ship this way: tell the user and stop.
 
-**The ship branch.** Cut it afresh for every ship question, from the integration branch's current head, so it never drifts from what the question describes.
+**The ship branch.** Cut it for every ship question, so it never drifts from what the question describes.
 
 1. **The left-out paths**, derived from the repository, never from a list kept by hand. Take the paths the stream changed, `git -C <worktree> diff --name-only --no-renames origin/<PR target>...stream/<slug>`, and sort each into the first row that matches:
 
