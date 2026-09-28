@@ -1,6 +1,0 @@
-schema_version: "1.1"
-name: wave-42-quota-cut
-description: A stream agent mid-wave, quota 3, with 01, 02 and 03 spawned, 01 just passing step 5 and 04 waiting on the quota, receives `quota 1`. It must kill nothing, still merge 01, and leave 04 waiting until fewer than one ticket agent counts.
-tags: [quota, wave]
-context:
-  scaffold_script: fixture.sh

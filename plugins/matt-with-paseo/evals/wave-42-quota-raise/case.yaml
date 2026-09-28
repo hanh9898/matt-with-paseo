@@ -1,6 +1,0 @@
-schema_version: "1.1"
-name: wave-42-quota-raise
-description: A stream agent mid-wave, quota 2, with 01 and 02 running and 03 and 04 waiting on the quota, receives `quota 4`. Rolling start must take 03 and 04 at once, without waiting for a merge or a new session.
-tags: [quota, wave]
-context:
-  scaffold_script: fixture.sh
