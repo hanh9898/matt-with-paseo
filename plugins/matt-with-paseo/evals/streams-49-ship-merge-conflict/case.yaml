@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: streams-49-ship-merge-conflict
+description: A stream at its last stage whose ship branch does not merge cleanly into the PR target. The stream skill must report the conflict to the user and ask no ship question.
+tags: [ship, streams]
+context:
+  scaffold_script: fixture.sh
