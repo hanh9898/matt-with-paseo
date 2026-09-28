@@ -1,6 +1,0 @@
-schema_version: "1.1"
-name: wave-53-merge-markers
-description: A reopened session finds a ticket merge left in progress, its conflicts marked as fixed but conflict markers still in a staged file. The wave skill must report the markers and leave the merge uncommitted.
-tags: [locate, merge, wave]
-context:
-  scaffold_script: fixture.sh

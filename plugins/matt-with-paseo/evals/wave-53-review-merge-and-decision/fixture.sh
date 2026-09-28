@@ -59,6 +59,12 @@ Export button in the invoice list: it downloads the month's invoices as CSV.
 ## Acceptance criteria
 - [ ] Export button in the invoice list works end to end.
 EOF
+cat > src/columns.js <<'EOF'
+export const csvColumns = [
+  "number",
+  "customer",
+];
+EOF
 git add -A
 git commit -q -m fixture
 base=$(git rev-parse --short HEAD)
@@ -89,6 +95,13 @@ mkdir -p src
 cat > src/filter.js <<'EOF'
 export const inMonth = (iso, month) => iso.startsWith(month); // ISO dates, YYYY-MM-DD
 EOF
+cat > src/columns.js <<'EOF'
+export const csvColumns = [
+  "number",
+  "customer",
+  "month",
+];
+EOF
 cat > .scratch/export/issues/02-month-filter.md <<'EOF'
 # 02: Filter invoices by month
 
@@ -109,6 +122,31 @@ git checkout -q main
 git merge -q --no-ff wave1/01-csv-writer -m "Merge ticket 01 (Write invoices as CSV) into main"
 git merge -q --no-ff wave1/02-month-filter -m "Merge ticket 02 (Filter invoices by month) into main"
 
+# Review finding 1 went back to agent-01: its fix adds the total column; catching up with main,
+# it hit the conflict and committed the file with its markers still in it.
+git checkout -q wave1/01-csv-writer
+cat > src/columns.js <<'EOF'
+export const csvColumns = [
+  "number",
+  "customer",
+  "total",
+];
+EOF
+git commit -q -am "fix: total column in the CSV (01, review finding 1)"
+git merge --no-ff main -m "Merge main into wave1/01-csv-writer" >/dev/null 2>&1 || true
+git add -A
+git commit -q -m "Merge main into wave1/01-csv-writer"
+cat > docs/csv-export.md <<'EOF'
+# CSV export
+
+Columns: number, customer, month, total.
+EOF
+git add -A
+git commit -q -m "docs: CSV columns (01, review finding 1)"
+git checkout -q main
+# A previous session started merging the fix back; git merged it without a conflict and stopped before committing.
+git merge -q --no-ff --no-commit wave1/01-csv-writer >/dev/null 2>&1
+
 cat > .scratch/export/wave1-common-rules.md <<EOF
 # Common rules for wave 1 (tickets 01, 02)
 
@@ -126,6 +164,7 @@ cat > .scratch/export/wave1-common-rules.md <<EOF
 
 ## File zones
 - Ticket 01 writes in \`src/csv.js\`; ticket 02 writes in \`src/filter.js\`.
+- Shared files: add only your own lines, and keep the order of the existing lines.
 
 ## Wave agents
 
@@ -139,6 +178,7 @@ cat > .scratch/export/wave1-common-rules.md <<EOF
 Fixed point \`$base\`, run in the orchestrator's session. Each ticket was reviewed alone by its agent; this pass reports seams only.
 
 - **Standards: 0 findings.**
-- **Spec: 1 finding.**
+- **Spec: 2 findings.**
+  - The CSV of 01 has no total column, which the export of ticket 03 needs. Contained in 01's zone: sent back to agent-01 with \`send_agent_prompt\`; its fix is merging back.
   - 01 writes dates as DD/MM/YYYY while 02 filters on ISO dates (YYYY-MM-DD), so the export of ticket 03 would mix both. Which format does the CSV use? Asked the user in the decision round: **waiting on the user's decision**, not answered yet.
 EOF

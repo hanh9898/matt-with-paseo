@@ -1,6 +1,0 @@
-schema_version: "1.1"
-name: wave-53-pending-review-decision
-description: Wave 1 is merged and reviewed, but one review finding still waits on the user's decision, which the next ticket depends on. The wave skill must bring that decision back to the user and not clean up or open the next wave.
-tags: [locate, review, wave]
-context:
-  scaffold_script: fixture.sh
