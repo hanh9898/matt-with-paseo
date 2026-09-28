@@ -92,13 +92,21 @@ Once every ticket of the wave is done: a ticket branch of this wave still unmerg
 
 A note for stage B: `/mattpocock-skills:to-tickets` synthesizes from the current conversation, as `/mattpocock-skills:to-spec` does, so it must run in the session that still holds the context that wrote the spec. If that session is gone, tell the user. Every command this step suggests outside this skill (stages A and B, `/mattpocock-skills:ask-matt`) is typed by the user only; this skill only suggests it.
 
+When the next step you will present is a step of this skill, call `list_profiles` before presenting it: with no profile that fits (step 1's table, last row), this checkpoint also asks for the agents' model and permission mode.
+
 Present three things to the user: the current stage (or the case of the list above), the signals you saw with their paths, and **one** concrete next step (a command to type, or a step number of this skill). Wait for the user to agree.
 
 **Done when**: the user has confirmed the stage and the next step. If the next step lies outside this skill, stop here.
 
 ## 1. Prepare
 
-Load the `paseo` skill and call `list_profiles`, reading each profile's `notes`.
+Load the `paseo` skill and call `list_profiles`, reading each profile's `notes`, then settle what the agents launch with:
+
+| `list_profiles` gives | The agents launch with |
+|---|---|
+| A profile the user names | that profile |
+| A profile whose notes fit ticket work | that profile |
+| No profile, or none that fits | the model (provider and model, from `list_providers` and `list_models`) and the permission mode the user gives: ask for both, and choose neither yourself, whatever fallback the `paseo` skill offers |
 
 Identify the tracker from `docs/agents/issue-tracker.md`. Identify the integration branch with `git branch --show-current`, never from the directory name. Read `stream <slug>` and `quota <N>` from the input when given.
 
@@ -106,7 +114,7 @@ Read the triage label file the `## Agent skills` section points to (its triage l
 
 Read the repo's evidence standards file when it declares one: an `## Evidence standards` section of `CLAUDE.md`/`AGENTS.md`, outside the `## Agent skills` block, pointing to a file of free prose on how this repo proves a change works. Fill the template's `<path to the evidence standards file, or "none declared">` placeholder with its path in step 3. When the section or its file is absent, write "none declared" there and continue; nothing else in the wave changes.
 
-**Done when**: you have stated six things: the ticket folder, how status and dependencies are recorded, the label string of each triage role above, the integration branch, the profile the agents will use, and the evidence standards file's path or that the repo declares none; and, when given, the stream slug and the quota.
+**Done when**: you have stated six things: the ticket folder, how status and dependencies are recorded, the label string of each triage role above, the integration branch, the profile the agents will use (or the model and permission mode the user gave), and the evidence standards file's path or that the repo declares none; and, when given, the stream slug and the quota.
 
 ## 2. Build the graph and split into waves
 
@@ -157,8 +165,16 @@ Write the `## Wave agents` heading and the table header row (ticket, agent id, w
 
 For each ticket in the wave, within the quota:
 
-1. `create_workspace` with `isolation: "worktree"`, `mode: "branch-off"`, `baseBranch` set to the integration branch, and `branchName` shaped as the ticket branch in "Names this run writes". Check that `git -C <worktree> rev-parse HEAD` equals the base commit; if the integration branch stays still while you spawn, every worktree in the wave shares one base. Paseo's MCP tools and CLI cannot label a workspace (workspace labels exist only in the app's sidebar), so the workspace itself stays unlabelled and is found through the labelled agent that runs in it.
-2. `create_agent` in that workspace, titled `[Wave N] <NN> <ticket name>`, with the ticket agent labels of "Names this run writes"; the labels, not the title, are how step 0 finds the wave's agents again. The prompt holds exactly four things: the **absolute** path to the common rules in the integration branch's checkout (the file is the wave's live log and is not in the worktree), the path to the ticket, the private resources (database name, port when no service is declared, volume, temp directory; a distinct set per agent, named per "Names this run writes"), and the **flow**.
+1. `create_workspace` with `projectId` set to the repository's Paseo project id, `isolation: "worktree"`, `mode: "branch-off"`, `baseBranch` set to the integration branch, and `branchName` shaped as the ticket branch in "Names this run writes". The project id is the `projectId` of the `paseo project ls --json` entry whose `path` is the repository's main checkout (the first line of `git worktree list`); read it once per wave. When no entry has that path, Paseo does not know the repository yet: `paseo project create <main checkout>` registers it, and its id is the one to pass. A call that times out may still have made the worktree, so read what git shows before calling again:
+
+   | `git worktree list` and `git rev-parse --verify <ticket branch>` show | Do |
+   |---|---|
+   | A worktree on the ticket branch | Adopt it: `create_workspace` with `isolation: "local"`, `path` set to that worktree and the same `projectId`; without the id, Paseo files the adopted directory as a project of its own |
+   | The ticket branch, in no worktree | `create_workspace` with the same `projectId`, `isolation: "worktree"`, `mode: "checkout-branch"`, `branch` set to the ticket branch |
+   | Neither | Call again as above |
+
+   Check that `git -C <worktree> rev-parse HEAD` equals the base commit; if the integration branch stays still while you spawn, every worktree in the wave shares one base. Paseo's MCP tools and CLI cannot label a workspace (workspace labels exist only in the app's sidebar), so the workspace itself stays unlabelled and is found through the labelled agent that runs in it.
+2. `create_agent` with `workspaceId` set to that workspace's id (without it, the agent lands in this session's own workspace), titled `[Wave N] <NN> <ticket name>`, with the ticket agent labels of "Names this run writes"; the labels, not the title, are how step 0 finds the wave's agents again. The prompt holds exactly four things: the **absolute** path to the common rules in the integration branch's checkout (the file is the wave's live log and is not in the worktree), the path to the ticket, the private resources (database name, port when no service is declared, volume, temp directory; a distinct set per agent, named per "Names this run writes"), and the **flow**.
 
 Before writing the private resources into the prompt, read the target repo's `paseo.json` in the integration branch's checkout, and never create or edit it: declared `worktree.setup` means Paseo runs that setup in each new worktree, so the prompt carries no environment setup; declared services (scripts with `"type": "service"`) mean Paseo gives each worktree its own port, so no port goes in the private resources; a service with a fixed `port` breaks this (see the README), so tell the user before spawning.
 
