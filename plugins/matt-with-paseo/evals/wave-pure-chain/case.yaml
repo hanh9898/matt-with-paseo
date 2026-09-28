@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: wave-pure-chain
+description: Three tickets in a pure chain. The wave skill must suggest implement in the current session, since no two can run side by side.
+tags: [locate, wave]
+context:
+  scaffold_script: fixture.sh

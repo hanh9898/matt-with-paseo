@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: wave-names-wayfinder-map
+description: A repo whose only tickets form a wayfinder decision map. The wave skill must name it as a map not yet through to-spec and start no wave.
+tags: [locate, wave]
+context:
+  scaffold_script: fixture.sh

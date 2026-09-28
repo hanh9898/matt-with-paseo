@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: wave-not-configured
+description: A repo with no Agent skills configuration. The wave skill must send the user to setup and stop.
+tags: [locate, wave]
+context:
+  scaffold_script: fixture.sh

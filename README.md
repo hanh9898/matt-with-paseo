@@ -338,6 +338,17 @@ It lists every `mattpocock-skills:<name>` reference in both skills (`plugins/mat
 
 Its tests: `python -B -m unittest discover -s scripts`.
 
+### Behaviour evals
+
+The plugin carries an eval suite for [`claude plugin eval`](https://code.claude.com/docs/en/plugin-evals) in `plugins/matt-with-paseo/evals/`. Each case builds a small repository with a fixture script, types one of the two commands, and grades what the skill decides: the locating step of the wave skill (not configured, no spec, a spec without tickets, tickets with width, a pure chain, a wayfinder map) and the stream skill's first run with no index. The runs are read-only, and Paseo's MCP server is not available inside an eval run, so the suite checks decisions, not spawning; the real multi-agent run is the acceptance run of #23. Every case also runs without the plugin, so the report shows what the plugin adds.
+
+```
+cd plugins/matt-with-paseo
+claude plugin eval . --scaffold
+```
+
+`--scaffold` runs each case's `fixture.sh` as you, to build its repository; read them first. A full run is 7 cases, 3 runs each, in two arms (with and without the plugin). The last full run scored 1.00 with the plugin on every case, against 0.20 to 0.50 without it. The fixture scripts must keep LF line endings: on Windows, check out with `core.autocrlf` set to `input` or `false`, or bash fails on the carriage returns.
+
 ## Acknowledgements
 
 - [Matt Pocock](https://github.com/mattpocock) for the [skills](https://github.com/mattpocock/skills) this orchestrates (MIT).

@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: wave-no-spec-no-tickets
+description: A configured repo with no spec and no tickets. The wave skill must point to ask-matt and stop.
+tags: [locate, wave]
+context:
+  scaffold_script: fixture.sh
