@@ -103,11 +103,17 @@ Read every ticket: status, dependency line (`Blocked by`), comments. Draw the de
 
 Two tickets in the same wave must be logically independent. If they touch the same registration file (manifest, package index, route table, permission file) they can still share a wave, but the common rules must assign each ticket its own file zone.
 
-Run each symptom ticket's own reproduction on the base commit. A symptom that does not reproduce, or an acceptance criterion that already passes, leaves an agent nothing to fix but something to invent: take that ticket out of the wave and back to triage (the answer may be a ticket rewritten as a test that locks the correct behaviour).
+Run each symptom ticket's own reproduction on the base commit. Only a run counts: its command and its output. Reading the code, or a comment saying "reproduced" without a run's output, is not a reproduction, however plain the defect looks.
+
+| The reproduction on the base commit | The ticket |
+|---|---|
+| Run, and its output shows the symptom | can join the wave |
+| Run, and the symptom does not show, or an acceptance criterion already passes | leaves the wave, back to triage: an agent would have nothing to fix but something to invent (the answer may be a ticket rewritten as a test that locks the correct behaviour) |
+| Not run: this session cannot run it (no shell, a device, an account, a service it cannot reach) | stays out of the wave until it is run, on the lost-width list below |
 
 Then hunt for lost width, and list every case with the one thing that would recover it:
 
-- **A ticket waiting on a human** (in the needs triage or ready for human role) that would join this wave, or that blocks tickets which would: name the exact question the human must answer, or the decision they must make.
+- **A ticket waiting on a human** (in the needs triage, needs info or ready for human role, or a symptom whose reproduction only a human can run now) that would join this wave, or that blocks tickets which would: name the exact question the human must answer, the decision they must make, or the command they must run and send back with its output.
 - **A false edge**: a `Blocked by` that stands for a shared file rather than a logical dependency (the later ticket neither calls nor reads what the earlier one builds). Propose dropping the edge and giving both tickets a file zone; the edge changes only in the ticket, and only with the user's agreement.
 
 With `quota <N>`, the upcoming wave starts at most N tickets (see "Quota" in step 4). When more can run now, propose the N to start first, those that unblock the most tickets first, and list the rest as waiting on the quota: they belong to this wave and join it by rolling start (step 6). A ticket waiting on the quota is not lost width.
@@ -143,6 +149,8 @@ For each ticket in the wave, within the quota:
 
 Before writing the private resources into the prompt, read the target repo's `paseo.json` in the integration branch's checkout, and never create or edit it: declared `worktree.setup` means Paseo runs that setup in each new worktree, so the prompt carries no environment setup; declared services (scripts with `"type": "service"`) mean Paseo gives each worktree its own port, so no port goes in the private resources; a service with a fixed `port` breaks this (see the README), so tell the user before spawning.
 
+The prompt only names the private resources; the agent creates each one when it first needs it, and keeps it until its ticket is merged, since step 7 may send a finding back to it. Step 8 removes them. What agents share (a server they all call, a render lock, anything else only one agent may hold at a time) is not a private resource: it goes into the common rules' Resources section in step 3, with how to take and release each lock.
+
 Take the shape of each `create_agent` call (required fields, optional fields, how the chosen profile maps onto it) from the `paseo` skill (loaded in step 1); do not guess parameters.
 
 The **flow** is the chain of skills the agent runs for that ticket. Read the ticket, then pick one row:
@@ -151,7 +159,8 @@ The **flow** is the chain of skills the agent runs for that ticket. Read the tic
 |---|---|
 | A symptom: broken, erroring, wrong numbers, slow | `/mattpocock-skills:diagnosing-bugs` then `/mattpocock-skills:tdd` |
 | Behaviour that should exist | `/mattpocock-skills:tdd` |
-| Work for a human: the ticket is in the ready for human role | spawn no agent |
+| A change to no code: documents, videos, configuration | no test-first skill: turn each acceptance criterion into a check that is run or looked at (a `grep` that must match, a render, a link check, the file opened in the tool that uses it), run it red before the change where the criterion is new, then make the change and run it green |
+| Work for a human: the ticket is in the ready for human or needs info role | spawn no agent |
 
 Every flow ends with `/mattpocock-skills:code-review` with the ticket's base commit (its row's) as the fixed point, naming the evidence standards file in the call when the repo declares one (the Standards axis reads only documents on how code is written by itself), then fixing the findings, the last commit, and the report.
 
@@ -173,10 +182,11 @@ Each time an agent reports done, check the real artifacts, not the report's word
 
 - the commits sit on the ticket's own branch (`git log <branch>`);
 - the ticket's status has changed, and its comments carry verification evidence;
-- the report's most decisive claim is re-run once by you (call the endpoint, open the screen, look at the screenshot);
+- the report's most decisive claim is re-run once by you (call the endpoint, open the screen, look at the screenshot); for a change the user sees, the screenshots include the screen scrolled past its first view and at a narrow width;
 - the ticket's comments carry the `mattpocock-skills:code-review` result: the number of findings per axis and the outcome of each. Missing means the agent did not finish its flow;
-- symptom tickets: the report shows the loop **red before** the fix and green after. Green alone does not tell you whether the fix hit the right place or only masked the symptom;
-- private resources are cleaned up, or kept for a stated reason.
+- symptom tickets: the report shows the loop **red before** the fix and green after, each as a run's command and output; a red read from the code is no loop. Green alone does not tell you whether the fix hit the right place or only masked the symptom;
+- the report names every change outside the ticket's file zone or outside git (a file in another checkout, a machine setting, a created resource), and `git -C <worktree> status --porcelain` is empty or each file it lists is named there;
+- the report lists the private resources the agent created, for step 8 to remove.
 
 A finished report whose artifacts are not there yet (no commits on the ticket's branch, no status change on the ticket) means the agent is still working: Paseo sends no notification for a turn an agent starts on its own after a background command, so its real finish would pass silently. Do not record the ticket as failed; create a heartbeat for its agent under the heartbeat contract, and check the report again once the agent has really stopped.
 
