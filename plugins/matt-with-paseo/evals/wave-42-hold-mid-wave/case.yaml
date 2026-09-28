@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: wave-42-hold-mid-wave
+description: A stream agent mid-wave, quota 2, ticket 01 just passed step 5 with 03 and 04 waiting on the quota, receives `hold`. It must spawn neither 03 nor 04, while still merging 01 and letting 02 run.
+tags: [hold, wave]
+context:
+  scaffold_script: fixture.sh

@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: wave-42-one-ticket-stream
+description: Under `stream`, a feature with a single ready ticket and no wave run yet. The wave skill must run it as a one-ticket wave (its own step 1), not suggest implement, and still wait for the stage confirmation.
+tags: [locate, wave, stream]
+context:
+  scaffold_script: fixture.sh
