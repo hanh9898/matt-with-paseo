@@ -1,6 +1,0 @@
-schema_version: "1.1"
-name: wave-54-reproduction-not-run
-description: Two tickets, no wave yet; the symptom ticket's only reproduction is a comment that read the code. At step 2 the wave skill must not accept that symptom as reproduced.
-tags: [graph, wave]
-context:
-  scaffold_script: fixture.sh

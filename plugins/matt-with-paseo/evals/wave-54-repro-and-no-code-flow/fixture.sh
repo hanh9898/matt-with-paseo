@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 exec bash -c "$(sed 's/\r$//' "$0" | tail -n +3)" "$0" # strip CRs from a CRLF checkout, then run the rest
 set -euo pipefail
-# Two tickets, no wave file: 02 is a symptom whose only "reproduction" is a comment that read the code.
+# Three tickets, no wave file: 01 builds behaviour, 02 is a symptom whose only "reproduction" is a comment
+# that read the code, 03 changes only the README.
 git init -q -b main .
 mkdir -p docs/agents
 cat > AGENTS.md <<'EOF'
@@ -48,6 +49,12 @@ cat > package.json <<'EOF'
 }
 EOF
 
+cat > README.md <<'EOF'
+# Invoices
+
+Lists invoices, totals them and exports them.
+EOF
+
 mkdir -p src scripts
 cat > src/total.js <<'EOF'
 export function invoiceTotal(lines) {
@@ -72,7 +79,7 @@ cat > .scratch/invoices/spec.md <<'EOF'
 Accountants see wrong invoice totals and retype invoices by hand.
 
 ## Solution
-Correct totals, and a CSV export.
+Correct totals, a CSV export, and a README section on the export.
 EOF
 cat > .scratch/invoices/issues/01-csv-export.md <<'EOF'
 # 01: Export invoices as CSV
@@ -102,6 +109,18 @@ An accountant reports that an invoice with three lines (10, 12, 20) shows a tota
 ## Comments
 
 **triager:** Reproduced. Reading `src/total.js`, the loop runs to `lines.length - 1`, so the last line is never added. Confirmed, ready for an agent.
+EOF
+cat > .scratch/invoices/issues/03-export-readme.md <<'EOF'
+# 03: Document the export in the README
+
+Status: ready-for-agent
+
+## What to build
+A `## Export` section in `README.md` explaining how an accountant exports invoices as CSV. No code changes.
+
+## Acceptance criteria
+- [ ] `README.md` has a `## Export` section.
+- [ ] The section gives one example of an exported line.
 EOF
 
 git add -A
