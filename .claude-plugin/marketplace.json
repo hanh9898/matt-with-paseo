@@ -4,12 +4,12 @@
     "name": "hanh9898",
     "url": "https://github.com/hanh9898"
   },
-  "description": "The matt-with-paseo skill: Matt Pocock's skills orchestrated across parallel Paseo agents.",
+  "description": "The matt-with-paseo skills: Matt Pocock's skills orchestrated across parallel Paseo agents, as waves of tickets and as streams of ticket sets.",
   "plugins": [
     {
       "name": "matt-with-paseo",
       "source": "./",
-      "description": "A simple multi-agent orchestrator: Matt Pocock's skills + the Paseo agent control plane, running tickets in waves of parallel agents."
+      "description": "A simple multi-agent orchestrator: Matt Pocock's skills + the Paseo agent control plane, running tickets in waves of parallel agents, and many ticket sets as streams that each ship through one pull request or GitLab merge request."
     }
   ]
 }
