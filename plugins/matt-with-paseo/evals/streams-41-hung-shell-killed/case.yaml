@@ -1,6 +1,0 @@
-schema_version: "1.1"
-name: streams-41-hung-shell-killed
-description: A stream agent running with its activity count unmoved for three ticks and a shell command as its last entry is hung; the tick kills and replaces it (no cancel, no re-prompt) and counts the restart. Its wave's ticket agents are idle, so the replacement check passes.
-tags: [supervise, streams]
-context:
-  scaffold_script: fixture.sh
