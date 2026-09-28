@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: wave-54-no-code-flow
+description: Wave 1 is logged with no agent yet, one ticket building behaviour and one changing only documentation. Resuming at step 4, the documentation ticket must get the flow for tickets that change no code, not a test-first flow.
+tags: [spawn, wave]
+context:
+  scaffold_script: fixture.sh
