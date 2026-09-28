@@ -1,6 +1,0 @@
-schema_version: "1.1"
-name: streams-48-agent-in-stream-workspace
-description: The stream's workspace already exists and no stream agent runs. The planned create_agent must pass that workspace's id, not land in the control folder's workspace.
-tags: [spawn, streams]
-context:
-  scaffold_script: fixture.sh

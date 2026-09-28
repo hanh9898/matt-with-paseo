@@ -5,6 +5,7 @@ allowed_tools: [Read, Glob, Grep]
 append_system_prompt: |
   Observed-state block. Paseo's MCP server cannot run inside this session, and this read-only session cannot run shell commands; this block states what they report, in their place.
   - Paseo's MCP tools: available to this session.
+  - A Paseo call this block does not state the result of: state the call you would make, with its parameters, in place of making it.
   - This session runs in the control folder, workspace `wks_ctrl1111` (project `prj_ctrl1111`).
   - Agents (`paseo ls -g --label stream=billing-export --json`, `list_agents`): none.
   - Pending permissions (`list_pending_permissions`): none.

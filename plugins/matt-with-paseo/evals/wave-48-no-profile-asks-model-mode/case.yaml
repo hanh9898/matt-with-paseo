@@ -1,6 +1,0 @@
-schema_version: "1.1"
-name: wave-48-no-profile-asks-model-mode
-description: Tickets with width and no Paseo profile configured. The wave skill's first question must ask the user for the agents' model and permission mode, choosing neither itself.
-tags: [locate, wave]
-context:
-  scaffold_script: fixture.sh
