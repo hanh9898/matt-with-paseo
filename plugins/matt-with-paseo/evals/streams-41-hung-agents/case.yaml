@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: streams-41-hung-agents
+description: One tick over two running streams whose stream agents' activity counts have not moved for three ticks. billing-export's last entry is a shell command, so it is hung and is killed and replaced (no cancel, no re-prompt), with the restart counted; its ticket agents are idle, so the replacement check passes. login-bug's last entry is a subagent, so it is reported to the user with that entry and never killed, cancelled or re-prompted.
+tags: [supervise, streams]
+context:
+  scaffold_script: fixture.sh

@@ -28,6 +28,10 @@ Copy in only what an agent cannot look up: an unwritten convention, the reason b
   a long command, the review sub-agents `mattpocock-skills:code-review` launches): wait for it inside
   the same turn. Paseo sends no finish notification for a turn you start on your own afterwards, so
   your "finished" report must mean the work is done.
+- Start any command that may take more than two minutes (a test suite, a build, a container, a commit
+  with slow hooks) in the background from the start, and read its output when it finishes. A foreground
+  command the shell moves to the background halfway can leave your turn waiting on a result that never
+  returns.
 
 ## Existing interfaces to reuse
 - `<function / hook / module>`: <signature>, <what it returns>, <what it already handles, e.g. sending mail, logging>.
