@@ -166,17 +166,28 @@ Run `git -C <repository> fetch origin` first, and check that each branch exists 
 
 The stream's integration branch is `stream/<slug>`, cut from the base branch. It is not the bare slug, for the reason the wave skill's [`TROUBLESHOOTING.md`](../matt-with-paseo/TROUBLESHOOTING.md) gives under "`create_workspace` fails because git cannot create the ticket branch under the `stream` prefix".
 
-`create_workspace` with `path` set to the repository, `isolation: "worktree"`, `mode: "branch-off"`, `branchName: "stream/<slug>"`, and `baseBranch` set to the base branch (`origin/<base>` when it exists on the remote, so the cut starts from the fetched head). Take the call's shape from the `paseo` skill and the tool's own schema (`path` is the source checkout); do not guess parameters. Then check `git -C <worktree> branch --show-current` prints `stream/<slug>` and `git -C <worktree> rev-parse HEAD` equals the base branch's head.
+Every `create_workspace` here passes `projectId`, the repository's Paseo project id: the `projectId` of the `paseo project ls --json` entry whose `path` is the Repository. When no entry has that path, Paseo does not know the repository yet: `paseo project create <repository>` registers it, and its id is the one to pass. Take each call's shape from the `paseo` skill and the tool's own schema (`path` is the source checkout); do not guess parameters. Pick the call by what git shows for `stream/<slug>` (`git -C <repository> worktree list`, `git -C <repository> rev-parse --verify stream/<slug>`):
 
-When `stream/<slug>` already exists (an earlier run cut it), open it with `mode: "checkout-branch"` and `branch: "stream/<slug>"` instead of cutting a new one.
+| `stream/<slug>` | `create_workspace` with `projectId` and |
+|---|---|
+| Exists nowhere | `path` set to the repository, `isolation: "worktree"`, `mode: "branch-off"`, `branchName: "stream/<slug>"`, and `baseBranch` set to the base branch (`origin/<base>` when it exists on the remote, so the cut starts from the fetched head) |
+| Exists (an earlier run cut it), in no worktree | `path` set to the repository, `isolation: "worktree"`, `mode: "checkout-branch"`, `branch: "stream/<slug>"` |
+| Checked out in a worktree no workspace of `list_workspaces` has (a `create_workspace` that timed out still made it) | `isolation: "local"`, `path` set to that worktree: it adopts the worktree, and without the id Paseo files it as a project of its own |
 
-**Done when**: a worktree exists on `stream/<slug>`, its head checked against the base branch, and you hold its workspace id and path.
+A call that times out picks again from the table: run the two git commands before calling anything. Then check `git -C <worktree> branch --show-current` prints `stream/<slug>` and `git -C <worktree> rev-parse HEAD` equals the base branch's head.
+
+**Done when**: a worktree exists on `stream/<slug>`, its head checked against the base branch, and you hold its workspace id and path, the workspace in the repository's Paseo project.
 
 ## 3. Spawn the stream agent
 
-Call `list_profiles` and read each profile's `notes`, as the wave skill's step 1 does; pick the profile the user names or whose notes fit orchestration, and map it onto the call per the `paseo` skill.
+Call `list_profiles` and read each profile's `notes`, as the wave skill's step 1 does, and map what the stream agent launches with onto the call per the `paseo` skill:
 
-`create_agent` in the stream's workspace, titled `[Stream] <slug>`, with `labels: { stream: "<slug>" }` and `notifyOnFinish: true`. The initial prompt is exactly the wave skill's command, starting at its first character:
+| `list_profiles` gives | The stream agent launches with |
+|---|---|
+| A profile the user names, or one whose notes fit orchestration | that profile |
+| No profile, or none that fits | the model and the permission mode the user gives: ask for both and spawn once they answer; choose neither yourself |
+
+`create_agent` with `workspaceId` set to the stream's workspace id from step 2 (without it, the agent lands in the control folder's workspace), titled `[Stream] <slug>`, with `labels: { stream: "<slug>" }` and `notifyOnFinish: true`. The initial prompt is exactly the wave skill's command, starting at its first character:
 
 ```
 /matt-with-paseo <tickets> stream <slug> quota <N>
