@@ -147,6 +147,20 @@ class DriftCheck(unittest.TestCase):
         self.assertEqual(result.stdout, "")
         self.assertEqual(result.returncode, 0)
 
+    def test_reports_the_beta_loop_lens_named_bare(self):
+        make_skill(self.skill, SKILL_MD + "\nDesign the loop as loop-me does.\n")
+
+        result = self.run_check()
+
+        self.assert_one_mismatch(result, "SKILL.md:19:", "loop-me", "without naming it")
+
+    def test_reports_the_beta_loop_lens_named_as_a_matt_skill_once(self):
+        make_skill(self.skill, SKILL_MD + "\nThen `/mattpocock-skills:loop-me`.\n")
+
+        result = self.run_check()
+
+        self.assert_one_mismatch(result, "SKILL.md:19:", "loop-me", "without naming it")
+
     def test_without_plugin_root_compares_against_the_user_scope_install(self):
         project_copy = self.tmp / "project-plugin"
         make_plugin(project_copy, {"tdd": False, "code-review": False, "to-spec": True, "extra": False})
