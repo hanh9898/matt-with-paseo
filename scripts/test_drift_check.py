@@ -94,13 +94,6 @@ class DriftCheck(unittest.TestCase):
         for fragment in fragments:
             self.assertIn(fragment, lines[0])
 
-    def assert_one_mismatch(self, result, *fragments):
-        self.assertEqual(result.returncode, 1, result.stderr)
-        lines = result.stdout.splitlines()
-        self.assertEqual(len(lines), 1, result.stdout)
-        for fragment in fragments:
-            self.assertIn(fragment, lines[0])
-
     def test_reports_a_reference_to_a_skill_that_does_not_exist(self):
         make_skill(self.skill, SKILL_MD + "\nThen `/mattpocock-skills:no-such-skill`.\n")
 

@@ -1,8 +1,8 @@
 # Coding standards
 
-The rules every change to this plugin is reviewed against, on the Standards axis of `mattpocock-skills:code-review`. Cite a rule by its ID (W3, L2, S1) in each finding.
+The rules every change to this plugin is reviewed against, on the Standards axis of `mattpocock-skills:code-review`. Cite a rule by its ID (W3, H1, L2, S1) in each finding.
 
-**Scope.** Every document an agent reads: both skills' `SKILL.md`, the common rules template, `TROUBLESHOOTING.md`, `AGENTS.md`/`CLAUDE.md`, the agent docs in `docs/agents/`, and the eval prompts and graders in `plugins/matt-with-paseo/evals/`; part 3 covers the scripts in `scripts/`. ADRs and the READMEs are written for people and stay outside it.
+**Scope.** Every document an agent reads: both skills' `SKILL.md`, the common rules template, `TROUBLESHOOTING.md`, `AGENTS.md`/`CLAUDE.md`, the agent docs in `docs/agents/`, the eval prompts and graders in `plugins/matt-with-paseo/evals/`, and this file itself; part 3 covers the scripts in `scripts/`. ADRs and the READMEs are written for people and stay outside it.
 
 ## 1. Writing for agents
 
@@ -18,11 +18,16 @@ The rules every change to this plugin is reviewed against, on the Standards axis
 | W6 | **Single source of truth.** Each meaning lives in one place and others point there; nothing restates what a file, a command or `--help` already shows | a naming rule copied from the wave skill's names table into a step |
 | W7 | **No-ops.** Every sentence changes behaviour against the model's default; a sentence that does not is deleted whole | "be careful to check the output" |
 | W8 | **Sediment.** Every line still bears on what the document does today; a change removes the lines it makes stale | a note about a flag the change removed |
-| W9 | **Choices as tables.** A choice between cases is a row in a table, not a new prose branch; a new agent flow is a row in the wave skill's step 4 flow table | an "if the ticket is a bug, otherwise…" paragraph beside the flow table |
+
+This repo adds one house rule of its own, not a lever of that skill:
+
+| ID | Rule | A finding looks like |
+|---|---|---|
+| H1 | **Choices as tables.** A choice between cases is a row in a table, not a new prose branch; a new agent flow is a row in the wave skill's step 4 flow table | an "if the ticket is a bug, otherwise…" paragraph beside the flow table |
 
 ## 2. Loop design
 
-Every loop in scope (a skill's run, a heartbeat, a ticket flow) is designed with the words **Checkpoint** and **Brief**, defined in the wave skill's words block ([`SKILL.md`](plugins/matt-with-paseo/skills/matt-with-paseo/SKILL.md), top of the file).
+**Checkpoint** and **Brief** are defined in the wave skill's words block ([`SKILL.md`](plugins/matt-with-paseo/skills/matt-with-paseo/SKILL.md), top of the file); read them there before applying these rules to any loop in scope (a skill's run, a heartbeat, a ticket flow).
 
 | ID | Rule | A finding looks like |
 |---|---|---|
