@@ -51,8 +51,9 @@ Copy in only what an agent cannot look up: an unwritten convention, the reason b
 
 ## Resources
 - Your private resources are listed in your prompt (database, port when no service is declared, volume,
-  temp directory). Use exactly that set. Create each one when you first need it, and keep it until your
-  ticket is merged: a review finding may come back to you. The orchestrator removes it after the merge.
+  temp directory). Use exactly that set. Create each one when you first need it, and leave it in place
+  when you finish: a review finding may come back to you. The orchestrator removes it once your ticket is
+  merged and the wave reviewed.
 - Shared resources, read-only: <main container, source database, another session's browser profile>.
 - Shared resources you may write to, and machine-wide locks: <a shared server, a render lock>: <what it
   guards>, <how to take it, how to see who holds it, how to release it>. Hold a lock only while the command

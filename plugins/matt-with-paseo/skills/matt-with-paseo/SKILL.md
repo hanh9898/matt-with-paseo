@@ -159,7 +159,7 @@ The **flow** is the chain of skills the agent runs for that ticket. Read the tic
 |---|---|
 | A symptom: broken, erroring, wrong numbers, slow | `/mattpocock-skills:diagnosing-bugs` then `/mattpocock-skills:tdd` |
 | Behaviour that should exist | `/mattpocock-skills:tdd` |
-| A change to no code: documents, videos, configuration | no test-first skill: turn each acceptance criterion into a check that is run or looked at (a `grep` that must match, a render, a link check, the file opened in the tool that uses it), run it red before the change where the criterion is new, then make the change and run it green |
+| A change to no code: documents, videos, configuration | no test-first skill: each acceptance criterion becomes a check that runs (a `grep`, a render, a link check), red before the change where the criterion is new, green after |
 | Work for a human: the ticket is in the ready for human or needs info role | spawn no agent |
 
 Every flow ends with `/mattpocock-skills:code-review` with the ticket's base commit (its row's) as the fixed point, naming the evidence standards file in the call when the repo declares one (the Standards axis reads only documents on how code is written by itself), then fixing the findings, the last commit, and the report.
