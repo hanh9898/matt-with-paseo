@@ -13,7 +13,7 @@ You are the orchestrator. Every run starts by **locating**: where the work stand
 - `stream <slug>`: namespaces everything this run creates by the slug, so that two runs in one repository never collide (see "Names this run writes" below). The slug holds only lowercase letters, digits and hyphens, so it is valid in a label value and a branch name; otherwise stop and say so.
 - `quota <N>`: the most ticket agents this run lets run at once (see "Quota" in step 4). `N` is a whole number of at least 1; otherwise stop and say so.
 
-Without `stream`, every label, branch name and file name is the one the "Without `stream`" column below gives; without `quota`, a wave takes every ticket that can run (step 2) until a `quota <N>` prompt sets one. With `stream`, the run also takes prompts while it runs (see "Prompts under `stream`" below).
+Without `stream`, every label, branch name and file name is the one the "Without `stream`" column below gives; without `quota`, a wave takes every ticket that can run (step 2). With `stream`, the run also takes prompts while it runs, a `quota <N>` among them (see "Prompts under `stream`" below).
 
 **Precondition:** this skill runs in a checkout of its integration branch. It reads that branch from the checkout it stands in (step 1), so whoever calls it, human or agent, opens it there first.
 
@@ -50,8 +50,6 @@ With `stream`, the run takes three prompts at any time, from the stream skill or
 | `hold` | A **Hold** stands: step 4's quota rule lets nothing new start. Merges, checks and running agents carry on |
 | `release` | The hold is lifted; rolling start (step 6) runs at once |
 | `quota <N>` | `N` is the quota from now on, checked as in **Input** (otherwise say so and keep the current one). A raise: rolling start runs at once. A cut stops no agent; it takes effect as ticket agents stop counting (step 4) |
-
-Answer each prompt in one line: whether a hold stands, the quota, the ticket agents counting, the tickets waiting.
 
 With `stream`, the run's work ends on its integration branch: shipping belongs to the stream skill (`/matt-with-paseo:matt-with-paseo-streams`). The run pushes nothing, opens no pull request, and creates no heartbeat outside step 5's heartbeat contract. Asked to ship, by anyone, answer that shipping belongs to the stream skill, and carry on with the run.
 

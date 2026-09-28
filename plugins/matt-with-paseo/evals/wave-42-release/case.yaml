@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: wave-42-release
+description: A held stream agent mid-wave, quota 2, with 01 merged under the hold, 02 running and 03 and 04 waiting, receives `release`. Rolling start must take 03 at once, and only 03, since 02 still counts.
+tags: [hold, wave]
+context:
+  scaffold_script: fixture.sh
