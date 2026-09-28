@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: streams-47-self-hosted-gitlab-forge
+description: A stream whose repository's remote is a self-hosted GitLab (known only from the tracker configuration) must get GitLab recorded as its forge at setup, before its worktree or stream agent.
+tags: [setup, streams]
+context:
+  scaffold_script: fixture.sh

@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: streams-47-base-without-tracker-config
+description: A stream whose base branch has no tracker configuration must stop at setup and ask whether to land the setup on the base branch as its own change (proposed first) or commit it on the stream branch.
+tags: [setup, streams]
+context:
+  scaffold_script: fixture.sh
