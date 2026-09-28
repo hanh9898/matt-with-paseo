@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: streams-47-setup-checks
+description: A stream whose base branch has no tracker configuration and whose PR target exists only as a local branch must stop at setup once, naming both problems, and ask whether to land the setup on the base branch (proposed first) or commit it on the stream branch.
+tags: [setup, streams]
+context:
+  scaffold_script: fixture.sh
