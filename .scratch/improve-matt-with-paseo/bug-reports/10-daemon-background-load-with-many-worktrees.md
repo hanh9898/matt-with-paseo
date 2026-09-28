@@ -2,7 +2,7 @@
 
 ## Summary
 
-With many worktrees open, the daemon keeps running git in the background for every watched directory: file listing that includes ignored files, and periodic fetches, including a fetch that fails the same way every 3 minutes. On a machine already short of memory, these commands hit the daemon's 30 s git timeout over and over, dozens queue up, and the daemon's event loop stalls for up to 16 s. That is when agent turns, hooks and workspace creation slowed down and one agent hung (reports 05 and 08). The operator has no setting to reduce this work and no view of it outside the log.
+With many worktrees open, the daemon keeps running git in the background for every watched directory: file listing that includes ignored files, and periodic fetches, including a fetch that fails the same way every 3 minutes. On a machine already short of memory, these commands hit the daemon's 30 s git timeout over and over, dozens queue up, and the daemon's event loop stalls for up to 16 s. The same window is when agent turns, hooks and workspace creation slowed down and one agent hung (reports 05 and 08); the load looks like the trigger there, not a proven cause. The operator has no setting to reduce this work and no view of it outside the log.
 
 ## Reproduce
 
@@ -26,7 +26,7 @@ Reproduction pending: the numbers below come from the daemon log of the run. Pro
 
 ## Evidence
 
-- Paseo daemon (version at the time of the run not recorded; CLI 0.8.0), Windows 11, 15.7 GB RAM with 8 GB given to WSL, 2026-09-28; one repository with five streams and about 15 Claude processes running.
+- Paseo daemon (version at the time of the run not recorded; CLI 0.8.0), Windows 11, 15.7 GB RAM with 8 GB given to WSL, 2026-09-28; one repository with five parallel lines of work and about 15 Claude processes running.
 - Daemon log: 22 `Git command timed out after 30000ms` between 10:40 and 12:00 UTC, two of them on the worktree of the agent that hung (10:49:35, 10:50:17 UTC).
 - Hooks of every agent timed out at 17–21 s against 10 s in the same window, and `git status` in an agent took 67–212 s.
 - The daemon's event loop was back to 0.3–1.7 s from 10:54:42 UTC, as the load dropped.

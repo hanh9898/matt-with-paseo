@@ -1,10 +1,8 @@
 # A finish notification arrives twice when the operator interrupts the receiving session
 
-Not yet confirmed: reproduce before filing, and file it against whichever side the reproduction points to (Paseo or Claude Code).
-
 ## Summary
 
-Twice in one run, a child agent's "finished" notification reached the orchestrating session, the operator interrupted that session, and the same notification then arrived a second time. Each copy is a separate user message in the session's transcript, so the session handled the same event twice. It is not known whether Paseo sent the notification twice or Claude Code re-delivered a queued message after the interrupt.
+Not yet confirmed: reproduce before filing, and file it against whichever side the reproduction points to (Paseo or Claude Code). Twice in one run, a child agent's "finished" notification reached the orchestrating session, the operator interrupted that session, and the same notification then arrived a second time. Each copy is a separate user message in the session's transcript, so the session handled the same event twice. It is not known whether Paseo sent the notification twice or Claude Code re-delivered a queued message after the interrupt.
 
 ## Reproduce
 
@@ -29,12 +27,12 @@ Reproduction pending. Proposed steps:
 - 03:26: `Agent d5c98b0e-627b-4526-8ee4-f48d2acbca7a (…) finished.`, then `[Request interrupted by user]`, then the same line again, in one operator message block.
 - 10:19: the same pattern with `Agent eb31842c-d443-465c-98e6-0b25b89917ec (…) finished.`
 - 01:42: an interrupt with no notification pending produced no extra message.
-- The chat export these come from writes one line per user record of the transcript, so the transcript holds two records for each; it does not show which side created the second.
+- These come from an export of the session transcript that writes one line per user record, so the transcript holds two separate records for each; the transcript does not show which side created the second.
 - The daemon log for those minutes was not read yet.
 
 ## Current workaround and its cost
 
-The orchestrator treats notifications as hints and re-reads the agent's real state; a duplicate costs one extra check. It would cost more for a caller that acts on each notification (for example counting finished tickets).
+The orchestrator treats notifications as hints and re-reads the agent's real state; a duplicate costs one extra check. It would cost more for a caller that acts on each notification (for example counting finished tasks).
 
 ## Suggested fix
 

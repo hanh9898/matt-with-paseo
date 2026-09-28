@@ -2,7 +2,7 @@
 
 ## Summary
 
-A child agent asked a four-part question (`AskUserQuestion`, a `kind: "question"` permission) and waited on it for about an hour and a half. Its parent, the orchestrating session, was never told: it found the question only when the operator asked about that stream and the parent looked. A caller that is not polling `list_pending_permissions` has no dependable signal that a child is blocked on it, and a signal that is missed is never repeated.
+A child agent asked a four-part question (`AskUserQuestion`, a `kind: "question"` permission) and waited on it until the operator happened to ask about it. Its parent, the orchestrating session, was never told: it found the question only when the operator asked about that stream and the parent looked. A caller that is not polling `list_pending_permissions` has no dependable signal that a child is blocked on it, and a signal that is missed is never repeated.
 
 ## Reproduce
 
@@ -21,13 +21,13 @@ Reproduction pending: in a probe on 2026-09-27 (report 02) the caller did receiv
 |---|---|---|
 | Child's permission request is created | the parent (or whoever is responsible for the child) is notified | nothing reached the parent |
 | Request stays pending | reminder, or a pending count visible in the parent's normal status calls | nothing; found only through `list_pending_permissions` or the child's activity |
-| Time until someone noticed | minutes | about 1 h 30 min |
+| Time until someone noticed | minutes | not measured exactly: the question was found at 09:22; confirm its creation time from the child's transcript before filing |
 
 ## Evidence
 
 - Paseo daemon (version at the time of the run not recorded; CLI 0.8.0), Windows 11, provider `claude`, 2026-09-28. Times in UTC.
-- A stream agent (child of the orchestrating session) asked four questions with options in one `AskUserQuestion` call and waited; the orchestrator saw them at 09:22 only because the operator asked it to check that stream, and relayed the operator's answer at 09:28. The run's problem list puts the wait at about an hour and a half; the time the question was created is in the child's transcript, not in the export used here.
-- In the same session at least three other events from children did not reach the parent as notifications (a ticket merged, and two waves closed); the parent found them by reading the children's activity.
+- A child agent that ran one line of work (a "stream") for the orchestrating session asked four questions with options in one `AskUserQuestion` call and waited; the orchestrator saw them at 09:22 only because the operator asked it to check that stream, and relayed the operator's answer at 09:28. The time the question was created was not extracted from the child's transcript; fill it in before filing.
+- In the same session at least three other events from children did not reach the parent as notifications (a task merged, and two batches of tasks closed); the parent found them by reading the children's activity.
 - The orchestrating session's own heartbeat had stopped delivering ticks from 05:15 (report 07), so the periodic `list_pending_permissions` check that would have caught the question did not run.
 
 ## Current workaround and its cost

@@ -19,14 +19,14 @@ Reproduction pending: it needs an agent whose turn is stuck in a tool call. Repo
 |---|---|---|
 | `cancel_agent` on a turn the provider cannot interrupt | failure, or a state such as "cancel requested, not acknowledged" | treated as done: `turn_canceled` recorded, no log line, no error |
 | The next `send_agent_prompt` | runs, or is shown as queued | shown as a new running turn (`turn_started`, `timeline:user_message`) while the provider only queued it |
-| Later cancels | same | a third cancel about 13 minutes later was also recorded, with no effect |
+| Later cancels | same | about 13 minutes later the metrics show one more `turn_canceled`, probably a third cancel, with no effect |
 
 ## Evidence
 
 - Paseo daemon (version at the time of the run not recorded; CLI 0.8.0), Claude Code 2.1.283, Windows 11, 2026-09-28.
 - Stuck agent `8af25598` (full id in the run's records), turn stuck from 10:51:09 UTC on Bash call `toolu_…dL6Ry6` (see report 05).
 - 11:21:42 UTC, parent cancels and sends a prompt. Paseo: `turn_canceled`, `turn_started`, `timeline:user_message`, `lastUserMessageAt=11:21:42.802Z`; daemon runtime metrics at 11:21:45 count one cancel and one start. Claude Code transcript: one `queue-operation enqueue`, no `dequeue`, no interrupt record; the transcript is not written again.
-- ~11:34:45 UTC, one more `turn_canceled` in the metrics; the transcript is unchanged.
+- ~11:34:45 UTC, one more `turn_canceled` in the metrics, probably a third cancel of this agent (the metrics do not name the agent for certain); the transcript is unchanged.
 - 11:40:20 UTC, archiving the agent logs `ProcessTransport is not ready for writing` and `Claude query operation did not settle cleanly (close query interrupt)`: only then does Paseo see that the process was no longer taking input.
 - For contrast, in the same session at 10:50:36 UTC a prompt that interrupted a normal foreground tool call worked: the transcript shows `[Request interrupted by user for tool use]`, then `enqueue` → `dequeue` of the new prompt.
 

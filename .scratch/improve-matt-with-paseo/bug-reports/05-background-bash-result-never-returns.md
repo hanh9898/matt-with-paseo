@@ -1,10 +1,8 @@
 # Claude Code: a Bash command moved to the background finishes, its result never reaches the turn, and the turn cannot be interrupted
 
-Product: Claude Code (and the Agent SDK it runs under Paseo), not Paseo itself.
-
 ## Summary
 
-A Bash tool call that ran past its 120 s timeout was moved to the background. The background task completed (exit 0, full output on disk) and its completion was queued, but the `tool_result` never came back to the agent loop, so the turn never ended. Later interrupts and prompts were only queued (`enqueue` without `dequeue`); the turn stayed stuck until the process was closed about 50 minutes later. The machine was heavily loaded at the moment the command was moved to the background and had recovered two minutes later; the agent did not continue.
+Product: Claude Code (and the Agent SDK it runs under Paseo), not Paseo itself. A Bash tool call that ran past its 120 s timeout was moved to the background. The background task completed (exit 0, full output on disk) and its completion was queued, but the `tool_result` never came back to the agent loop, so the turn never ended. Later interrupts and prompts were only queued (`enqueue` without `dequeue`); the turn stayed stuck until the process was closed about 50 minutes later. The machine was heavily loaded at the moment the command was moved to the background and had recovered two minutes later; the agent did not continue.
 
 ## Reproduce
 
@@ -36,7 +34,7 @@ Reproduction pending: the steps below are proposed from the diagnosis and have n
   - 11:21:42 cancel plus a new prompt: the transcript records only `queue-operation enqueue`, no `dequeue`, no `[Request interrupted]`.
   - 11:40:20 the agent is archived; closing logs `ProcessTransport is not ready for writing` and `Claude query operation did not settle cleanly (close query interrupt)`.
 - Tool latency in the session grew up to the hang: 12 s, 26 s, 124 s, 34 s, 107 s, 212 s, 67 s (interrupted), then no result.
-- Load at the time (trigger, not sufficient cause): hooks timed out at 17–21 s against a 10 s limit (last hook record 10:51:02, `UserPromptSubmit` 20 974 ms), the Paseo daemon's event loop delay peaked at 16 475 ms, and `git` on the same worktree timed out at 30 s. From 10:54:42 the event loop delay was back to 0.3–1.7 s.
+- Load at the time (trigger, not sufficient cause): hooks timed out at 17–21 s against a 10 s limit (last hook record 10:51:02, `UserPromptSubmit` 20 974 ms), the Paseo daemon's event loop delay peaked at 16 475 ms, and `git` on the same worktree timed out at 30 s (daemon side in report 10). From 10:54:42 the event loop delay was back to 0.3–1.7 s.
 - Ruled out: OOM (the CLI itself wrote `enqueue` records 30 minutes after the hang, and the child command exited 0; no resource-exhaustion events), subagents (both had returned), an API or advisor stall (the last response ended with `stop_reason=tool_use`), and context limits.
 - Not settled: which internal await does not resolve (the `PostToolUse` hook of a backgrounded call, or the move-to-background step itself). The CLI ran without debug logging.
 - A read-only detector over transcripts flags the signature (an open `tool_use` followed only by `enqueue` records); on that day it flagged this session only.

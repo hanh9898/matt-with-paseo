@@ -26,8 +26,8 @@ Reproduction pending: it needs a machine slow enough that a checkout takes more 
 
 ## Evidence
 
-- Paseo daemon (version at the time of the run not recorded; CLI 0.8.0), Windows 11, 2026-09-28; one repository with five worktree streams, each creating one workspace per ticket. Times in UTC.
-- About 03:27: one stream's `create_workspace` had timed out three times; its agent removed the orphaned worktrees and created them again.
+- Paseo daemon (version at the time of the run not recorded; CLI 0.8.0), Windows 11, 2026-09-28; one repository worked by five parallel lines of work ("streams"), each run by its own agent that creates one worktree workspace per task ("ticket"). Times in UTC.
+- About 07:04: one stream's `create_workspace` had timed out three times; its agent removed the orphaned worktrees and created them again.
 - About 07:17: another stream's `create_workspace` for one ticket went past 120 s twice.
 - About 08:03: a third stream's `create_workspace` went past 120 s all three times, including when run alone; one ticket's worktree was cut off in the middle of its checkout and had to be created again.
 - About 09:38: the orchestrator's own `create_workspace` went past 120 s; the worktree was complete on disk, and it was adopted as a local workspace.
