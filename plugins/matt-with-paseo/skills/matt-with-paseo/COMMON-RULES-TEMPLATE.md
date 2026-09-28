@@ -41,6 +41,12 @@ Copy in only what an agent cannot look up: an unwritten convention, the reason b
 ## Traps already hit
 - <trap>: <symptom>, <how to avoid it>, <how to check you avoided it>.
 
+## Failing on base
+- On `<base commit>`, before the first spawn: `<each verification command the repo has: install, build, lint, test>`
+  fails in <each failing test or check, with its first error line>, or "none: every command passes".
+- A failure listed here is not yours: leave it as it is unless your ticket's acceptance criteria name it, and
+  name it in your report as failing on base. A failure not listed here is yours to explain.
+
 ## Acceptance criteria are the contract
 - A trap above, or an instruction an earlier ticket left in its comments, is guidance; your ticket's
   acceptance criteria are the contract.

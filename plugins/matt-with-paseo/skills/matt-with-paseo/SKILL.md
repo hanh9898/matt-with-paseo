@@ -71,13 +71,14 @@ Read the signals on the real repo through its tracker configuration: the `## Age
 | E. Wave in progress | A `wave<N>-common-rules.md` file exists, and a ticket of that wave (listed in the file's title) is neither `resolved` nor in the ready for human role; or the file has `## Wave agents` but no `## Review`, or the "cleaned" column is not fully checked | Resume at the missing step, see right below the table |
 | F. No work left for agents | At least one ticket exists, and every ticket is `resolved` or in the ready for human role | Summarize per step 8; list the work waiting on humans |
 
-Ticket status is the primary signal for stage E; the two log sections `## Wave agents` and `## Review` only tell you which step is missing. A wave file with no `## Wave agents` whose tickets are all done is an old, finished wave, not stage E.
+Ticket status is the primary signal for stage E; the two log sections `## Wave agents` and `## Review` only tell you which step is missing, as their cells read in the file: a "cleaned" cell counts as checked only once ticked, whatever a commit message says. A wave file with no `## Wave agents` whose tickets are all done is an old, finished wave, not stage E. The wave files and tickets that count are the ones in this checkout of the integration branch, committed or not (a wave file stays uncommitted until step 8); a copy inside a worktree (a path `git worktree list` prints) or on another branch does not count.
 
 For stage E, a previous session may have ended mid-step (a crash, a closed window), so run the **recovery sweep** first and report what it finds before resuming any step:
 
 - `paseo ls -g --label wave=<N> --json` lists the wave's agents by label (`list_agents` cannot filter by label; `-g` because the agents run in worktrees, not in this checkout), with the label filter of "Names this run writes", so that with `stream` another run's agents are never listed. An agent with no row in the `## Wave agents` table was spawned but never logged; add its row before anything else, unless it carries a `stream` label this run does not have (see [`TROUBLESHOOTING.md`](TROUBLESHOOTING.md)).
 - The wave's workspaces are the ones its labelled agents run in: match each agent's `cwd` (printed with `~` for the home directory) against `list_workspaces` and `git worktree list`. A workspace or worktree of this wave with no row, or with no labelled agent in it, is an orphan of an interrupted spawn; a row whose workspace is gone is a cleanup already done. With `stream`, a worktree or branch is this run's only when its branch has the ticket branch shape of "Names this run writes"; leave every other one alone, even with the same wave number.
 - Every background job or heartbeat the previous session started: its output, if any, may hold a report nobody processed.
+- A merge left in progress on the integration branch (`git status` says it is still merging): run step 6's conflict-marker search on it before anything else. A file the search prints goes into what you report, and the merge stays uncommitted.
 
 Then take each unfinished ticket of the wave. Find its agent in the `## Wave agents` table, or else with `paseo ls -g --label wave=<N> --label ticket=<NN>` and the label filter of "Names this run writes":
 
@@ -87,7 +88,7 @@ Then take each unfinished ticket of the wave. Find its agent in the `## Wave age
 
 A `## Wave agents` row whose ticket is `review` is step 7's review agent; it carries no `ticket` label, so its row is the only way to find it. Still running: wait, with a heartbeat per step 5 if this session did not spawn it (its ticks check only `get_agent_status`, since it has no ticket branch), then continue step 7 with its findings. Stopped with no `## Review` yet: continue step 7 with its findings. It has no ticket branch to merge.
 
-Once every ticket of the wave is done: a ticket branch of this wave still unmerged (`git branch --no-merged <integration branch>`, keeping only the ticket branch shape of "Names this run writes") goes to step 5, which reads its report, then step 6; no `## Review` yet goes to step 7; an uncleaned row goes to step 8.
+Once every ticket of the wave is done: a ticket branch of this wave still unmerged (`git branch --no-merged <integration branch>`, keeping only the ticket branch shape of "Names this run writes") goes to step 5, which reads its report, then step 6; no `## Review` yet, or a finding in it that reads **waiting on the user's decision**, goes to step 7; an uncleaned row goes to step 8 only after that.
 
 A note for stage B: `/mattpocock-skills:to-tickets` synthesizes from the current conversation, as `/mattpocock-skills:to-spec` does, so it must run in the session that still holds the context that wrote the spec. If that session is gone, tell the user. Every command this step suggests outside this skill (stages A and B, `/mattpocock-skills:ask-matt`) is typed by the user only; this skill only suggests it.
 
@@ -200,11 +201,17 @@ Agent stopped midway or report incomplete: see [`TROUBLESHOOTING.md`](TROUBLESHO
 
 ## 6. Merge into the integration branch
 
-Merge each ticket as soon as its report passes step 5, while the rest of the wave keeps running: steps 5 and 6 interleave. One merge commit per ticket: `git merge --no-ff <ticket branch> -m "Merge ticket NN (<name>) into <integration branch>"`. After each merge, run the cheapest verification the repo has (install, build, lint, test).
+Merge each ticket as soon as its report passes step 5, while the rest of the wave keeps running: steps 5 and 6 interleave. One merge commit per ticket, in three moves:
+
+1. `git merge --no-ff --no-commit <ticket branch>`, resolving any conflict git reports.
+2. The conflict-marker search: `git diff --cached -G'^(<<<<<<<|>>>>>>>)( |$)' --name-only HEAD` must print nothing. It lists every staged file whose changes add or drop a marker line, including markers the ticket branch committed itself, which git merges without a conflict. A file it prints keeps the merge uncommitted.
+3. `git commit -m "Merge ticket NN (<name>) into <integration branch>"`.
+
+After each merge, run the cheapest verification the repo has (install, build, lint, test). A failure listed in the common rules' "Failing on base" section is not this merge's; any other failure is.
 
 **Rolling start.** After each green merge, each time a ticket agent stops counting against the quota (step 4), and at each `release` or quota raise ("Prompts under `stream`"), re-read the graph: a ticket whose `Blocked by` is now fully merged and which is in the ready for agent role, or which step 2 left waiting on the quota, joins the current wave at once, without waiting for the rest of it, as long as step 4's quota rule allows; the rest keep waiting for the next agent to stop counting, or for the release. Spawn it per step 4, with the integration branch's new head as its base commit, written in its row and named in its prompt; append it to the wave file's title and graph, unless step 2 already put it there as waiting on the quota. Its agent's `mattpocock-skills:code-review` uses that base commit.
 
-Conflict, failure after a merge, or a test count after the merge that does not match the test files git tracks: see [`TROUBLESHOOTING.md`](TROUBLESHOOTING.md).
+Conflict, a file the conflict-marker search prints, failure after a merge, or a test count after the merge that does not match the test files git tracks: see [`TROUBLESHOOTING.md`](TROUBLESHOOTING.md).
 
 **Done when**: every ticket in the wave is merged, every ticket its merges unblocked has been started in the wave, and verification is green after the last merge.
 
@@ -216,11 +223,11 @@ Each ticket was already reviewed by its agent in step 4. This pass targets only 
 - A wave of two or more tickets: run `mattpocock-skills:code-review` with the wave's first base commit (step 3) as the fixed point, so tickets started by rolling start are covered too, stating in the call that each ticket was already reviewed on its own and only seam findings should be reported, and naming the evidence standards file when the repo declares one. Present the Standards and Spec axes separately.
 - When a profile read in step 1 has `notes` saying it is for review, run that review in an agent launched with that profile, on a fresh workspace from the integration branch, taking the `create_agent` shape from the `paseo` skill as in step 4, with the review agent labels of "Names this run writes" and its own row in `## Wave agents` (ticket column `review`) so step 8 cleans it up; otherwise run it in this session.
 
-Fix each finding. Before sending new work into an existing worktree, fast-forward its branch to the integration branch (`git -C <worktree> merge --ff-only <integration branch>`), so the agent reads the latest ticket comments and its merge comes back without conflicts. The coordinator writes into a ticket file only while no agent holds that ticket; decisions for a held ticket go to its agent with `send_agent_prompt`. A finding contained in one ticket's zone goes back to that same agent via `send_agent_prompt`. A finding cutting across several tickets goes to one agent on a fresh workspace from the integration branch; the coordinator edits files itself only when the user assigns that fix to it in the decision round, and says so in `## Review`. Gather every question that needs a human decision into one round, present it, then record the decisions in the comments of the tickets involved, so the next wave can read them.
+Fix each finding. Before sending new work into an existing worktree, fast-forward its branch to the integration branch (`git -C <worktree> merge --ff-only <integration branch>`), so the agent reads the latest ticket comments and its merge comes back without conflicts; every fix merges back through step 6's three moves, the conflict-marker search included. The coordinator writes into a ticket file only while no agent holds that ticket; decisions for a held ticket go to its agent with `send_agent_prompt`. A finding contained in one ticket's zone goes back to that same agent via `send_agent_prompt`. A finding cutting across several tickets goes to one agent on a fresh workspace from the integration branch; the coordinator edits files itself only when the user assigns that fix to it in the decision round, and says so in `## Review`. Gather every question that needs a human decision into one round, present it, then record the decisions in the comments of the tickets involved, so the next wave can read them.
 
-Append a `## Review` section to the end of the common rules file: the fixed point, the number of findings per axis, and the outcome of each finding.
+Append a `## Review` section to the end of the common rules file: the fixed point, the number of findings per axis, and the outcome of each finding. A finding whose question is asked and not yet answered reads **waiting on the user's decision**; update it once the answer comes. While any finding reads so, the wave stays open: step 8 does not start, and the question comes back in the next round. An answer that puts the question off names the ticket that will carry it, and that is the finding's outcome.
 
-**Done when**: every finding has an outcome (fixed, skipped with a reason, or waiting on a human), every decision is recorded in a ticket, and the `## Review` section is written.
+**Done when**: every finding has an outcome (fixed, skipped with a reason, or put off to a named ticket), none reads waiting on the user's decision, every decision is recorded in a ticket, and the `## Review` section is written.
 
 ## 8. Clean up the wave, open the next
 
@@ -234,6 +241,10 @@ The clean-worktree check is mandatory, never skipped: Paseo archives a worktree 
 
 With all three, `archive_agent`, `archive_workspace`, clean up the non-Paseo resources listed in the private resources column, then check the "cleaned" column. If any is missing, leave the row as is and see [`TROUBLESHOOTING.md`](TROUBLESHOOTING.md). Delete every heartbeat created for the wave. Then `paseo ls -g --label wave=<N>`, with the label filter of "Names this run writes", must list nothing; an agent still listed has no row in the table, so check and clean it the same way, unless it carries a `stream` label this run does not have (see [`TROUBLESHOOTING.md`](TROUBLESHOOTING.md)).
 
+Then commit the wave file on the integration branch, alone in its commit (`git add <wave file>`, `git commit -m "docs: wave <N> log"`). Until this point it stays uncommitted in this checkout, so no worktree of the wave carries a copy of it (step 4).
+
+Before returning to step 2, run step 1 again, reading its files and `list_profiles` afresh rather than from what this session read before. Compare with what step 1 stated last time (its six things, the profile's `notes` included): a change to the tracker configuration, the triage label file, a profile or the evidence standards file is named to the user in step 2's presentation, and the next wave follows the new version. For the tracked files, `git diff <this wave's base commit> HEAD -- <their paths>` shows the change. Read [`COMMON-RULES-TEMPLATE.md`](COMMON-RULES-TEMPLATE.md) again too: a section it has and this wave's rules lack, or the reverse (the log sections `## Wave agents` and `## Review` aside), is named the same way, and step 3 writes the next wave's rules from this reading.
+
 Return to step 2 with the new base commit. When no open ticket can join a wave, report a summary: which tickets are `resolved`, which wait on a human, and which remain open and what blocks them.
 
-**Done when**: every row in the table is checked as cleaned or has a reason for keeping it that the user has been told, no heartbeat of the wave remains, and the next wave is open or the summary is reported.
+**Done when**: every row in the table is checked as cleaned or has a reason for keeping it that the user has been told, no heartbeat of the wave remains, the wave file is committed, step 1 has run again, and the next wave is open or the summary is reported.

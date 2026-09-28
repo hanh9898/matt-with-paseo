@@ -28,6 +28,14 @@ Each entry: the observable symptom, then how to handle it. When an incident expo
 
 **Test count after a merge exceeds what the tracked test files contain.** The worktrees sit inside the integration branch's checkout, and a runner that scans the tree (`node --test`, a `**` glob) also runs the unmerged code of the worktrees still open, so green proves nothing. Restrict the input to files git tracks, for example `git ls-files '*.test.js' | xargs node --test`. Check: the printed count matches the tests in those files. Passing a directory name straight to the runner does not always work (`node --test test/` on Node 24 fails with `Cannot find module`).
 
+**The conflict-marker search prints a file** (step 6 of the skill). The merge stays uncommitted. Open each printed file and find where its markers come from:
+
+| The markers come from | Do |
+|---|---|
+| A conflict git reported in this merge, left unresolved | Resolve it (a registration file as in the next entry), `git add` the file, run the search again, then commit |
+| The ticket branch, which committed them itself | `git merge --abort`; send the ticket back to its agent with `send_agent_prompt` to remove them on its branch, and merge again once its report passes step 5 |
+| Content that only looks like a marker (a document quoting one) | Tell the user with the file and line; the merge waits for their answer |
+
 **Conflict in a registration file**, caused by two tickets both adding lines to a manifest, package index, route table, or permission file. Keep both sides' lines, in ticket-number order.
 
 **Install is green but the real run fails.** For example, two modules register a helper under the same name and one silently shadows the other: installing reports nothing, only a real call fails. Fix it, then add the real-call check to the "Done when:" section of the next wave's common rules; its traps section gets only a one-line pointer to that check (step 3 of the skill).
