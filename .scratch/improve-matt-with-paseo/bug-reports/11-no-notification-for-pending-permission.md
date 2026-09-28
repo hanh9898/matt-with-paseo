@@ -28,7 +28,7 @@ Reproduction pending: in a probe on 2026-09-27 (report 02) the caller did receiv
 - Paseo daemon (version at the time of the run not recorded; CLI 0.8.0), Windows 11, provider `claude`, 2026-09-28. Times in UTC.
 - A child agent that ran one line of work (a "stream") for the orchestrating session asked four questions with options in one `AskUserQuestion` call and waited; the orchestrator saw them at 09:22 only because the operator asked it to check that stream, and relayed the operator's answer at 09:28. The time the question was created was not extracted from the child's transcript; fill it in before filing.
 - In the same session at least three other events from children did not reach the parent as notifications (a task merged, and two batches of tasks closed); the parent found them by reading the children's activity.
-- The orchestrating session's own heartbeat had stopped delivering ticks from 05:15 (report 07), so the periodic `list_pending_permissions` check that would have caught the question did not run.
+- Polling did not catch it either: the orchestrating session's heartbeat had stopped delivering ticks from 05:15 (report 07), and the ticks it had run before did not call `list_pending_permissions` (the session said so at 09:29). A caller that has to remember to poll misses it easily; a pushed signal would not depend on that.
 
 ## Current workaround and its cost
 
