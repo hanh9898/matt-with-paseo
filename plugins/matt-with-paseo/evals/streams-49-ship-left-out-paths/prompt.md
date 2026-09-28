@@ -10,6 +10,7 @@ append_system_prompt: |
   - Pending permissions (`list_pending_permissions`): none.
   - This session's heartbeats: `streams-reconcile`, expires 2026-09-29 17:00.
   - `git -C <worktree> fetch origin`: succeeds, nothing new.
+  - `git -C <worktree> remote get-url origin`: `https://github.com/acme/shop.git`.
   - `git -C <worktree> rev-parse --short stream/invoice-export`: 1a2b3c4.
   - `git -C <worktree> status --porcelain`: empty.
   - `git -C <worktree> log --oneline origin/main..stream/invoice-export`: `1a2b3c4 wave 1 of invoice-export`.

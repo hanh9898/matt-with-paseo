@@ -102,6 +102,8 @@ The status line is the reconcile loop's only memory (step 5): every step writes 
 | A finding reported to the user | step 5 | `reported: open pull request not recorded` |
 | Nothing to ship, for the integration branch's head | step 6 | `nothing to ship at 1a2b3c4` |
 | Ship question asked, for the integration branch's head, and the user's answer | step 6 | `ship question asked at 1a2b3c4, user said wait` |
+| Paths the user kept in the ship branch | step 6 | `keeps docs/agents/issue-tracker.md` |
+| Ship blocked by a conflict with the PR target, for the integration branch's head | step 6 | `ship blocked at 1a2b3c4: conflicts with test` |
 | Shipped, with the pull request's or merge request's link | step 6 | `shipped https://…/pull/12, waits on the reviewers` |
 | Paused over an overlap | step 7 | `waits on the user (paused, overlaps login-bug)` |
 
@@ -271,7 +273,7 @@ A **respawn** replaces a stream agent whose context has grown large before it hi
 
 ## 6. Ship the stream
 
-A stream ships through one pull request from its integration branch to its PR target. You open it; you never merge a pull request. Merging it, and any later promotion (such as `test` to `develop`), belongs to the repository's own process and its reviewers.
+A stream ships through one pull request to its PR target, from a ship branch `stream/<slug>-ship` that leaves agent-only paths out (ADR 0007); the integration branch keeps everything, so the next wave and a later ship see the same history. You open the pull request; you never merge it. Merging it, and any later promotion (such as `test` to `develop`), belongs to the repository's own process and its reviewers.
 
 **The last stage.** A stream reaches its last stage when two public signals agree:
 
@@ -280,7 +282,7 @@ A stream ships through one pull request from its integration branch to its PR ta
 | The stream agent's end-of-turn message | it reports stage F of the wave skill's step 0 table |
 | Ticket status on the tracker, read through the tracker configuration in the stream's worktree | every ticket of the stream's Tickets is `resolved` or in the ready for human role |
 
-Either signal alone is not the last stage. When they disagree, prompt the stream agent "where does the stream stand?" and read both again on its answer. Check this on each end-of-turn message of step 4 and on each tick of step 5. A stream at its last stage whose integration branch holds no commit beyond the PR target (`git -C <worktree> log --oneline origin/<PR target>..stream/<slug>` prints nothing) has nothing to ship: write `nothing to ship at <head>`, with the integration branch's short head, into the status line and stop here.
+Either signal alone is not the last stage. When they disagree, prompt the stream agent "where does the stream stand?" and read both again on its answer. Check this on each end-of-turn message of step 4 and on each tick of step 5; nothing below runs before the last stage. A status line that records `ship blocked at <head>` for the integration branch's current short head stops here: the conflict is already reported. A stream at its last stage whose integration branch holds no commit beyond the PR target (`git -C <worktree> log --oneline origin/<PR target>..stream/<slug>` prints nothing) has nothing to ship: write `nothing to ship at <head>`, with the integration branch's short head, into the status line and stop here.
 
 **The forge.** The pull request is opened on the forge that hosts the stream's repository, chosen from two sources: the host of `git -C <worktree> remote get-url origin`, and the tracker configuration in the stream's worktree when it names a forge (a GitHub or GitLab tracker, or `gh` or `glab` commands).
 
@@ -291,22 +293,54 @@ Either signal alone is not the last stage. When they disagree, prompt the stream
 
 When the two sources disagree, or neither names GitHub or GitLab (any other forge), the stream cannot ship this way: tell the user and stop.
 
-**Ask first.** Pushing and opening a pull request are outward actions, so nothing is pushed or opened before the user says yes in a question round. Put the ship question into the next question round of step 4, headed with the stream's slug like every relayed question, and write `ship question asked at <head>`, with the integration branch's short head, into the status line. Give the user what they need to decide:
+**The ship branch.** Cut it afresh for every ship question, from the integration branch's current head, so it never drifts from what the question describes.
 
-- the repository, the forge, the branch `stream/<slug>`, the PR target and the source it came from in step 1;
-- the commits the pull request will carry (`git -C <worktree> log --oneline origin/<PR target>..stream/<slug>`), and the shared-base warning of step 1 again if it was raised;
-- the tickets waiting on a human, which ship unresolved.
+1. **The left-out paths**, derived from the repository, never from a list kept by hand. Take the paths the stream changed, `git -C <worktree> diff --name-only --no-renames origin/<PR target>...stream/<slug>`, and sort each into the first row that matches:
 
-Any answer other than yes keeps the stream unshipped; write what the user said beside the ship question in the status line. Ask again only when the user brings it up or the integration branch's head moves (a later wave merged), since the status line then records no ship question for the current head.
+   | Kind | The changed paths that are |
+   |---|---|
+   | Kept in | paths the user kept in at an earlier answer (`keeps <path>` in the status line) |
+   | Binary evidence | shown as binary (`-	-`) by `git -C <worktree> diff --numstat origin/<PR target>...stream/<slug>`: never committed to the ship branch, attached to the pull request instead |
+   | Ticket folder | inside the folder the tracker configuration gives the stream's spec and tickets: for a local-markdown tracker, the feature folder holding the Tickets folder (`.scratch/<feature>/` for `.scratch/<feature>/issues/`). A GitHub or GitLab tracker has none |
+   | Wave files | named `wave*-common-rules.md`, anywhere; a match on the name, not a read of the file |
+   | Tracker configuration | the `CLAUDE.md`/`AGENTS.md` holding the `## Agent skills` section, and each file that section points to |
+   | Ships | every other path |
+
+   Every path of the rows from binary evidence to tracker configuration is left out.
+2. **Cut it** in a throwaway worktree outside the stream's worktree and the control folder, so the stream's worktree stays on `stream/<slug>`: `git -C <repository> worktree add -B stream/<slug>-ship <temp>/<slug>-ship stream/<slug>`. In it, `git restore --source=origin/<PR target> --staged --worktree -- <left-out paths>` (a path the PR target lacks is deleted), then one commit, `chore(ship): leave agent-only paths out`, then `git -C <repository> worktree remove <temp>/<slug>-ship`. With no path left out, the ship branch is the integration branch's head and carries no extra commit.
+3. **Check the merge**: `git -C <worktree> merge-tree --write-tree --name-only origin/<PR target> stream/<slug>-ship`.
+
+   | Result | Do |
+   |---|---|
+   | Exit 0, and no change left (`git -C <worktree> diff --quiet origin/<PR target>...stream/<slug>-ship` exits 0: the stream changed only left-out paths) | Nothing to ship: write `nothing to ship at <head>` into the status line and stop here |
+   | Exit 0, clean | Ask the ship question below. Its merge danger: the commits on the PR target since the merge base (`git -C <worktree> log --oneline stream/<slug>-ship..origin/<PR target>`), and which of the ship branch's paths they touch too |
+   | Exit 1, conflicts | Ask no ship question. Report to the user, headed with the slug, the conflicted paths the command lists and that the stream ships once its integration branch merges the PR target cleanly (how, for example a ticket that merges the PR target in, is the user's call); write `ship blocked at <head>: conflicts with <PR target>` into the status line. A new integration head asks again |
+   | Any other exit | Tell the user the command's error and stop |
+
+**Ask first.** Pushing and opening a pull request are outward actions, so nothing is pushed or opened before the user says yes in a question round. Put the ship question into the next question round of step 4, headed with the stream's slug like every relayed question, and write `ship question asked at <head>`, with the integration branch's short head, into the status line. Ask it in these words every round, filling in the values, so that its meaning never drifts:
+
+```
+[<slug>] Ship <slug>? Pull request from stream/<slug>-ship (cut at <head>) to <PR target> (from <source of step 1>), on <forge>, repository <repository>.
+Commits: <each line of git log --oneline origin/<PR target>..stream/<slug>>
+Left out, restored to <PR target>'s version: <path> (<kind>), …  (none: say none)
+Evidence to attach to the pull request, not committed: <path>, …
+Kept in at your word: <path>, …
+Merge danger: merges cleanly; <PR target> moved <n> commits since the cut, touching <paths>.
+Shipping unresolved, waiting on a human: <tickets>.
+<the shared-base warning of step 1, when it was raised>
+Answer yes, no, or yes keeping <path> in.
+```
+
+Any answer other than yes keeps the stream unshipped; write what the user said beside the ship question in the status line. "Yes keeping `<path>` in" writes `keeps <path>` into the status line and is a yes: cut the ship branch again with that path in the kept row, and check the merge again before pushing. Ask again only when the user brings it up or the integration branch's head moves (a later wave merged), since the status line then records no ship question for the current head.
 
 **Push and open.** On the user's yes, in this order:
 
 1. `git -C <worktree> status --porcelain` must be empty and `git -C <worktree> branch --show-current` must print `stream/<slug>`; otherwise tell the user and stop.
-2. `git -C <worktree> fetch origin`, then check the PR target still exists (`git -C <worktree> rev-parse --verify origin/<PR target>`).
-3. Look for a pull request this stream already has, run in the worktree: on GitHub `gh pr list --head stream/<slug> --base <PR target> --state open --json url`, on GitLab `glab mr list --source-branch stream/<slug> --target-branch <PR target>` (open merge requests only, by default). When one is listed, reuse it: skip to the link below, never open a second one. When the forge's CLI cannot resolve the remote as a repository of that forge, the pull request cannot be opened this way; tell the user and stop.
-4. `git -C <worktree> push -u origin stream/<slug>`. Push only the integration branch, never the base branch or a wave or ticket branch.
-5. Write the pull request's description with `/mattpocock-skills:pr`, from public signals only: `git -C <worktree> diff origin/<PR target>...stream/<slug>`, the commit log above, and the tickets and their comments on the tracker for the evidence. Save it to a file outside the worktree, so it never lands in the branch.
-6. Open it, run in the worktree, with the title a line naming the stream's work. On GitHub `gh pr create --head stream/<slug> --base <PR target> --title "<title>" --body-file <that file>`; on GitLab `glab mr create --source-branch stream/<slug> --target-branch <PR target> --title "<title>" --description-file <that file> --yes`. Each prints the URL.
+2. `git -C <worktree> fetch origin`, then check the PR target still exists (`git -C <worktree> rev-parse --verify origin/<PR target>`). When the integration branch's head is no longer the one the question named, or the PR target moved, cut the ship branch again and check its merge; a conflict now is reported as "The ship branch" says, with no push.
+3. `git -C <worktree> push --force-with-lease -u origin stream/<slug>-ship`: the ship branch is cut afresh each time, so its history is rewritten. Push only the ship branch, never the integration branch, the base branch, or a wave or ticket branch.
+4. Look for a pull request this stream already has, run in the worktree: on GitHub `gh pr list --head stream/<slug>-ship --base <PR target> --state open --json url`, on GitLab `glab mr list --source-branch stream/<slug>-ship --target-branch <PR target>` (open merge requests only, by default). When one is listed, the push has updated it: skip to the link below, never open a second one. When the forge's CLI cannot resolve the remote as a repository of that forge, the pull request cannot be opened this way; tell the user and stop.
+5. Write the pull request's description with `/mattpocock-skills:pr`, from public signals only: `git -C <worktree> diff origin/<PR target>...stream/<slug>-ship`, the commit log above, and the tickets and their comments on the tracker for the evidence. Save it to a file outside the worktree, so it never lands in the branch.
+6. Open it, run in the worktree, with the title a line naming the stream's work. On GitHub `gh pr create --head stream/<slug>-ship --base <PR target> --title "<title>" --body-file <that file>`, adding `--attach <path>` for each image or video of the evidence; on GitLab `glab mr create --source-branch stream/<slug>-ship --target-branch <PR target> --title "<title>" --description-file <that file> --yes`. Each prints the URL. Evidence the command cannot attach (every file on GitLab, anything but an image or video on GitHub) goes to the user as a list, to attach on the pull request's page.
 
 **Post the link.** The owner reads the stream's spec or tickets, so the link goes there, through the tracker configuration's own way to comment:
 
@@ -314,11 +348,11 @@ Any answer other than yes keeps the stream unshipped; write what the user said b
 |---|---|
 | GitHub | A comment on the stream's parent spec issue when Tickets names one; otherwise a comment on each ticket of the stream |
 | GitLab | A note on the stream's parent spec issue when Tickets names one; otherwise a note on each ticket of the stream, with the tracker configuration's comment command (by default `glab issue note <number> --message "<link>"`) |
-| Local markdown | A comment in the spec file, or in each ticket file when the stream has no spec, as the tracker configuration writes comments. It is a file change in the stream's worktree: commit it on `stream/<slug>` and push again, so the open pull request carries it |
+| Local markdown | A comment in the spec file, or in each ticket file when the stream has no spec, as the tracker configuration writes comments. It is a file change in the stream's worktree: commit it on `stream/<slug>` only; the ticket folder is left out of the ship branch, so nothing is pushed for it |
 
 Then write the link into the stream's status line: date, shipped, the pull request's URL, and that the stream waits on the repository's reviewers. The pull request stays open for them; you never merge it, on either forge.
 
-**Done when**: the stream is at its last stage by both signals, the forge was chosen from the stream's repository, the user said yes in a question round before anything was pushed, one pull request (a merge request on GitLab) goes from `stream/<slug>` to the stream's PR target with a description written with `/mattpocock-skills:pr`, its link is posted on the stream's spec or tickets and written in the status line, and nothing was merged.
+**Done when**: the stream is at its last stage by both signals, the forge was chosen from the stream's repository, the ship branch was cut from the integration branch's head with its left-out paths derived from the repository and its merge into the PR target checked clean, the user said yes to the ship question in a question round before anything was pushed (or a conflict was reported and no ship question asked), one pull request (a merge request on GitLab) goes from `stream/<slug>-ship` to the stream's PR target with a description written with `/mattpocock-skills:pr`, its link is posted on the stream's spec or tickets and written in the status line, and nothing was merged.
 
 ## 7. Warn when streams change the same file
 
