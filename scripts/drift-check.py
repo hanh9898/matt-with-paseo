@@ -9,8 +9,10 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
 PLUGIN = REPO / "plugins" / "matt-with-paseo"
+# The scope CODING_STANDARDS.md states, the standards file itself, and both READMEs.
 DEFAULT_TARGETS = [PLUGIN / "skills" / "matt-with-paseo", PLUGIN / "skills" / "matt-with-paseo-streams",
-                   PLUGIN / "README.md", REPO / "README.md"]
+                   REPO / "AGENTS.md", REPO / "CLAUDE.md", REPO / "docs" / "agents", PLUGIN / "evals",
+                   REPO / "CODING_STANDARDS.md", PLUGIN / "README.md", REPO / "README.md"]
 REFERENCE = re.compile(r"mattpocock-skills:([a-z0-9][a-z0-9-]*)")
 
 

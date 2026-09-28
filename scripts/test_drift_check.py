@@ -171,7 +171,7 @@ class DriftCheck(unittest.TestCase):
         self.assertEqual(result.returncode, 2)
         self.assertIn("mattpocock-skills", result.stderr)
 
-    def test_without_targets_checks_both_skills_and_readme_of_this_repo(self):
+    def test_without_targets_checks_the_standards_scope_and_both_readmes_of_this_repo(self):
         make_plugin(self.plugin, {})  # an empty plugin: every reference is stale
 
         result = subprocess.run(
@@ -186,6 +186,8 @@ class DriftCheck(unittest.TestCase):
         self.assertIn(str(repo / "README.md"), paths)
         self.assertIn(str(PLUGIN / "README.md"), paths)
         self.assertIn(str(STREAM_SKILL / "SKILL.md"), paths)
+        self.assertIn(str(repo / "CODING_STANDARDS.md"), paths)
+        self.assertIn(str(PLUGIN / "evals" / "wave-pure-chain" / "graders" / "suggests-implement.md"), paths)
 
     def copy_stream_skill(self, *extra):
         """A copy of this repo's stream skill, and a plugin holding every Matt skill it names
