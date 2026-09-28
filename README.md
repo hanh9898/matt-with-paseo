@@ -347,7 +347,7 @@ cd plugins/matt-with-paseo
 claude plugin eval . --scaffold
 ```
 
-`--scaffold` runs each case's `fixture.sh` as you, to build its repository; read them first. A full run is 7 cases, 3 runs each, in two arms (with and without the plugin). The last full run scored 1.00 with the plugin on every case, against 0.20 to 0.50 without it. The fixture scripts must keep LF line endings: on Windows, check out with `core.autocrlf` set to `input` or `false`, or bash fails on the carriage returns.
+`--scaffold` runs each case's `fixture.sh` as you, to build its repository; read them first. A full run is 7 cases, 3 runs each, in two arms (with and without the plugin). The last full run scored 1.00 with the plugin on every case, against 0.20 to 0.50 without it. Each fixture strips carriage returns before it runs, so a CRLF checkout on Windows works too.
 
 ## Acknowledgements
 
