@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: streams-48-workspace-in-repo-project
+description: Starting a stream, the planned create_workspace must carry the repository's Paseo project id and the planned create_agent the new workspace's id, not the control folder's.
+tags: [spawn, streams]
+context:
+  scaffold_script: fixture.sh
