@@ -29,7 +29,7 @@ grill-with-docs ─┐
 wayfinder ───────┘   (Matt's skills, typed by you)  (this skill + Paseo agents)
 ```
 
-Work reaches this skill through one of two equal on-ramps, `/mattpocock-skills:grill-with-docs` or `/mattpocock-skills:wayfinder`, which both merge at `/mattpocock-skills:to-spec`. The route up to the spec is Matt's, not this skill's: when there is no spec and no tickets yet, the skill sends you to `/mattpocock-skills:ask-matt` to pick the skill that fits, and stops. A wayfinder map is a set of decision tickets, not yet through `/mattpocock-skills:to-spec`, so the skill names it and starts no wave on it.
+Work reaches the wave skill through one of two equal on-ramps, `/mattpocock-skills:grill-with-docs` or `/mattpocock-skills:wayfinder`, which both merge at `/mattpocock-skills:to-spec`. The route up to the spec is Matt's, not this skill's: when there is no spec and no tickets yet, the skill sends you to `/mattpocock-skills:ask-matt` to pick the skill that fits, and stops. A wayfinder map is a set of decision tickets, not yet through `/mattpocock-skills:to-spec`, so the skill names it and starts no wave on it.
 
 Each run then locates the current stage from what the tracker holds:
 
@@ -55,7 +55,7 @@ Each wave then goes through the same loop:
 7. **Review the seams**: for waves of two or more tickets, one `mattpocock-skills:code-review` pass over where the tickets touch; findings go back to the owning agent or get fixed on the integration branch.
 8. **Clean up**: archive agents and worktrees that are stopped, clean, and merged; then open the next wave.
 
-The skill asks for your approval at the decisions that are yours: the stage and next step, the wave plan, and any question a review raises.
+The wave skill asks for your approval at the decisions that are yours: the stage and next step, the wave plan, and any question a review raises.
 
 ## Streams: many ticket sets at once
 
@@ -93,12 +93,12 @@ The wave skill runs in a checkout of its integration branch, whoever calls it. W
 
 - [Claude Code](https://claude.com/claude-code)
 - [Paseo](https://paseo.sh), with its MCP server available to the orchestrating session and its `paseo` skill installed
-- [Matt Pocock's skills](https://github.com/mattpocock/skills), installed as the `mattpocock-skills` Claude Code plugin. The skill suggests commands in the plugin's namespaced form, `/mattpocock-skills:<skill>`; if you installed Matt's skills another way, type the same skill without the prefix (`/<skill>`).
+- [Matt Pocock's skills](https://github.com/mattpocock/skills), installed as the `mattpocock-skills` Claude Code plugin. Both skills suggest commands in the plugin's namespaced form, `/mattpocock-skills:<skill>`; if you installed Matt's skills another way, type the same skill without the prefix (`/<skill>`).
 - A git repository whose tracker is configured by `/mattpocock-skills:setup-matt-pocock-skills`
 
 ### Target repo `paseo.json` (optional)
 
-If the target repo commits a `paseo.json`, the skill uses it when spawning: with `worktree.setup` declared, it stops pasting environment setup into agent prompts; with services declared, it stops assigning ports and relies on the port Paseo gives each worktree. The skill never writes `paseo.json`; the target repo owns it. Notes for whoever maintains that file:
+If the target repo commits a `paseo.json`, the wave skill uses it when spawning: with `worktree.setup` declared, it stops pasting environment setup into agent prompts; with services declared, it stops assigning ports and relies on the port Paseo gives each worktree. Neither skill writes `paseo.json`; the target repo owns it. Notes for whoever maintains that file:
 
 - Do not declare a fixed `port` on a service. Every worktree then gets the same port; on Windows the processes all bind it without error, a worktree's proxy URL serves another worktree's files, and `health` still reports healthy. Leave `port` out and read the assigned one from `PASEO_PORT`.
 - On Windows, `worktree.setup` runs in Windows PowerShell, while `scripts` and terminals run in cmd. The sh form `$VAR` used in the Paseo docs fails silently in both: it expands to nothing in PowerShell and stays literal in cmd. Use PowerShell syntax in setup (`$env:PASEO_WORKTREE_PORT`) and cmd syntax in scripts (`%PASEO_PORT%`).
@@ -107,7 +107,7 @@ If the target repo commits a `paseo.json`, the skill uses it when spawning: with
 
 If the target repo has its own standard for proving a change works (measure on real data, attach a recording of the screen, run a command twice and compare the counts), write it as free prose in a file, for example `docs/agents/evidence-standards.md`, and declare it in an `## Evidence standards` section of `CLAUDE.md` or `AGENTS.md` that points to that file. Put the section **outside** the `## Agent skills` block: `/mattpocock-skills:setup-matt-pocock-skills` rewrites that block in place and would drop anything added inside it.
 
-The skill reads the file while preparing a wave, points every agent to it from the common rules instead of copying it, and names it in every `mattpocock-skills:code-review` call, because the review's Standards axis reads only documents on how code is written (such as `CODING_STANDARDS.md`) on its own. The file is about how to prove a change works, so keep it separate from those. A repo without the section runs exactly as before.
+The wave skill reads the file while preparing a wave, points every agent to it from the common rules instead of copying it, and names it in every `mattpocock-skills:code-review` call, because the review's Standards axis reads only documents on how code is written (such as `CODING_STANDARDS.md`) on its own. The file is about how to prove a change works, so keep it separate from those. A repo without the section runs exactly as before.
 
 ## Installation
 
@@ -169,7 +169,7 @@ In a Claude Code session inside your repository (with the plugin install, use `/
 /matt-with-paseo <feature name or ticket folder>
 ```
 
-The skill is user-invoked only (`disable-model-invocation: true`): it starts agents and merges branches, so it runs when you ask for it.
+Both skills are user-invoked only (`disable-model-invocation: true`): the wave skill starts agents and merges branches, the stream skill starts agents and opens pull requests, so each runs when you ask for it. The stream skill's command is in [The control folder and its index](#the-control-folder-and-its-index).
 
 Files it writes, next to your ticket folder:
 
@@ -201,15 +201,15 @@ Files in this repo:
 
 ## Limitations
 
-- Tested with Claude Code on one project. Other agent providers that Paseo supports should work as long as they can load Matt Pocock's skills, but have not been tried.
+- Tested with Claude Code on one project. The stream skill has not yet had its end-to-end run with two streams in one repository. Other agent providers that Paseo supports should work as long as they can load Matt Pocock's skills, but have not been tried.
 - Agents can only run model-invocable skills. A Matt skill whose `disable-model-invocation` frontmatter flag is `true` can only be typed by a human (the rule in step 4 of `SKILL.md`), so the orchestrator suggests it and you type it.
-- The ticket tracker is whatever `mattpocock-skills:setup-matt-pocock-skills` configured; the skill reads it but does not create one.
+- The ticket tracker is whatever `mattpocock-skills:setup-matt-pocock-skills` configured; both skills read it but do not create one.
 
 ## Contributing
 
-Issues and pull requests are welcome. The skill follows Matt Pocock's [`mattpocock-skills:writing-for-agents`](https://github.com/mattpocock/skills) guidance, so a good change usually:
+Issues and pull requests are welcome. Both skills follow Matt Pocock's [`mattpocock-skills:writing-for-agents`](https://github.com/mattpocock/skills) guidance, so a good change usually:
 
-- adds a row to a table rather than a new prose branch (new flows go in the step 4 flow table);
+- adds a row to a table rather than a new prose branch (new agent flows go in the wave skill's step 4 flow table);
 - gives every step a checkable completion criterion;
 - moves material only some runs need into `TROUBLESHOOTING.md` or a new file behind a pointer, keeping `SKILL.md` short.
 
