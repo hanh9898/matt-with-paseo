@@ -349,7 +349,7 @@ cd plugins/matt-with-paseo
 claude plugin eval . --scaffold
 ```
 
-`--scaffold` runs each case's `fixture.sh` as you, to build its repository; read them first. The first run in a directory asks you to trust the plugin, so start it from an interactive terminal; from a script, CI or an agent session, add `--trust-plugin` once you have read the suite. A full run is 7 cases, 3 runs each, in two arms (with and without the plugin). The last full run scored 1.00 with the plugin on every case, against 0.20 to 0.50 without it. Each fixture strips carriage returns before it runs, so a CRLF checkout on Windows works too.
+`--scaffold` runs each case's `fixture.sh` as you, to build its repository; read them first. The first run in a directory asks you to trust the plugin, so start it from an interactive terminal; from a script, CI or an agent session, add `--trust-plugin` once you have read the suite. A full run is 9 cases, 3 runs each, in two arms (with and without the plugin). The last full run scored 1.00 with the plugin on every case, against 0.20 to 0.67 without it. Each fixture strips carriage returns before it runs, so a CRLF checkout on Windows works too.
 
 ## Acknowledgements
 
