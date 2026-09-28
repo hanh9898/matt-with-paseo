@@ -23,11 +23,30 @@ The wave file doubles as a log, so a new session can pick up a half-finished wav
 
 ## How it works
 
+```mermaid
+flowchart TD
+    idea([Idea or request]) --> askmatt{{"ask-matt: which on-ramp?"}}
+    askmatt --> grill["grill-with-docs"]
+    askmatt --> wayfinder["wayfinder"]
+    askmatt --> prototype["prototype"]
+    grill --> spec["to-spec"]
+    wayfinder --> spec
+    prototype --> spec
+    spec --> tickets["to-tickets"]
+    tickets --> one{"How many ticket sets<br/>run and ship apart?"}
+    one -- "one" --> wave["/matt-with-paseo<br/>waves of parallel agents"]
+    one -- "several" --> streams["/matt-with-paseo-streams<br/>one stream per set"]
+    streams -- "one wave-skill agent per stream" --> wave
+    wave --> merged[("integration branch")]
+    merged --> pr(["one PR or MR,<br/>a human merges"])
+
+    classDef matt fill:#e6e9ff,stroke:#669,color:#111
+    classDef ours fill:#e3f6e3,stroke:#393,color:#111
+    class askmatt,grill,wayfinder,prototype,spec,tickets matt
+    class wave,streams ours
 ```
-grill-with-docs ─┐
-                 ├──► to-spec ──► to-tickets ──► wave 1 ──► wave 2 ──► ... ──► done
-wayfinder ───────┘   (Matt's skills, typed by you)  (this skill + Paseo agents)
-```
+
+Blue boxes are Matt's skills, typed by you; green boxes are this plugin's two skills.
 
 Work reaches the wave skill through one of two equal on-ramps, `/mattpocock-skills:grill-with-docs` or `/mattpocock-skills:wayfinder`, which both merge at `/mattpocock-skills:to-spec`. The route up to the spec is Matt's, not this skill's: when there is no spec and no tickets yet, the skill sends you to `/mattpocock-skills:ask-matt` to pick the skill that fits, and stops. A wayfinder map is a set of decision tickets, not yet through `/mattpocock-skills:to-spec`, so the skill names it and starts no wave on it.
 
@@ -46,6 +65,30 @@ Once the tickets exist, come back to this skill rather than Matt's `/mattpocock-
 
 Each wave then goes through the same loop:
 
+```mermaid
+flowchart TD
+    s0["0. Locate the stage"] --> g0{{"You confirm the next step"}}
+    g0 --> s1["1. Prepare: profiles, tracker, integration branch"]
+    s1 --> s2["2. Split: graph, the wave, lost width"]
+    s2 --> g2{{"You approve the wave"}}
+    g2 --> s3["3. Pin the base commit, write the common rules"]
+    s3 --> s4["4. Spawn one worktree and one agent per ticket"]
+    s4 --> s5["5. Check each report against real artifacts"]
+    s5 --> s6["6. Merge the ticket, run a cheap verification"]
+    s6 -- "rolling start: a ticket it unblocks" --> s4
+    s6 --> s7["7. Review the seams between tickets"]
+    s7 --> g7{{"You decide the review questions"}}
+    g7 --> s8["8. Clean up: stopped, clean, merged"]
+    s8 -- "tickets left" --> s2
+    s8 -- "nothing left" --> done(["Summary"])
+    hb[/"Heartbeat: catches an agent that stopped<br/>without a finish notification"/] -.-> s5
+
+    classDef gate fill:#fff4d6,stroke:#c90,color:#111
+    class g0,g2,g7 gate
+```
+
+Yellow boxes are the decisions that stay yours.
+
 1. **Prepare**: read Paseo profiles, the ticket tracker, and the integration branch. The branch is read with `git branch --show-current`, never from the directory name (the rule in step 1 of `SKILL.md`).
 2. **Split**: draw the dependency graph and put every ticket that can run now into the wave. It also lists what is costing width (a ticket waiting on a human, a `Blocked by` that is only a shared file) with the one question that would unblock it. You approve it.
 3. **Common rules**: pin a base commit and write `wave<N>-common-rules.md` from the template.
@@ -62,6 +105,62 @@ The wave skill asks for your approval at the decisions that are yours: the stage
 A **stream** is one ticket set that ships through one integration branch and one pull request. Use the wave skill alone when you run one ticket set from its own checkout. Use the stream skill, `matt-with-paseo-streams`, when you run several ticket sets at once, often in one repository, and each must ship on its own: work for several requesters, or an independent bug that should not wait for an unrelated feature. Unrelated work that ships separately becomes separate streams. Streams never depend on each other: a ticket that waits on another belongs in the same stream.
 
 The stream skill gives each stream one worktree on its own integration branch, `stream/<slug>`, cut from the stream's base branch, and one Paseo agent there that runs the wave skill. It brings you every question from every stream in one batched round, verbatim, and never answers for you. A heartbeat reconciles the index with what is running, restarting a failed stream agent without touching the other streams. After each wave it warns you when two streams in one repository change the same file, and never blocks. When a stream's tickets are all done, it asks you, and only after you confirm does it push the integration branch and open one pull request per stream (a merge request on GitLab) to the stream's target, with a description written with `mattpocock-skills:pr` and a link posted on the stream's spec or tickets. It never merges: that stays with the repository's reviewers.
+
+### How the stream skill runs
+
+```mermaid
+flowchart TB
+    user(["You, in the control folder"]) -- "batched questions and answers" --> ss["matt-with-paseo-streams<br/>index, agent cap, reconcile loop"]
+    ss -. "read only" .-> tracker[("Tracker: ticket status")]
+
+    subgraph A ["Stream A: own worktree"]
+        wa["matt-with-paseo<br/>stream a, quota 4"] -- spawn --> ta["Ticket agents A1 to A4"]
+        ta -- merge --> ba[("stream/a")]
+    end
+    subgraph B ["Stream B: own worktree"]
+        wb["matt-with-paseo<br/>stream b, quota 2"] -- spawn --> tb["Ticket agents B1, B2"]
+        tb -- merge --> bb[("stream/b")]
+    end
+
+    ss -- "stream, quota" --> wa
+    ss -- "stream, quota" --> wb
+    ss -- "opens after you confirm" --> pra(["PR or MR to test"])
+    ss -- "opens after you confirm" --> prb(["PR or MR to develop"])
+    ba -- head --> pra
+    bb -- head --> prb
+```
+
+The stream skill talks only to stream agents, never to ticket agents, and reads only public signals. Streams share no dependencies, so nothing connects A and B.
+
+One stream, from start to shipping:
+
+```mermaid
+sequenceDiagram
+    actor You
+    participant S as Stream skill
+    participant W as Stream agent (wave skill)
+    participant T as Ticket agents
+    participant F as GitHub or GitLab
+
+    You->>S: /matt-with-paseo-streams
+    S->>S: read the index, split the cap into quotas
+    S->>W: spawn in the stream's worktree:<br/>/matt-with-paseo tickets stream slug quota N
+    W-->>S: end of turn: stage to confirm
+    S->>You: one round with every stream's questions
+    You->>S: answers
+    S->>W: answer, notifications on
+    W->>T: spawn a wave, check, merge into stream/slug
+    loop every heartbeat tick
+        S->>S: reconcile the index with what runs
+    end
+    W-->>S: end of turn: next wave to approve
+    Note over S,W: wave boundary: quota may change here,<br/>never while ticket agents run
+    W-->>S: end of turn: every ticket done
+    S->>You: ship this stream?
+    You->>S: yes
+    S->>F: push stream/slug, open one PR or MR
+    S->>You: link, posted on the spec or tickets
+```
 
 ### The control folder and its index
 
