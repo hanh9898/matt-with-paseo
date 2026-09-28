@@ -67,6 +67,7 @@ The index is `streams.md` at the root of the control folder: one line for the ca
 | Tickets | Where the stream's tickets live: a folder, for a local-markdown tracker; a label or a parent spec issue, for GitHub or GitLab. It is passed to the wave skill as written |
 | Base branch | The branch the integration branch is cut from; empty means resolve per step 1 |
 | PR target | The branch the stream's pull request goes to; empty means resolve per step 1 |
+| Forge | `GitHub` or `GitLab`: the forge that hosts the repository, where step 6 opens the pull request; empty means resolve per step 1, which writes it. An index without this column reads as empty; add the column when you write the row |
 | Priority | A number, 1 first; empty means the order of rows (first come first served) |
 | Status | The stream's status line: one line you keep current, holding only the items of "The status line" below |
 
@@ -77,13 +78,13 @@ Example:
 
 Agent cap: 6
 
-| Slug | Repository | Owner | Tickets | Base branch | PR target | Priority | Status |
-|---|---|---|---|---|---|---|---|
-| billing-export | D:\src\opms | Lan | label `stream:billing-export` | | | 1 | 2026-09-27 wave 1 running, waits on the stream agent |
-| login-bug | D:\src\opms | Minh | `.scratch/login-bug/issues/` | test | test | 2 | 2026-09-27 not started |
+| Slug | Repository | Owner | Tickets | Base branch | PR target | Forge | Priority | Status |
+|---|---|---|---|---|---|---|---|---|
+| billing-export | D:\src\opms | Lan | label `stream:billing-export` | | | GitLab | 1 | 2026-09-27 wave 1 running, waits on the stream agent |
+| login-bug | D:\src\opms | Minh | `.scratch/login-bug/issues/` | test | test | | 2 | 2026-09-27 not started |
 ```
 
-With no index yet, write `streams.md` with the cap line and the table header, ask the user for the cap and each stream's fields, and write them in.
+With no index yet, write `streams.md` with the cap line and the table header, ask the user for the cap and each stream's fields, and write them in. Each Repository is the absolute path of a local checkout that the user gives; ask for it rather than searching the disks. Ask for each field by its name alone: the example's values above belong to no user and appear in no question, as a default or a suggestion. The Forge cell may stay empty; step 1 fills it.
 
 ### The status line
 
@@ -92,6 +93,8 @@ The status line is the reconcile loop's only memory (step 5): every step writes 
 | Item | Written by | Example |
 |---|---|---|
 | Date, stage, who the stream waits on | every step that updates the line (step 4 from each end-of-turn message) | `2026-09-27 wave 1 running, waits on the stream agent` |
+| Setup stopped, with the problems found | step 1 | `setup stopped: PR target release not on origin` |
+| The tracker configuration goes on the stream branch | step 1 | `tracker setup on the stream branch` |
 | The stream agent's id | steps 3 and "Replace a stream agent" | `agent 3e0a7953` |
 | Waits on the cap | step 3, and "Replace a stream agent" at a wave boundary | `waits on the cap` |
 | The last end-of-turn message handled, with its time | step 4 | `handled message of 2026-09-27 14:02` |
@@ -149,21 +152,39 @@ A stream whose Tickets point at nothing yet has no work to run. Work enters a st
 
 **Done when**: one row is chosen, its slug, repository, owner and tickets are filled in, and the stream has no running stream agent, or one tick of step 5 has run for the one it has.
 
-## 1. Resolve the branches
+## 1. Check the setup
 
-Resolve the base branch and the PR target separately, each by the first source that gives a value:
+Step 1 finds, before anything is created, what the stream would otherwise meet only at ship time. Run every check below first, then write the values into the stream's row and go on to step 2 when no problem is found. With any problem, stop at one checkpoint: its brief, headed `[<slug>]`, lists every problem found with what the user can do about each, and `setup stopped:` with the problems goes into the status line. Run step 1 again, from its first check, once the user answers.
 
-| Order | Source | How to read it |
-|---|---|---|
-| 1 | The stream's row | the Base branch and PR target cells |
-| 2 | The target repository's declared default | prose next to the `## Agent skills` section of its `CLAUDE.md`/`AGENTS.md`, naming the base branch and the pull-request target |
-| 3 | The remote's default branch | `git -C <repository> symbolic-ref --short refs/remotes/origin/HEAD`; when that ref is missing, `git -C <repository> remote show origin` (its `HEAD branch` line) |
+1. **Fetch.** `git -C <repository> fetch origin`.
+2. **Branches.** Resolve the base branch and the PR target separately, each by the first source that gives a value:
 
-Run `git -C <repository> fetch origin` first, and check that each branch exists (`git -C <repository> rev-parse --verify <branch>`, trying `origin/<branch>` too); a base branch or PR target that exists nowhere goes back to the user.
+   | Order | Source | How to read it |
+   |---|---|---|
+   | 1 | The stream's row | the Base branch and PR target cells |
+   | 2 | The target repository's declared default | prose next to the `## Agent skills` section of its `CLAUDE.md`/`AGENTS.md`, naming the base branch and the pull-request target |
+   | 3 | The remote's default branch | `git -C <repository> symbolic-ref --short refs/remotes/origin/HEAD`; when that ref is missing, `git -C <repository> remote show origin` (its `HEAD branch` line) |
+
+   The base branch exists when `git -C <repository> rev-parse --verify <branch>` succeeds for `<branch>` or `origin/<branch>`. The PR target exists only on the remote: `git -C <repository> ls-remote --exit-code --heads origin <PR target>`, since the pull request goes to origin's branch.
+3. **Tracker configuration.** The `## Agent skills` section of `CLAUDE.md` or `AGENTS.md` on the base branch, read at `<base ref>` (`git -C <repository> show <base ref>:AGENTS.md`, and the same for `CLAUDE.md`), where `<base ref>` is `origin/<base>` when it exists on the remote, else `<base>`, the ref step 2 cuts from. The checkout's working tree may hold another branch, so it does not count. When the status line records `tracker setup on the stream branch` (the second choice below), read `stream/<slug>` instead; while that branch does not exist or lacks the section, the check passes and step 1 hands on to step 2 as that choice says.
+4. **Forge.** The Forge cell when it is filled; otherwise the host of `git -C <repository> remote get-url origin` (`github.com` is GitHub, `gitlab.com` is GitLab) and the tracker configuration read in check 3 when it names a forge (a GitHub or GitLab tracker, or `gh` or `glab` commands). A self-hosted GitLab is known only from the tracker configuration.
+
+| Found | In the brief |
+|---|---|
+| The fetch fails (unknown host, refused connection, authentication failed) | The remote's URL, git's error line, and what the user can do: restore the connection (network, VPN), sign in to the forge themselves, or correct the remote's URL. Checks 2 to 4 wait for a fetch that works, since they read the remote |
+| A base branch that exists neither locally nor on origin | The branch and the source it came from; the user names another in the Base branch cell |
+| A PR target missing on origin, including one that exists only as a local branch | The branch, and where it exists; the user pushes it to origin through the repository's own process or names another in the PR target cell. You push nothing |
+| No `## Agent skills` section on the base branch | The two choices of the table below, in its order, the first proposed |
+| No forge: the Forge cell is empty and neither source names GitHub or GitLab, or the two name different forges | The remote's host and what the tracker configuration says; the user writes `GitHub` or `GitLab` in the Forge cell. A repository on any other forge cannot ship through this skill (step 6) |
+
+| Choice | What follows |
+|---|---|
+| 1. Land the setup on the base branch as a change of its own | The user runs `/mattpocock-skills:setup-matt-pocock-skills` on a branch cut from the base branch and merges it into the base branch through the repository's own process, so the configuration never rides in the stream's pull request |
+| 2. Commit it on the stream branch | On this answer, write `tracker setup on the stream branch` into the status line; step 2 then creates the worktree, and you stop after it, giving the user its path to run `/mattpocock-skills:setup-matt-pocock-skills` in and commit on `stream/<slug>`. The command with the slug typed again goes on at step 3 in that worktree. The configuration stays on the integration branch, and ship leaves it out as an agent-only path (ADR 0007) |
 
 **Shared base branch.** A base branch that gathers several people's unfinished work (such as a `test` branch every owner merges into) draws a warning, never a block. It is shared when the repository's prose says so, or when it is not the remote's default branch and `git -C <repository> log --format=%ae <remote default>..<base>` lists more than one author. Tell the user which branch, the authors found, and that the stream's pull request will carry their unmerged work unless its target already holds it; then continue with the base branch the user keeps.
 
-**Done when**: the base branch and the PR target each have a value and the source it came from, the user has seen any shared-base warning, and both values are written into the stream's row.
+**Done when**: every check has run; the base branch, the PR target and the forge each have a value and the source it came from, the PR target exists on origin, and the base branch carries the tracker configuration or the status line records `tracker setup on the stream branch`; the user has seen any shared-base warning; and the three values are written into the stream's row. Or: nothing was created, and one checkpoint has shown the user every problem found, recorded as `setup stopped:` in the status line.
 
 ## 2. Create the stream's worktree
 
@@ -297,14 +318,12 @@ A stream ships through one pull request from its **Ship branch** to its PR targe
 
 Either signal alone is not the last stage. When they disagree, prompt the stream agent "where does the stream stand?" and read both again on its answer. Check this on each end-of-turn message of step 4 and on each tick of step 5; nothing below runs before the last stage. A status line that records `ship blocked at <head>` for the integration branch's current short head stops here: the conflict is already reported. A stream at its last stage whose integration branch holds no commit beyond the PR target (`git -C <worktree> log --oneline origin/<PR target>..stream/<slug>` prints nothing) has nothing to ship: write `nothing to ship at <head>`, with the integration branch's short head, into the status line and stop here.
 
-**The forge.** The pull request is opened on the forge that hosts the stream's repository, chosen from two sources: the host of `git -C <worktree> remote get-url origin`, and the tracker configuration in the stream's worktree when it names a forge (a GitHub or GitLab tracker, or `gh` or `glab` commands).
+**The forge.** The pull request is opened on the forge in the stream's Forge cell, which step 1 wrote before any work started:
 
-| Forge | Chosen when | Commands |
-|---|---|---|
-| GitHub | the remote's host is `github.com`, or the tracker configuration declares GitHub for it | `gh`, as below |
-| GitLab | the remote's host is `gitlab.com`, or the tracker configuration declares GitLab for it (a self-hosted GitLab is known only this way) | `glab`, merge requests. Take the command shapes from the tracker configuration when it declares GitLab; the shapes below are the defaults |
-
-When the two sources disagree, or neither names GitHub or GitLab (any other forge), the stream cannot ship this way: tell the user and stop.
+| Forge | Commands |
+|---|---|
+| GitHub | `gh`, as below |
+| GitLab | `glab`, merge requests. Take the command shapes from the tracker configuration when it declares GitLab; the shapes below are the defaults |
 
 **The ship branch.** Cut it for every ship question, so it never drifts from what the question describes.
 

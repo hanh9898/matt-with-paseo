@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: streams-47-setup-checks
+description: A stream whose base branch has no tracker configuration, whose PR target exists only as a local branch, and whose remote is a self-hosted GitLab nothing declares, must stop at setup once, naming all three problems (the forge to be written in the index before work starts), and ask whether to land the setup on the base branch (proposed first) or commit it on the stream branch.
+tags: [setup, streams]
+context:
+  scaffold_script: fixture.sh
