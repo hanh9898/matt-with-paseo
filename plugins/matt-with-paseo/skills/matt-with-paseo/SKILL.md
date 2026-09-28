@@ -17,12 +17,14 @@ Without `stream`, every label, branch name and file name is the one the "Without
 
 **Precondition:** this skill runs in a checkout of its integration branch. It reads that branch from the checkout it stands in (step 1), so whoever calls it, human or agent, opens it there first.
 
-Four words used throughout:
+Words used throughout:
 
 - **Wave**: a set of tickets run in parallel. A ticket joins a wave once every ticket it depends on is `resolved` and merged.
 - **Integration branch**: the branch collecting the results of every wave. Each wave branches its worktrees off a **base commit** pinned on this branch.
 - **Common rules**: what every agent of the wave needs to know that its own prompt does not carry. Written once per wave (step 3).
 - **Ticket agent**: the Paseo agent step 4 spawns to work one ticket, carrying that ticket's label. The review agent of step 7 is not one.
+- **Checkpoint**: a point where the run stops for the user to verify or decide (a question, an approval). Pushed right: the run does all the work it can first, so the user is asked once, late, with everything prepared.
+- **Brief**: what a checkpoint shows the user: a tight, decision-ready summary of what was produced and why, with a link to the asset itself, never the raw output.
 
 ## Names this run writes
 

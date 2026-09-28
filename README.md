@@ -314,11 +314,7 @@ Files in this repo:
 
 ## Contributing
 
-Issues and pull requests are welcome. Both skills follow Matt Pocock's [`mattpocock-skills:writing-for-agents`](https://github.com/mattpocock/skills) guidance, so a good change usually:
-
-- adds a row to a table rather than a new prose branch (new agent flows go in the wave skill's step 4 flow table);
-- gives every step a checkable completion criterion;
-- moves material only some runs need into `TROUBLESHOOTING.md` or a new file behind a pointer, keeping `SKILL.md` short.
+Issues and pull requests are welcome. Every document an agent reads, and every script, follows [`CODING_STANDARDS.md`](CODING_STANDARDS.md): Matt Pocock's [`mattpocock-skills:writing-for-agents`](https://github.com/mattpocock/skills) as checkable rules, the loop design rules, and the scripts' conventions. `mattpocock-skills:code-review` reads it on its Standards axis, so each finding cites one of its rules.
 
 When a fix comes from a real incident, describe the symptom you saw in the pull request.
 
@@ -328,12 +324,12 @@ Before a release, run the drift check by hand (Python 3, standard library only):
 python scripts/drift-check.py
 ```
 
-It lists every `mattpocock-skills:<name>` reference in both skills (`plugins/matt-with-paseo/skills/matt-with-paseo/`, `plugins/matt-with-paseo/skills/matt-with-paseo-streams/`), the plugin's README and this README and compares each one with the Matt plugin installed on your machine, not with a pinned version: it reads the user-scope `mattpocock-skills` entry of `~/.claude/plugins/installed_plugins.json` (pass `--plugin-root <dir>` to compare against another copy). A reference fails when the plugin's manifest does not ship that skill, or when it sits in an agent flow (step 4 of the wave skill's `SKILL.md`, or anywhere in `COMMON-RULES-TEMPLATE.md`; the stream skill spawns only the wave skill, so it has none) and the skill sets `disable-model-invocation`. The check only sees prefixed names, so always name Matt's skills as `mattpocock-skills:<name>`.
+It lists every `mattpocock-skills:<name>` reference in the documents the standards cover (both skills, `AGENTS.md`, `CLAUDE.md`, `docs/agents/`, the eval prompts and graders), `CODING_STANDARDS.md` itself, the plugin's README and this README, and compares each one with the Matt plugin installed on your machine, not with a pinned version: it reads the user-scope `mattpocock-skills` entry of `~/.claude/plugins/installed_plugins.json` (pass `--plugin-root <dir>` to compare against another copy). A reference fails when the plugin's manifest does not ship that skill, or when it sits in an agent flow (step 4 of the wave skill's `SKILL.md`, or anywhere in `COMMON-RULES-TEMPLATE.md`; the stream skill spawns only the wave skill, so it has none) and the skill sets `disable-model-invocation`. The reference check only sees prefixed names, so always name Matt's skills as `mattpocock-skills:<name>`. It also fails on any line naming the beta skill whose loop lens the standards carry unnamed (`BETA_LENS` in the script holds its name), so that no document comes to depend on it.
 
 | Exit | Output | Meaning |
 |---|---|---|
 | 0 | nothing | no stale reference |
-| 1 | one line per stale reference | fix each line before releasing |
+| 1 | one line per stale reference, or per line naming that beta skill | fix each line before releasing |
 | 2 | one error line | the check could not run: no plugin found, or the wave skill's `SKILL.md` has no `## 4.` step |
 
 Its tests: `python -B -m unittest discover -s scripts`.

@@ -94,13 +94,6 @@ class DriftCheck(unittest.TestCase):
         for fragment in fragments:
             self.assertIn(fragment, lines[0])
 
-    def assert_one_mismatch(self, result, *fragments):
-        self.assertEqual(result.returncode, 1, result.stderr)
-        lines = result.stdout.splitlines()
-        self.assertEqual(len(lines), 1, result.stdout)
-        for fragment in fragments:
-            self.assertIn(fragment, lines[0])
-
     def test_reports_a_reference_to_a_skill_that_does_not_exist(self):
         make_skill(self.skill, SKILL_MD + "\nThen `/mattpocock-skills:no-such-skill`.\n")
 
@@ -147,6 +140,20 @@ class DriftCheck(unittest.TestCase):
         self.assertEqual(result.stdout, "")
         self.assertEqual(result.returncode, 0)
 
+    def test_reports_the_beta_loop_lens_named_bare(self):
+        make_skill(self.skill, SKILL_MD + "\nDesign the loop as loop-me does.\n")
+
+        result = self.run_check()
+
+        self.assert_one_mismatch(result, "SKILL.md:19:", "loop-me", "without naming it")
+
+    def test_reports_the_beta_loop_lens_named_as_a_matt_skill_once(self):
+        make_skill(self.skill, SKILL_MD + "\nThen `/mattpocock-skills:loop-me`.\n")
+
+        result = self.run_check()
+
+        self.assert_one_mismatch(result, "SKILL.md:19:", "loop-me", "without naming it")
+
     def test_without_plugin_root_compares_against_the_user_scope_install(self):
         project_copy = self.tmp / "project-plugin"
         make_plugin(project_copy, {"tdd": False, "code-review": False, "to-spec": True, "extra": False})
@@ -171,7 +178,7 @@ class DriftCheck(unittest.TestCase):
         self.assertEqual(result.returncode, 2)
         self.assertIn("mattpocock-skills", result.stderr)
 
-    def test_without_targets_checks_both_skills_and_readme_of_this_repo(self):
+    def test_without_targets_checks_the_standards_scope_and_both_readmes_of_this_repo(self):
         make_plugin(self.plugin, {})  # an empty plugin: every reference is stale
 
         result = subprocess.run(
@@ -186,6 +193,8 @@ class DriftCheck(unittest.TestCase):
         self.assertIn(str(repo / "README.md"), paths)
         self.assertIn(str(PLUGIN / "README.md"), paths)
         self.assertIn(str(STREAM_SKILL / "SKILL.md"), paths)
+        self.assertIn(str(repo / "CODING_STANDARDS.md"), paths)
+        self.assertIn(str(PLUGIN / "evals" / "wave-pure-chain" / "graders" / "suggests-implement.md"), paths)
 
     def copy_stream_skill(self, *extra):
         """A copy of this repo's stream skill, and a plugin holding every Matt skill it names
