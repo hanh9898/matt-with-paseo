@@ -28,12 +28,13 @@ Run both guards first, in this order. A guard that fails stops the skill with it
    | Exactly one row's Slug | Go on with that row |
    | Anything else: free text, a task, a slug not in the index, any argument while there is no `streams.md` | Stop. Say that the command takes nothing (to list or set up the index) or one slug of the index, and list the index's slugs. Never map the text onto a stream whose name looks close, and never take it as a task to work on |
 
-2. **Paseo's tools.** This skill needs the `paseo` MCP server's tools (`create_workspace`, `create_agent`, `get_agent_status`, `get_agent_activity`, `send_agent_prompt`, `list_pending_permissions`, `create_heartbeat` and the rest). They count as available when this session's tool list holds them, or when this session's instructions carry an **observed-state block**: what those tools would report, stated in their place (an eval run does this, since Paseo's MCP server cannot run inside one). A block stands in only for what it states; an action that needs a call it does not state goes no further than saying what it would do. With neither, stop and tell the user how to enable them:
-   - set `daemon.mcp.injectIntoAgents` to `true` in Paseo's `config.json` (in `~/.paseo/` by default);
-   - reload the daemon: `paseo daemon reload`;
-   - start a new agent in this control folder and run the command there: tools are injected when an agent starts, so this session does not gain them.
+2. **Paseo's tools.** This skill needs the `paseo` MCP server's tools (`create_workspace`, `create_agent`, `get_agent_status`, `get_agent_activity`, `send_agent_prompt`, `list_pending_permissions`, `create_heartbeat` and the rest):
 
-   Offer no `paseo` CLI commands in place of the MCP tools; this skill uses the CLI only where its steps name it.
+   | Tools | Do |
+   |---|---|
+   | In this session's tool list | Go on |
+   | Stated by an **observed-state block** in this session's instructions: what those tools would report, stated in their place (an eval run does this, since Paseo's MCP server cannot run inside one) | Go on; the block stands in only for what it states, and an action that needs a call it does not state goes no further than saying what it would do |
+   | Neither | Stop and tell the user how to enable them: set `daemon.mcp.injectIntoAgents` to `true` in Paseo's `config.json` (in `~/.paseo/` by default); reload the daemon: `paseo daemon reload`; start a new agent in this control folder and run the command there: tools are injected when an agent starts, so this session does not gain them. Offer no `paseo` CLI commands in place of the MCP tools; this skill uses the CLI only where its steps name it |
 
 **Done when**: the argument is empty or one row's slug, and Paseo's tools are in the tool list or stated by an observed-state block; or the skill stopped with the failing guard's message and wrote nothing.
 
