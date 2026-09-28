@@ -180,7 +180,14 @@ Each time an agent reports done, check the real artifacts, not the report's word
 
 A finished report whose artifacts are not there yet (no commits on the ticket's branch, no status change on the ticket) means the agent is still working: Paseo sends no notification for a turn an agent starts on its own after a background command, so its real finish would pass silently. Do not record the ticket as failed; create a heartbeat for its agent under the heartbeat contract, and check the report again once the agent has really stopped.
 
-**Heartbeat contract**, for both cases above: `create_heartbeat` always with `expiresIn` set; the cadence is yours (for example every 15 minutes), always capped by an expiry, so no heartbeat outlives its wave. Each tick checks, for every agent it watches, `get_agent_status`, the commits on the ticket's branch (`git log <branch>`), uncommitted files in its worktree (`git -C <worktree> status --porcelain`), and the ticket's comments. `delete_heartbeat` once the agent has really stopped and its artifacts pass the checks above, and at the latest in step 8.
+**Heartbeat contract**, for both cases above: `create_heartbeat` always with `expiresIn` set; the cadence is yours (for example every 15 minutes), always capped by an expiry, so no heartbeat outlives its wave. Each tick checks, for every agent it watches, `get_agent_status`, the commits on the ticket's branch (`git log <branch>`), uncommitted files in its worktree (`git -C <worktree> status --porcelain`), the ticket's comments, and its activity count (`updateCount` in `get_agent_activity`), kept from tick to tick in this session. A ticket agent still `running` whose count has not moved for three ticks is judged by its last activity entry:
+
+| Last activity entry | Do |
+|---|---|
+| A shell command (`[Shell]`, `[Powershell]`) or no tool call (text, a `[Task notification]`) | Hung: a foreground shell command cannot legitimately run that long. `kill_agent` it, never cancel and prompt it (a prompt only queues behind the stuck call), and hand its remainder to a new agent in the same workspace, as [`TROUBLESHOOTING.md`](TROUBLESHOOTING.md) "A ticket goes wrong while its agent is running" gives for `kill_agent` |
+| A subagent (`[Agent]`, such as the `mattpocock-skills:code-review` reviewers) or another tool that can run long | Not hung: tell the user once, with the ticket and that entry, and let it run |
+
+`delete_heartbeat` once the agent has really stopped and its artifacts pass the checks above, and at the latest in step 8.
 
 Agent stopped midway or report incomplete: see [`TROUBLESHOOTING.md`](TROUBLESHOOTING.md).
 
