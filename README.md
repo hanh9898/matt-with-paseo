@@ -79,7 +79,7 @@ The skill reads the file while preparing a wave, points every agent to it from t
 
 ## Installation
 
-The repo follows the [Agent Skills](https://agentskills.io/specification) layout (`skills/matt-with-paseo/SKILL.md`) and is also a Claude Code plugin marketplace, so any of these works. Pick one; installing twice gives you two copies of the command.
+The repo follows the [Agent Skills](https://agentskills.io/specification) layout (`skills/matt-with-paseo/SKILL.md`, `skills/matt-with-paseo-streams/SKILL.md`) and is also a Claude Code plugin marketplace, so any of these works. Every option installs both skills side by side, since the stream skill points to files of the wave skill's folder. Pick one; installing twice gives you two copies of each command.
 
 ### Option 1: Claude Code plugin
 
@@ -88,23 +88,23 @@ The repo follows the [Agent Skills](https://agentskills.io/specification) layout
 /plugin install matt-with-paseo@matt-with-paseo
 ```
 
-Updates arrive through `/plugin marketplace update`. Plugin skills are namespaced, so the command is `/matt-with-paseo:matt-with-paseo`.
+Updates arrive through `/plugin marketplace update`. Plugin skills are namespaced, so the commands are `/matt-with-paseo:matt-with-paseo` and `/matt-with-paseo:matt-with-paseo-streams`.
 
 ### Option 2: `npx skills`
 
 ```bash
-npx skills add hanh9898/matt-with-paseo -g -a claude-code
+npx skills add hanh9898/matt-with-paseo --skill '*' -g -a claude-code
 ```
 
-`-g` installs for your user; drop it to install into the current project. The command is `/matt-with-paseo`.
+`--skill '*'` takes both skills; `-g` installs for your user; drop it to install into the current project. The commands are `/matt-with-paseo` and `/matt-with-paseo-streams`.
 
 ### Option 3: GitHub CLI (v2.90+)
 
 ```bash
-gh skill install hanh9898/matt-with-paseo matt-with-paseo --agent claude-code --scope user
+gh skill install hanh9898/matt-with-paseo --all --agent claude-code --scope user
 ```
 
-This resolves the latest tagged release; add `--pin v0.1.0` to fix a version. The command is `/matt-with-paseo`.
+`--all` takes both skills. This resolves the latest tagged release; add `--pin v0.4.0` to fix a version. The commands are `/matt-with-paseo` and `/matt-with-paseo-streams`.
 
 ### Option 4: Manual copy
 
@@ -112,19 +112,21 @@ macOS / Linux:
 
 ```bash
 git clone https://github.com/hanh9898/matt-with-paseo.git
-cp -r matt-with-paseo/skills/matt-with-paseo ~/.claude/skills/
+cp -r matt-with-paseo/skills/matt-with-paseo matt-with-paseo/skills/matt-with-paseo-streams ~/.claude/skills/
 cp matt-with-paseo/.claude-plugin/plugin.json ~/.claude/skills/matt-with-paseo/
+cp matt-with-paseo/.claude-plugin/plugin.json ~/.claude/skills/matt-with-paseo-streams/
 ```
 
 Windows (PowerShell):
 
 ```powershell
 git clone https://github.com/hanh9898/matt-with-paseo.git
-Copy-Item -Recurse matt-with-paseo\skills\matt-with-paseo "$env:USERPROFILE\.claude\skills\"
+Copy-Item -Recurse matt-with-paseo\skills\matt-with-paseo, matt-with-paseo\skills\matt-with-paseo-streams "$env:USERPROFILE\.claude\skills\"
 Copy-Item matt-with-paseo\.claude-plugin\plugin.json "$env:USERPROFILE\.claude\skills\matt-with-paseo\"
+Copy-Item matt-with-paseo\.claude-plugin\plugin.json "$env:USERPROFILE\.claude\skills\matt-with-paseo-streams\"
 ```
 
-The second copy puts the plugin manifest next to the skill, so a hand-installed copy carries its version: read the `version` field of `plugin.json` in the skill folder to see which release you run. To use it in one project only, copy the skill into that project's `.claude/skills/` and the manifest into its `.claude/skills/matt-with-paseo/` instead. The command is `/matt-with-paseo`.
+The last two copies put the plugin manifest next to each skill, so a hand-installed copy carries its version: read the `version` field of `plugin.json` in either skill folder to see which release you run. To use them in one project only, copy both skills into that project's `.claude/skills/` and the manifest into each of their folders instead. The commands are `/matt-with-paseo` and `/matt-with-paseo-streams`.
 
 ## Usage
 
