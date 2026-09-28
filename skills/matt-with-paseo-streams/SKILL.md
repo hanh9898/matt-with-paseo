@@ -12,7 +12,7 @@ You are the stream orchestrator. You run in a control folder outside every repos
 
 Words: every word of the wave skill's words block ([`matt-with-paseo`](../matt-with-paseo/SKILL.md), top of the file) holds here with the same meaning. This skill adds one:
 
-- **Stream**: one ticket set that ships through one integration branch and one pull request (a merge request on GitLab; this skill says pull request for both). Its owner (Owner in the index) is an attribute of it. No dependency crosses a stream boundary; dependencies between tickets stay inside the stream, where the wave skill runs them.
+- **Stream**: one ticket set that ships through one integration branch and one pull request (a merge request on GitLab; this skill says pull request for both). Its owner is an attribute of it. No dependency crosses a stream boundary; dependencies between tickets stay inside the stream, where the wave skill runs them.
 
 ## Inputs: public signals only
 
@@ -106,17 +106,17 @@ Archiving a parent agent archives and interrupts its running children (probe C1)
 3. **Hold**, when the check fails (a ticket agent runs). Archive nothing:
    - At a wave boundary (step 4), the stream keeps its agent and the quota it has for one more wave; the wave approval joins the round, and the next boundary tries again.
    - For a failed stream agent that still exists (step 5), send it `send_agent_prompt` "where does the stream stand?", `background: true`, `notifyOnFinish: true`, and write `resume sent` with the time into the status line. A turn that gets past the error means the agent supervises its wave again, and nothing more is done.
-   - When the resume gets nowhere (the prompt is refused, or the turn ends on the same error), or the stream agent is gone, write `restart held: wave <N> ticket agents running` into the status line and report it to the user once, headed with the slug. The ticket agents finish their turns on their own; their reports wait unread and nothing merges. Every tick runs the check again, and the first one that passes does step 2.
+   - When the resume gets nowhere (the prompt is refused, or the turn ends on the same error), or the stream agent is gone, write `restart held: wave <N> ticket agents running` into the status line and, unless the status line already records it, report it to the user, headed with the slug. The ticket agents finish their turns on their own; their reports wait unread and nothing merges. Every tick runs the check again, and the first one that passes does step 2.
 
 A replacement at a wave boundary never counts against the restart budget of step 5; only a restart does, once per failure, whether it ends as a resume, a hold, or a replacement.
 
-Measured: the cascade above, with `archive_agent` (probe C1). Not yet measured: whether an agent whose status reports an error starts a new turn on `send_agent_prompt`, and whether killing or archiving a stream agent by hand touches its ticket agents the same way. Until they are, trust only the check.
+**Done when**: the stream agent was archived only after the check passed, and the status line holds the new agent id or "waits on the cap", or it records the resume sent or the restart held.
 
 ## 0. Pick the stream
 
 Read `streams.md`. With a slug in the input, take its row; with none, show the index and ask the user which stream to run.
 
-Before anything else, check whether the stream already runs: `paseo ls -g --label stream=<slug> --json`, keeping only the agents without a `wave` label (the others are the stream's ticket agents). A stream agent left there means the stream is running: run one tick (step 5) instead of spawning a second one. The tick reads the end-of-turn message a closed session may never have handled and hands it to step 4, restarts only what has failed, and creates this session's heartbeat.
+Before anything else, check whether the stream already runs: `paseo ls -g --label stream=<slug> --json`, keeping only the agents without a `wave` label (the others are the stream's ticket agents). A stream agent left there means the stream is running: run one tick (step 5) instead of spawning a second one.
 
 A stream whose Tickets point at nothing yet has no work to run. Work enters a stream through Matt's usual routes, typed by the user in the target repository: `/mattpocock-skills:triage` for raw issues, and for larger work grilling or `/mattpocock-skills:wayfinder`, then `/mattpocock-skills:to-spec`, then `/mattpocock-skills:to-tickets`. Suggest the route and stop.
 
@@ -184,7 +184,7 @@ On each notification:
 | Same quota, context past the threshold | "Replace a stream agent" with the same quota; write `respawned for context` in the status line. |
 | No room (the split leaves the stream waiting on the cap) | "Replace a stream agent", which spawns nothing and writes "waits on the cap" in the status line. A later split that gives the stream room spawns it per step 3. |
 
-Capacity and context change only here: you never prompt, cancel or archive a stream agent for capacity or context anywhere else, so a running wave is never cut. None of these replacements spends restart budget. A split that frees slots (a stream archived here, or a stream with no ticket left for agents) gives them to the streams that wait on the cap, in priority order, each spawned per step 3.
+Capacity and context change only here: you never prompt, cancel or archive a stream agent for capacity or context anywhere else, so a running wave is never cut. A split that frees slots (a stream archived here, or a stream with no ticket left for agents) gives them to the streams that wait on the cap, in priority order, each spawned per step 3.
 
 **A question round.** Gather every question pending across all streams: each stream whose status line says it waits on the user, plus every stream agent that `list_pending_permissions` lists with a question-type permission, plus your own two kinds of item: the ship question (step 6) of each stream at its last stage, and each overlap warning (step 7). Present them to the user in one round, one message, each stream agent's question **verbatim** under a heading `[<slug>]` with its stream's slug, the ship question under its stream's slug too, and each overlap warning under both slugs as step 7 shows, and wait. The answers are the user's alone: every approval gate of the wave skill keeps its meaning only if the user is the one who passes it, so you never answer, approve, or pick an option for them, even when the answer looks obvious.
 
@@ -199,7 +199,7 @@ A message that asks nothing (a progress report) only updates the status line.
 Every running stream stays under one reconcile loop (ADR 0004). A **tick** compares, stream by stream, the desired state with the observed state, and closes each gap it finds with the one action the table gives. Run a tick on every heartbeat prompt, after every finish notification from a stream agent (step 4 is then the action of its gap), and first thing in any session opened in the control folder.
 
 - **Desired state** is the index. A stream should run when its status line holds a stream agent id (step 3 or "Replace a stream agent" wrote it) and records none of shipped, stopped, or waits on the cap; any other row should not run. A stream that waits on the cap has no stream agent on purpose: only a split spawns it (The index), never a restart.
-- **Observed state** is the public signals of the Inputs section and nothing else: the stream's agents (`paseo ls -g --label stream=<slug> --json`, the stream agent being the one without a `wave` label), `get_agent_status` and `get_agent_activity` on the stream agent, ticket status on the stream's tracker, the stream's worktree on `stream/<slug>` (`git -C <repository> worktree list`), and the stream's open pull request, looked up on the stream's forge as step 6 chooses it (`gh pr list --head stream/<slug> --state open` on GitHub, `glab mr list --source-branch stream/<slug>` on GitLab).
+- **Observed state** is the public signals of the Inputs section and nothing else: the stream's agents (`paseo ls -g --label stream=<slug> --json`, the stream agent being the one without a `wave` label), `get_agent_status` and `get_agent_activity` on the stream agent, ticket status on the stream's tracker, the stream's worktree on `stream/<slug>` (`git -C <repository> worktree list`), and the stream's open pull request, looked up as step 6 does it ("Push and open", its step 3).
 
 The stream's status line ("The status line", The index) is the loop's only memory. Every action writes its outcome into the status line before the tick goes on (the agent it spawned, the end-of-turn message it handled with that message's time, the question it showed, the restart it counted, the ship question it asked), so each action is idempotent: a second tick right after the first finds nothing left to close and changes nothing.
 
@@ -241,7 +241,7 @@ A **restart** touches only that stream's row, agent and worktree; the other stre
 
 The **restart budget** is two restarts per wave, unless the user sets another number. The status line counts it with the wave it belongs to, such as `restarts 1/2 in wave 3`; the wave number comes from the stream agent's end-of-turn messages (never from its wave files), and a new wave number starts the count again. When a stream would need a restart past its budget, it stops instead: spawn nothing, leave the failed agent and the worktree as they are for inspection, write `stopped: restart budget spent (2/2 in wave 3)` and the owner into the status line, and report it to the user, headed with the slug, with each failure as `get_agent_activity` shows it. A stopped stream should not run, so later ticks leave it alone; it runs again only when the user says so, which clears `stopped` and the count, and the next tick restarts it.
 
-A **respawn** replaces a stream agent whose context has grown large before it hits the ceiling. It happens only at the stream's wave boundary, where step 4 reads the context use and runs "Replace a stream agent"; in the middle of a wave the agent keeps supervising its running ticket agents. A respawn spends no restart budget; the status line records it as `respawned for context`.
+A **respawn** replaces a stream agent whose context has grown large before it hits the ceiling. It happens only at the stream's wave boundary, where step 4 reads the context use and runs "Replace a stream agent"; in the middle of a wave the agent keeps supervising its running ticket agents. The status line records it as `respawned for context`.
 
 **Done when**: a tick has closed or reported every gap it found and a second tick right after it finds none, every stopped stream has been reported to the user, and this session holds a reconcile heartbeat with an expiry exactly while a stream runs.
 
@@ -282,7 +282,7 @@ Any answer other than yes keeps the stream unshipped; write what the user said b
 3. Look for a pull request this stream already has, run in the worktree: on GitHub `gh pr list --head stream/<slug> --base <PR target> --state open --json url`, on GitLab `glab mr list --source-branch stream/<slug> --target-branch <PR target>` (open merge requests only, by default). When one is listed, reuse it: skip to the link below, never open a second one. When the forge's CLI cannot resolve the remote as a repository of that forge, the pull request cannot be opened this way; tell the user and stop.
 4. `git -C <worktree> push -u origin stream/<slug>`. Push only the integration branch, never the base branch or a wave or ticket branch.
 5. Write the pull request's description with `/mattpocock-skills:pr`, from public signals only: `git -C <worktree> diff origin/<PR target>...stream/<slug>`, the commit log above, and the tickets and their comments on the tracker for the evidence. Save it to a file outside the worktree, so it never lands in the branch.
-6. Open it, run in the worktree, with the title a line naming the stream's work. On GitHub `gh pr create --head stream/<slug> --base <PR target> --title "<title>" --body-file <that file>`; on GitLab `glab mr create --source-branch stream/<slug> --target-branch <PR target> --title "<title>" --description "<that file's content>" --yes`. Each prints the URL.
+6. Open it, run in the worktree, with the title a line naming the stream's work. On GitHub `gh pr create --head stream/<slug> --base <PR target> --title "<title>" --body-file <that file>`; on GitLab `glab mr create --source-branch stream/<slug> --target-branch <PR target> --title "<title>" --description-file <that file> --yes`. Each prints the URL.
 
 **Post the link.** The owner reads the stream's spec or tickets, so the link goes there, through the tracker configuration's own way to comment:
 
