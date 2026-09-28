@@ -13,7 +13,7 @@ You are the orchestrator. Every run starts by **locating**: where the work stand
 - `stream <slug>`: namespaces everything this run creates by the slug, so that two runs in one repository never collide (see "Names this run writes" below). The slug holds only lowercase letters, digits and hyphens, so it is valid in a label value and a branch name; otherwise stop and say so.
 - `quota <N>`: the most ticket agents this run lets run at once (see "Quota" in step 4). `N` is a whole number of at least 1; otherwise stop and say so.
 
-Without `stream`, every label, branch name and file name is the one the "Without `stream`" column below gives; without `quota`, a wave takes every ticket that can run (step 2).
+Without `stream`, every label, branch name and file name is the one the "Without `stream`" column below gives; without `quota`, a wave takes every ticket that can run (step 2). With `stream`, the run also takes prompts while it runs, a `quota <N>` among them (see "Prompts under `stream`" below).
 
 **Precondition:** this skill runs in a checkout of its integration branch. It reads that branch from the checkout it stands in (step 1), so whoever calls it, human or agent, opens it there first.
 
@@ -41,6 +41,18 @@ This table is the only place the naming rule lives; the steps point here. With `
 
 The common rules file (`wave<N>-common-rules.md`), its sections and the agent titles are the same in both columns: the file sits in the checkout of this run's integration branch, which no other run shares.
 
+## Prompts under `stream`
+
+With `stream`, the run takes three prompts at any time, from the stream skill or the user, and carries on from where it stands (ADR 0006):
+
+| Prompt | Effect |
+|---|---|
+| `hold` | A **Hold** stands: step 4's quota rule lets nothing new start. Merges, checks and running agents carry on |
+| `release` | The hold is lifted; rolling start (step 6) runs at once |
+| `quota <N>` | `N` is the quota from now on, checked as in **Input** (otherwise say so and keep the current one). A raise: rolling start runs at once. A cut stops no agent; it takes effect as ticket agents stop counting (step 4) |
+
+With `stream`, the run's work ends on its integration branch: shipping belongs to the stream skill (`/matt-with-paseo:matt-with-paseo-streams`). The run pushes nothing, opens no pull request, and creates no heartbeat outside step 5's heartbeat contract. Asked to ship, by anyone, answer that shipping belongs to the stream skill, and carry on with the run.
+
 ## 0. Locate the state and suggest the next step
 
 Read the signals on the real repo through its tracker configuration: the `## Agent skills` section of `CLAUDE.md`/`AGENTS.md` and the documents it points to, which say where specs and tickets live and how a wayfinder map is stored. Settle the cases in this order:
@@ -54,7 +66,7 @@ Read the signals on the real repo through its tracker configuration: the `## Age
 |---|---|---|
 | A. Not configured | `CLAUDE.md`/`AGENTS.md` has no `## Agent skills` section, or the section points to no issue tracker | The user types `/mattpocock-skills:setup-matt-pocock-skills` |
 | B. Spec, no tickets | A spec exists where the tracker configuration puts specs; no ticket belongs to it yet | The user types `/mattpocock-skills:to-tickets <spec>`, in the same session that wrote the spec |
-| C. Tickets, no wave run yet | Tickets exist; no `wave*-common-rules.md` file | A single ticket, or a pure chain where no two tickets can ever run side by side: `/mattpocock-skills:implement` in this session. Any width at all: step 1 of this skill |
+| C. Tickets, no wave run yet | Tickets exist; no `wave*-common-rules.md` file | With `stream`, a single ticket: step 1 of this skill, as a one-ticket wave. Otherwise a single ticket, or a pure chain where no two tickets can ever run side by side: `/mattpocock-skills:implement` in this session. Any width at all: step 1 of this skill |
 | D. N waves done, tickets left | A `wave*-common-rules.md` file exists, no wave is in progress (stage E does not match), and at least one ticket is still open | Back to step 2, building the graph from the open tickets; run step 1 first if this session has not |
 | E. Wave in progress | A `wave<N>-common-rules.md` file exists, and a ticket of that wave (listed in the file's title) is neither `resolved` nor in the ready for human role; or the file has `## Wave agents` but no `## Review`, or the "cleaned" column is not fully checked | Resume at the missing step, see right below the table |
 | F. No work left for agents | At least one ticket exists, and every ticket is `resolved` or in the ready for human role | Summarize per step 8; list the work waiting on humans |
@@ -134,7 +146,7 @@ A trap's "how to check you avoided it" column tells its kind: a command with a c
 
 Write the `## Wave agents` heading and the table header row (ticket, agent id, workspace id, branch, base commit, private resources, cleaned) at the end of the common rules file **before** spawning the first agent. Write each agent's row as soon as it is spawned, so any session reopened midway can read which agents exist.
 
-**Quota.** With `quota <N>`, this rule gates every ticket agent spawn in any step: the spawns below, a spawn from step 0's recovery sweep, rolling start (step 6), a new agent replacing a broken one ([`TROUBLESHOOTING.md`](TROUBLESHOOTING.md)). A ticket agent counts from its spawn until its report passes step 5 or it is recorded as failed, whatever `get_agent_status` shows in between, since a turn it starts on its own sends no notification. Spawn only while fewer than N ticket agents count; otherwise the ticket waits, and rolling start picks it up. Step 7 sends a finding back to a ticket agent under the same rule: that agent counts again until its fix is merged. The review agent and the cross-ticket fix agent of step 7 are not ticket agents; they start only once every ticket of the wave is merged, so they run in the slots its ticket agents freed: counting them with every ticket agent that counts again, step 7 runs at most N agents at once.
+**Quota.** With `quota <N>` or a **Hold**, this rule gates every ticket agent spawn in any step: the spawns below, a spawn from step 0's recovery sweep, rolling start (step 6), a new agent replacing a broken one ([`TROUBLESHOOTING.md`](TROUBLESHOOTING.md)). A ticket agent counts from its spawn until its report passes step 5 or it is recorded as failed, whatever `get_agent_status` shows in between, since a turn it starts on its own sends no notification. Spawn only while no hold stands and, with a quota, fewer than N ticket agents count; otherwise the ticket waits, and rolling start picks it up. Step 7 sends a finding back to a ticket agent under the same rule: that agent counts again until its fix is merged. The review agent and the cross-ticket fix agent of step 7 are not ticket agents; they start only once every ticket of the wave is merged and no hold stands, so they run in the slots its ticket agents freed: counting them with every ticket agent that counts again, step 7 runs at most N agents at once.
 
 For each ticket in the wave, within the quota:
 
@@ -190,7 +202,7 @@ Agent stopped midway or report incomplete: see [`TROUBLESHOOTING.md`](TROUBLESHO
 
 Merge each ticket as soon as its report passes step 5, while the rest of the wave keeps running: steps 5 and 6 interleave. One merge commit per ticket: `git merge --no-ff <ticket branch> -m "Merge ticket NN (<name>) into <integration branch>"`. After each merge, run the cheapest verification the repo has (install, build, lint, test).
 
-**Rolling start.** After each green merge, and each time a ticket agent stops counting against the quota (step 4), re-read the graph: a ticket whose `Blocked by` is now fully merged and which is in the ready for agent role, or which step 2 left waiting on the quota, joins the current wave at once, without waiting for the rest of it, as long as the quota allows (step 4); the rest keep waiting for the next agent to stop counting. Spawn it per step 4, with the integration branch's new head as its base commit, written in its row and named in its prompt; append it to the wave file's title and graph, unless step 2 already put it there as waiting on the quota. Its agent's `mattpocock-skills:code-review` uses that base commit.
+**Rolling start.** After each green merge, each time a ticket agent stops counting against the quota (step 4), and at each `release` or quota raise ("Prompts under `stream`"), re-read the graph: a ticket whose `Blocked by` is now fully merged and which is in the ready for agent role, or which step 2 left waiting on the quota, joins the current wave at once, without waiting for the rest of it, as long as step 4's quota rule allows; the rest keep waiting for the next agent to stop counting, or for the release. Spawn it per step 4, with the integration branch's new head as its base commit, written in its row and named in its prompt; append it to the wave file's title and graph, unless step 2 already put it there as waiting on the quota. Its agent's `mattpocock-skills:code-review` uses that base commit.
 
 Conflict, failure after a merge, or a test count after the merge that does not match the test files git tracks: see [`TROUBLESHOOTING.md`](TROUBLESHOOTING.md).
 

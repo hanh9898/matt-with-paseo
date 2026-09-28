@@ -188,6 +188,14 @@ The stream agent runs the wave skill with two optional arguments, which you can 
 
 The wave skill runs in a checkout of its integration branch, whoever calls it. Without `stream` it behaves exactly as in 0.3.0; without `quota` a wave takes every ticket that can run.
 
+With `stream`, the run also takes three prompts while it runs, typed into its session by the stream skill or by you (ADR 0006):
+
+- `hold`: it starts no new agent, rolling start included, while the agents already running carry on and finished tickets still merge.
+- `release`: lifts the hold; waiting tickets start at once, within the quota.
+- `quota <N>`: a new quota. A raise starts waiting tickets at once; a cut stops no agent and takes effect as agents finish.
+
+With `stream`, a single ticket also runs as a one-ticket wave, rather than the skill suggesting `/mattpocock-skills:implement`. And the run never ships: it pushes nothing and opens no pull request. Asked to, it answers that shipping belongs to the stream skill.
+
 ## Requirements
 
 Claude Code only: the skills need a shell, git and the Paseo MCP server. What the plugin runs and sends is listed in [the plugin README](plugins/matt-with-paseo/README.md#what-the-plugin-runs).
