@@ -9,5 +9,5 @@
   "homepage": "https://github.com/hanh9898/matt-with-paseo",
   "repository": "https://github.com/hanh9898/matt-with-paseo",
   "license": "MIT",
-  "keywords": ["multi-agent", "orchestration", "paseo", "skills", "worktree", "tdd"]
+  "keywords": ["multi-agent", "orchestration", "paseo", "skills", "worktree", "tdd", "streams", "gitlab"]
 }

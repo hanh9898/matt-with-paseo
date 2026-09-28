@@ -188,6 +188,8 @@ Files in this repo:
 | [`skills/matt-with-paseo/TROUBLESHOOTING.md`](skills/matt-with-paseo/TROUBLESHOOTING.md) | Symptoms and fixes for stopped agents, merge conflicts, and cleanup |
 | [`skills/matt-with-paseo-streams/SKILL.md`](skills/matt-with-paseo-streams/SKILL.md) | The stream orchestrator: the index, then steps 0 to 7 |
 | [`.claude-plugin/`](.claude-plugin/) | Marketplace and plugin manifests for the Claude Code plugin install |
+| [`docs/adr/`](docs/adr/) | Architecture decisions behind the stream skill: streams share no dependencies, one wave-skill agent per stream, one integration branch per stream, the reconcile loop |
+| [`scripts/`](scripts/) | The drift check against Matt's installed skills, and its tests |
 
 ## Design principles
 
@@ -197,7 +199,10 @@ Files in this repo:
 - **Red before green.** A bug fix counts only if its test failed on the symptom before the fix.
 - **Review per ticket, then the seams.** Each agent ends with `mattpocock-skills:code-review` before its last commit, as `/mattpocock-skills:implement` does; the orchestrator reviews only where tickets collide once merged, and skips that pass for one-ticket waves.
 - **Nothing destructive without three checks.** A worktree is archived only when its agent has stopped, its tree is clean, and its branch is merged.
-- **State lives on disk.** Ticket status and the wave file are enough for a fresh session to resume.
+- **State lives on disk.** Ticket status and the wave file are enough for a fresh session to resume; for streams, the index and the agents' labels are.
+- **Each layer talks only to the layer below it.** The stream skill prompts, restarts and archives stream agents, never ticket agents, and reads only public signals (tracker status, end-of-turn messages, agent status, git), never a wave file ([ADR 0002](docs/adr/0002-nested-orchestration-per-stream.md)).
+- **Reconcile, do not just report.** The stream skill's heartbeat compares the index with what it observes and takes one idempotent action per gap, so a new session recovers by running one tick ([ADR 0004](docs/adr/0004-stream-heartbeat-is-a-reconcile-loop-with-supervision.md)).
+- **Never archive a parent while its children run.** Archiving a Paseo agent archives its running child agents too (measured, probe C1), so a stream agent is replaced only when no ticket agent of its stream runs.
 
 ## Limitations
 

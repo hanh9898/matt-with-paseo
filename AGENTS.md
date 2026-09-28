@@ -10,4 +10,4 @@ Default vocabulary: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-
 
 ### Domain docs
 
-Single-context; the vocabulary is the words block in `skills/matt-with-paseo/SKILL.md`, no `GLOSSARY.md`. See `docs/agents/domain.md`.
+Single-context; the vocabulary is the words block in `skills/matt-with-paseo/SKILL.md`, and the stream skill's words block (`skills/matt-with-paseo-streams/SKILL.md`) adds only **Stream**; no `GLOSSARY.md`. Decisions are ADRs in `docs/adr/`. See `docs/agents/domain.md`.
