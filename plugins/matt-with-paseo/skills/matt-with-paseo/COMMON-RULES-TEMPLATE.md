@@ -57,8 +57,13 @@ Copy in only what an agent cannot look up: an unwritten convention, the reason b
 
 ## Resources
 - Your private resources are listed in your prompt (database, port when no service is declared, volume,
-  temp directory). Use exactly that set.
+  temp directory). Use exactly that set. Create each one when you first need it, and leave it in place
+  when you finish: a review finding may come back to you. The orchestrator removes it once your ticket is
+  merged and the wave reviewed.
 - Shared resources, read-only: <main container, source database, another session's browser profile>.
+- Shared resources you may write to, and machine-wide locks: <a shared server, a render lock>: <what it
+  guards>, <how to take it, how to see who holds it, how to release it>. Hold a lock only while the command
+  that needs it runs.
 
 ## Repo and user rules
 - <commit and comment language>, <accepted way to verify>, <lint command>, <test accounts>.
@@ -66,12 +71,16 @@ Copy in only what an agent cannot look up: an unwritten convention, the reason b
   Name it in your `mattpocock-skills:code-review` call.
 
 ## Done when:
-- Commit to your branch. The orchestrator pushes and merges.
+- Commit to your branch. The orchestrator merges it. Pull-request descriptions and discussion are written
+  by whoever ships, outside this wave: keep none in your worktree, and put what they need in your report.
 - Before the last commit: run `/mattpocock-skills:code-review` with your base commit as the fixed point, fix the
   findings, and write the number of findings per axis and the outcome of each into the ticket's comments.
 - Change the ticket status: `resolved` if fully done, `<ready for human label from the triage label file>` for the part a human must do.
   Write in the comments what you verified, with evidence, and what remains open.
-- Clean up your private resources; state the reason for anything you keep.
+- For a change the user sees, the screenshots include the screen scrolled past its first view and at a
+  narrow width.
 - Report back: a design summary, files touched, how you verified with evidence, work not done or still
-  in doubt, and decisions the user must make.
+  in doubt, every change outside your file zone or outside git (a file in another checkout, a machine
+  setting, an uncommitted file) with where it is, each private resource you created, and decisions the
+  user must make.
 ```
