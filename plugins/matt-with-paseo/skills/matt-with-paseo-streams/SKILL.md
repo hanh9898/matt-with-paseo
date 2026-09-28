@@ -166,13 +166,14 @@ Run `git -C <repository> fetch origin` first, and check that each branch exists 
 
 The stream's integration branch is `stream/<slug>`, cut from the base branch. It is not the bare slug, for the reason the wave skill's [`TROUBLESHOOTING.md`](../matt-with-paseo/TROUBLESHOOTING.md) gives under "`create_workspace` fails because git cannot create the ticket branch under the `stream` prefix".
 
-Every `create_workspace` here passes `projectId`, the repository's Paseo project id: the `projectId` of the `paseo project ls --json` entry whose `path` is the Repository. When no entry has that path, Paseo does not know the repository yet: `paseo project create <repository>` registers it, and its id is the one to pass. Take each call's shape from the `paseo` skill and the tool's own schema (`path` is the source checkout); do not guess parameters. Pick the call by what git shows for `stream/<slug>` (`git -C <repository> worktree list`, `git -C <repository> rev-parse --verify stream/<slug>`):
+Every `create_workspace` here passes `projectId`, the repository's Paseo project id: the `projectId` of the `paseo project ls --json` entry whose `path` is the Repository. When no entry has that path, Paseo does not know the repository yet: `paseo project create <repository>` registers it, and its id is the one to pass. Take each call's shape from the `paseo` skill and the tool's own schema (`path` is the source checkout); do not guess parameters. Pick the row by what git shows for `stream/<slug>` (`git -C <repository> worktree list`, `git -C <repository> rev-parse --verify stream/<slug>`):
 
-| `stream/<slug>` | `create_workspace` with `projectId` and |
+| `stream/<slug>` | Do |
 |---|---|
-| Exists nowhere | `path` set to the repository, `isolation: "worktree"`, `mode: "branch-off"`, `branchName: "stream/<slug>"`, and `baseBranch` set to the base branch (`origin/<base>` when it exists on the remote, so the cut starts from the fetched head) |
-| Exists (an earlier run cut it), in no worktree | `path` set to the repository, `isolation: "worktree"`, `mode: "checkout-branch"`, `branch: "stream/<slug>"` |
-| Checked out in a worktree no workspace of `list_workspaces` has (a `create_workspace` that timed out still made it) | `isolation: "local"`, `path` set to that worktree: it adopts the worktree, and without the id Paseo files it as a project of its own |
+| Exists nowhere | `create_workspace` with `projectId`, `path` set to the repository, `isolation: "worktree"`, `mode: "branch-off"`, `branchName: "stream/<slug>"`, and `baseBranch` set to the base branch (`origin/<base>` when it exists on the remote, so the cut starts from the fetched head) |
+| Exists (an earlier run cut it), in no worktree | `create_workspace` with `projectId`, `path` set to the repository, `isolation: "worktree"`, `mode: "checkout-branch"`, `branch: "stream/<slug>"` |
+| Checked out in a worktree a workspace of `list_workspaces` has (an earlier run made both) | No call: take that workspace's id and path |
+| Checked out in a worktree no workspace of `list_workspaces` has (a `create_workspace` that timed out still made it) | `create_workspace` with `projectId`, `isolation: "local"`, `path` set to that worktree: it adopts the worktree, and without the id Paseo files it as a project of its own |
 
 A call that times out picks again from the table: run the two git commands before calling anything. Then check `git -C <worktree> branch --show-current` prints `stream/<slug>` and `git -C <worktree> rev-parse HEAD` equals the base branch's head.
 

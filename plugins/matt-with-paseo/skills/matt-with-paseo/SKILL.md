@@ -85,13 +85,13 @@ Present three things to the user: the current stage (or the case of the list abo
 
 ## 1. Prepare
 
-Load the `paseo` skill and call `list_profiles`, reading each profile's `notes`, then settle what the agents launch with:
+Load the `paseo` skill and call `list_profiles`, reading each profile's `notes`, then settle what the agents launch with. Do this while step 0 locates, before it presents: when step 0's next step is a step of this skill and the last row below applies, that row's question goes into step 0's presentation, the run's first round, next to its request to agree.
 
 | `list_profiles` gives | The agents launch with |
 |---|---|
 | A profile the user names | that profile |
 | A profile whose notes fit ticket work | that profile |
-| No profile, or none that fits | the model (provider and model, from `list_providers` and `list_models`) and the permission mode the user gives: ask for both, and choose neither yourself, whatever fallback the `paseo` skill offers. Call `list_profiles` before step 0 presents, so this question joins that first round when its next step is a step of this skill |
+| No profile, or none that fits | the model (provider and model, from `list_providers` and `list_models`) and the permission mode the user gives: ask for both, and choose neither yourself, whatever fallback the `paseo` skill offers |
 
 Identify the tracker from `docs/agents/issue-tracker.md`. Identify the integration branch with `git branch --show-current`, never from the directory name. Read `stream <slug>` and `quota <N>` from the input when given.
 
