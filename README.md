@@ -336,14 +336,16 @@ Its tests: `python -B -m unittest discover -s scripts`.
 
 ### Behaviour evals
 
-The plugin carries an eval suite for [`claude plugin eval`](https://code.claude.com/docs/en/plugin-evals) in `plugins/matt-with-paseo/evals/`. Each case builds a small repository with a fixture script, types one of the two commands, and grades what the skill decides: the locating step of the wave skill (not configured, no spec, a spec without tickets, tickets with width, a pure chain, a wayfinder map) and the stream skill's first run with no index. The runs are read-only, and Paseo's MCP server is not available inside an eval run, so the suite checks decisions, not spawning; the real multi-agent run is the acceptance run of #23. Every case also runs without the plugin, so the report shows what the plugin adds.
+The plugin carries an eval suite for [`claude plugin eval`](https://code.claude.com/docs/en/plugin-evals) in `plugins/matt-with-paseo/evals/`. Each case builds a small repository with a fixture script, types one of the two commands, and grades what the skill decides: the locating step of the wave skill (not configured, no spec, a spec without tickets, tickets with width, a pure chain, a wayfinder map) and the stream skill's entry guards and first run (no Paseo tools, free text instead of a slug, no index). The runs are read-only, and Paseo's MCP server is not available inside an eval run, so the suite checks decisions, not spawning; the real multi-agent run is the acceptance run of #23. Every case also runs without the plugin, so the report shows what the plugin adds.
+
+**Observed state in the prompt.** A stream-skill case that needs Paseo describes what Paseo would report instead of calling it: an observed-state block in the case's `append_system_prompt` (`prompt.md` frontmatter) states, one line each, that the tools are available and what they return (the agents with their labels and statuses, activity counts and last activity entries, pending questions and permissions, the user's latest answer). The stream skill's entry guard takes such a block in place of the tools, and only for what it states; the command in the prompt's body stays alone, so its argument stays what the case types. The case then grades what the skill decides from that state (what it sends, to whom, what it refuses, what it asks), never its phrasing. `streams-no-index` is the smallest example; `streams-no-paseo-tools` is the one case that states nothing, to check the guard stops.
 
 ```
 cd plugins/matt-with-paseo
 claude plugin eval . --scaffold
 ```
 
-`--scaffold` runs each case's `fixture.sh` as you, to build its repository; read them first. The first run in a directory asks you to trust the plugin, so start it from an interactive terminal; from a script, CI or an agent session, add `--trust-plugin` once you have read the suite. A full run is 7 cases, 3 runs each, in two arms (with and without the plugin). The last full run scored 1.00 with the plugin on every case, against 0.20 to 0.50 without it. Each fixture strips carriage returns before it runs, so a CRLF checkout on Windows works too.
+`--scaffold` runs each case's `fixture.sh` as you, to build its repository; read them first. The first run in a directory asks you to trust the plugin, so start it from an interactive terminal; from a script, CI or an agent session, add `--trust-plugin` once you have read the suite. A full run is 9 cases, 3 runs each, in two arms (with and without the plugin). The last full run scored 1.00 with the plugin on every case, against 0.20 to 0.67 without it. Each fixture strips carriage returns before it runs, so a CRLF checkout on Windows works too.
 
 ## Acknowledgements
 

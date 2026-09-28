@@ -25,6 +25,7 @@ Words used throughout:
 - **Ticket agent**: the Paseo agent step 4 spawns to work one ticket, carrying that ticket's label. The review agent of step 7 is not one.
 - **Checkpoint**: a point where the run stops for the user to verify or decide (a question, an approval). Pushed right: the run does all the work it can first, so the user is asked once, late, with everything prepared.
 - **Brief**: what a checkpoint shows the user: a tight, decision-ready summary of what was produced and why, with a link to the asset itself, never the raw output.
+- **Hold**: a run with `stream` told `hold` spawns nothing new, rolling start included, while its running agents carry on; `release` lifts it (ADR 0006).
 
 ## Names this run writes
 

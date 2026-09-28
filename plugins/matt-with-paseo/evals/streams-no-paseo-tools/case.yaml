@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: streams-no-paseo-tools
+description: The stream skill run in a session without Paseo's MCP tools must write nothing, say how to enable them, and propose no CLI in their place.
+tags: [guard, streams]
+context:
+  scaffold_script: fixture.sh
