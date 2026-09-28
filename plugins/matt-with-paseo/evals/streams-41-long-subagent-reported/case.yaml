@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: streams-41-long-subagent-reported
+description: A stream agent running with its activity count unmoved for three ticks and a subagent as its last entry may be doing legitimate long work; the tick reports it to the user with that entry and never kills, cancels or re-prompts it.
+tags: [supervise, streams]
+context:
+  scaffold_script: fixture.sh
