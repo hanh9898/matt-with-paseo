@@ -8,9 +8,9 @@ append_system_prompt: |
   - Agents (`paseo ls -g --label stream=csv-export --json`, `list_agents`): none.
   - Pending permissions (`list_pending_permissions`): none.
   - `git -C <repository> fetch origin` in the csv-export row's repository: exits 0 and changes nothing; the remote-tracking refs under its `.git/refs/remotes/origin/` are what origin holds.
-  - `git -C <repository> remote get-url origin`: `https://github.com/acme/shop.git`.
+  - `git -C <repository> remote get-url origin`: `git@code.acme.test:shop/shop.git`.
   - `git -C <repository> show origin/main:AGENTS.md`: the same text as the checkout's `AGENTS.md`; `origin/main` has no `CLAUDE.md` and no `docs/agents/`.
-  - Tickets (`gh issue list --repo acme/shop --label stream:csv-export`): #11 "Write invoices as CSV" and #12 "Filter invoices by month", both open and labelled `ready-for-agent`.
+  - Tickets (the tracker's list for the label `stream:csv-export`): #11 "Write invoices as CSV" and #12 "Filter invoices by month", both open and labelled `ready-for-agent`.
 ---
 
 /matt-with-paseo:matt-with-paseo-streams csv-export

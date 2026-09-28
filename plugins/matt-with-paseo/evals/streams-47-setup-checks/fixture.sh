@@ -1,10 +1,12 @@
 #!/usr/bin/env bash
 exec bash -c "$(sed 's/\r$//' "$0" | tail -n +3)" "$0" # strip CRs from a CRLF checkout, then run the rest
 set -euo pipefail
-# A control folder with one stream, not started, with two setup problems:
+# A control folder with one stream, not started, with three setup problems:
 # its base branch `main` has no tracker configuration (AGENTS.md has no
 # `## Agent skills` section, no docs/agents/), and its PR target `release`
-# exists only as a local branch, never on origin. The remote is GitHub.
+# exists only as a local branch, never on origin; and its remote is a
+# self-hosted GitLab on a host whose name does not say so, which with no tracker
+# configuration nothing declares.
 root="$(pwd -W 2>/dev/null || pwd)"
 mkdir -p shop
 (
@@ -19,7 +21,7 @@ EOF
   git add -A
   git -c user.name=eval -c user.email=eval@example.com commit -q -m fixture
   git branch release
-  git remote add origin https://github.com/acme/shop.git
+  git remote add origin git@code.acme.test:shop/shop.git
   git update-ref refs/remotes/origin/main HEAD
   git symbolic-ref refs/remotes/origin/HEAD refs/remotes/origin/main
 )
