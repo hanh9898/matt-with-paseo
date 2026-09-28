@@ -301,12 +301,12 @@ When the two sources disagree, or neither names GitHub or GitLab (any other forg
    |---|---|
    | Kept in | paths the user kept in at an earlier answer (`keeps <path>` in the status line) |
    | Binary evidence | shown as binary (`-	-`) by `git -C <worktree> diff --numstat origin/<PR target>...stream/<slug>`: never committed to the ship branch, attached to the pull request instead |
-   | Ticket folder | inside the folder the tracker configuration gives the stream's spec and tickets: for a local-markdown tracker, the feature folder holding the Tickets folder (`.scratch/<feature>/` for `.scratch/<feature>/issues/`). A GitHub or GitLab tracker has none |
    | Wave files | named `wave*-common-rules.md`, anywhere; a match on the name, not a read of the file |
+   | Ticket folder | inside the folder the tracker configuration gives the stream's spec and tickets: for a local-markdown tracker, the feature folder holding the Tickets folder (`.scratch/<feature>/` for `.scratch/<feature>/issues/`). A GitHub or GitLab tracker has none |
    | Tracker configuration | the `CLAUDE.md`/`AGENTS.md` holding the `## Agent skills` section, and each file that section points to |
    | Ships | every other path |
 
-   Every path of the rows from binary evidence to tracker configuration is left out.
+   Every path of the rows from binary evidence to tracker configuration is left out; the ship question names each with its row.
 2. **Cut it** in a throwaway worktree outside the stream's worktree and the control folder, so the stream's worktree stays on `stream/<slug>`: `git -C <repository> worktree add -B stream/<slug>-ship <temp>/<slug>-ship stream/<slug>`. In it, `git restore --source=origin/<PR target> --staged --worktree -- <left-out paths>` (a path the PR target lacks is deleted), then one commit, `chore(ship): leave agent-only paths out`, then `git -C <repository> worktree remove <temp>/<slug>-ship`. With no path left out, the ship branch is the integration branch's head and carries no extra commit.
 3. **Check the merge**: `git -C <worktree> merge-tree --write-tree --name-only origin/<PR target> stream/<slug>-ship`.
 
