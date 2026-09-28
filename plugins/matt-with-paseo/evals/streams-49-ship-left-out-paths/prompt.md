@@ -18,6 +18,7 @@ append_system_prompt: |
   - `git -C <worktree> diff --numstat origin/main...stream/invoice-export`: `.scratch/invoice-export/evidence/export.png` is binary (`-	-`); every other path is text.
   - `git log origin/main` since the stream's merge base: no new commit.
   - Merge of any ship branch cut from 1a2b3c4 into `origin/main` (`git merge-tree --write-tree --name-only origin/main <ship branch>`): exit 0, clean.
+  - `git diff --quiet origin/main...<ship branch>` for that ship branch: exit 1, it still changes `src/export/`.
   - Pull requests (`gh pr list`): none open.
 ---
 
