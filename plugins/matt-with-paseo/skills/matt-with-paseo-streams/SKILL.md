@@ -166,7 +166,7 @@ Run `git -C <repository> fetch origin` first, and check that each branch exists 
 
 The stream's integration branch is `stream/<slug>`, cut from the base branch. It is not the bare slug, for the reason the wave skill's [`TROUBLESHOOTING.md`](../matt-with-paseo/TROUBLESHOOTING.md) gives under "`create_workspace` fails because git cannot create the ticket branch under the `stream` prefix".
 
-Every `create_workspace` here passes `projectId`, the repository's Paseo project id: the `projectId` of the `paseo project ls --json` entry whose `path` is the Repository. When no entry has that path, Paseo does not know the repository yet: `paseo project create <repository>` registers it, and its id is the one to pass. Take each call's shape from the `paseo` skill and the tool's own schema (`path` is the source checkout); do not guess parameters. Pick the row by what git shows for `stream/<slug>` (`git -C <repository> worktree list`, `git -C <repository> rev-parse --verify stream/<slug>`):
+Every `create_workspace` here passes `projectId`, the repository's Paseo project id, found as the wave skill's step 4, item 1 says, with the Repository as the main checkout. Take each call's shape from the `paseo` skill and the tool's own schema (`path` is the source checkout); do not guess parameters. Pick the row by what git shows for `stream/<slug>` (`git -C <repository> worktree list`, `git -C <repository> rev-parse --verify stream/<slug>`):
 
 | `stream/<slug>` | Do |
 |---|---|
@@ -186,7 +186,7 @@ Call `list_profiles` and read each profile's `notes`, as the wave skill's step 1
 | `list_profiles` gives | The stream agent launches with |
 |---|---|
 | A profile the user names, or one whose notes fit orchestration | that profile |
-| No profile, or none that fits | the model and the permission mode the user gives: ask for both and spawn once they answer; choose neither yourself |
+| No profile, or none that fits | the model and the permission mode the user gives, asked for as in the last row of the wave skill's step 1 table; spawn once they answer |
 
 `create_agent` with `workspaceId` set to the stream's workspace id from step 2 (without it, the agent lands in the control folder's workspace), titled `[Stream] <slug>`, with `labels: { stream: "<slug>" }` and `notifyOnFinish: true`. The initial prompt is exactly the wave skill's command, starting at its first character:
 
