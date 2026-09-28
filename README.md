@@ -2,7 +2,7 @@
 
 A simple multi-agent orchestrator for Claude Code. It combines [Matt Pocock's skills](https://github.com/mattpocock/skills) (grill, spec, tickets, TDD, code review) with [Paseo](https://paseo.sh), a control plane for running many coding agents at once.
 
-You write the tickets with Matt's skills. `matt-with-paseo` runs them in **waves**: every ticket gets its own Paseo agent in its own git worktree, and the orchestrator merges, reviews, and cleans up before starting the next wave.
+You write the tickets with Matt's skills. `matt-with-paseo` runs them in **waves**: every ticket gets its own Paseo agent in its own git worktree, and the orchestrator merges, reviews, and cleans up before starting the next wave. When several ticket sets must run and ship on their own at once, a second skill, `matt-with-paseo-streams`, runs each set as a **stream** from one control folder (see [Streams](#streams-many-ticket-sets-at-once)).
 
 ## Why
 
@@ -10,7 +10,7 @@ Matt Pocock's skills take a feature from a vague idea to a set of small, depende
 
 Paseo can run many agents in parallel, each in its own worktree. What it does not know is which tickets are safe to run together, what each agent needs to be told, or how to check and merge the results.
 
-`matt-with-paseo` fills that gap with one skill:
+`matt-with-paseo` fills that gap with the wave skill:
 
 - It **locates** where your work stands (not configured, no spec yet, spec, tickets, a wave in progress, finished) and suggests one next step.
 - It **names** a wayfinder map as a set of decision tickets not yet through `/mattpocock-skills:to-spec`, and starts no wave on it.
@@ -56,6 +56,38 @@ Each wave then goes through the same loop:
 8. **Clean up**: archive agents and worktrees that are stopped, clean, and merged; then open the next wave.
 
 The skill asks for your approval at the decisions that are yours: the stage and next step, the wave plan, and any question a review raises.
+
+## Streams: many ticket sets at once
+
+A **stream** is one ticket set that ships through one integration branch and one pull request. Use the wave skill alone when you run one ticket set from its own checkout. Use the stream skill, `matt-with-paseo-streams`, when you run several ticket sets at once, often in one repository, and each must ship on its own: work for several requesters, or an independent bug that should not wait for an unrelated feature. Unrelated work that ships separately becomes separate streams. Streams never depend on each other; dependencies between tickets stay inside a stream, where the wave skill runs them.
+
+The stream skill gives each stream one worktree on its own integration branch, `stream/<slug>`, cut from the stream's base branch, and one Paseo agent there that runs the wave skill. It brings you every question from every stream in one batched round, verbatim, and never answers for you. A heartbeat reconciles the index with what is running, restarting a failed stream agent without touching the other streams. After each wave it warns you when two streams in one repository change the same file, and never blocks. When a stream's tickets are all done, it asks you, and only after you confirm does it push the integration branch and open one pull request per stream (a merge request on GitLab) to the stream's target, with a description written with `mattpocock-skills:pr` and a link posted on the stream's spec or tickets. It never merges: that stays with the repository's reviewers.
+
+### The control folder and its index
+
+The stream skill is user-invoked only, like the wave skill, and runs from a **control folder** outside every repository: create an empty folder, open a Claude Code session in it, and type `/matt-with-paseo-streams` (`/matt-with-paseo:matt-with-paseo-streams` with the plugin install), or `/matt-with-paseo-streams <slug>` for one stream.
+
+The index is `streams.md` at the root of that folder. With no index yet, the skill writes it and asks you for its fields:
+
+- the **agent cap**, above the table: the most agents running at once across every stream;
+- one row per stream: its slug, the absolute path of a local checkout of its repository, its owner, where its tickets live (a folder for a local-markdown tracker; a label or a parent spec issue for GitHub), its base branch, its pull-request target, its priority, and a status line the skill keeps current.
+
+An empty base branch or target falls back to the default the target repository declares next to its `## Agent skills` section, then to the remote's default branch. A base branch that gathers several people's unfinished work, such as a shared `test` branch, draws a warning, never a block. The index only says where each stream's tickets live; the tracker stays the one source of truth for them. The field table and an example are in [The index](skills/matt-with-paseo-streams/SKILL.md#the-index).
+
+**How the cap is split.** Each running stream uses one slot for its stream agent plus its quota, the number of ticket agents it may run at once. Streams take slots in priority order, first come first served by default, so a cap below 2 runs no stream. A stream left without room waits on the cap and starts at a later wave boundary; a running wave is never cut for capacity.
+
+### The two wave-skill arguments
+
+The stream agent runs the wave skill with two optional arguments, which you can also type yourself:
+
+```
+/matt-with-paseo <feature name or ticket folder> stream <slug> quota <N>
+```
+
+- `stream <slug>` puts the slug into every label, ticket branch name and private resource name the run creates, so two runs in one repository never collide.
+- `quota <N>` caps the ticket agents the run lets run at once.
+
+The wave skill runs in a checkout of its integration branch, whoever calls it. Without `stream` it behaves exactly as in 0.3.0; without `quota` a wave takes every ticket that can run.
 
 ## Requirements
 
@@ -143,6 +175,10 @@ Files it writes, next to your ticket folder:
 
 - `wave<N>-common-rules.md`: the rules every agent of wave N reads, followed by the wave's agent table and review log.
 
+The stream skill writes one file, in its control folder:
+
+- `streams.md`: the index, the agent cap and one row per stream with its status line.
+
 Files in this repo:
 
 | File | Purpose |
@@ -150,6 +186,7 @@ Files in this repo:
 | [`skills/matt-with-paseo/SKILL.md`](skills/matt-with-paseo/SKILL.md) | The orchestrator: locate, then steps 1 to 8 |
 | [`skills/matt-with-paseo/COMMON-RULES-TEMPLATE.md`](skills/matt-with-paseo/COMMON-RULES-TEMPLATE.md) | The frame for each wave's common rules |
 | [`skills/matt-with-paseo/TROUBLESHOOTING.md`](skills/matt-with-paseo/TROUBLESHOOTING.md) | Symptoms and fixes for stopped agents, merge conflicts, and cleanup |
+| [`skills/matt-with-paseo-streams/SKILL.md`](skills/matt-with-paseo-streams/SKILL.md) | The stream orchestrator: the index, then steps 0 to 7 |
 | [`.claude-plugin/`](.claude-plugin/) | Marketplace and plugin manifests for the Claude Code plugin install |
 
 ## Design principles
@@ -184,13 +221,13 @@ Before a release, run the drift check by hand (Python 3, standard library only):
 python scripts/drift-check.py
 ```
 
-It lists every `mattpocock-skills:<name>` reference in `skills/matt-with-paseo/` and this README and compares each one with the Matt plugin installed on your machine, not with a pinned version: it reads the user-scope `mattpocock-skills` entry of `~/.claude/plugins/installed_plugins.json` (pass `--plugin-root <dir>` to compare against another copy). A reference fails when the plugin's manifest does not ship that skill, or when it sits in an agent flow (step 4 of `SKILL.md`, or anywhere in `COMMON-RULES-TEMPLATE.md`) and the skill sets `disable-model-invocation`. The check only sees prefixed names, so always name Matt's skills as `mattpocock-skills:<name>`.
+It lists every `mattpocock-skills:<name>` reference in both skills (`skills/matt-with-paseo/`, `skills/matt-with-paseo-streams/`) and this README and compares each one with the Matt plugin installed on your machine, not with a pinned version: it reads the user-scope `mattpocock-skills` entry of `~/.claude/plugins/installed_plugins.json` (pass `--plugin-root <dir>` to compare against another copy). A reference fails when the plugin's manifest does not ship that skill, or when it sits in an agent flow (step 4 of the wave skill's `SKILL.md`, or anywhere in `COMMON-RULES-TEMPLATE.md`; the stream skill spawns only the wave skill, so it has none) and the skill sets `disable-model-invocation`. The check only sees prefixed names, so always name Matt's skills as `mattpocock-skills:<name>`.
 
 | Exit | Output | Meaning |
 |---|---|---|
 | 0 | nothing | no stale reference |
 | 1 | one line per stale reference | fix each line before releasing |
-| 2 | one error line | the check could not run: no plugin found, or `SKILL.md` has no `## 4.` step |
+| 2 | one error line | the check could not run: no plugin found, or the wave skill's `SKILL.md` has no `## 4.` step |
 
 Its tests: `python -B -m unittest discover -s scripts`.
 
