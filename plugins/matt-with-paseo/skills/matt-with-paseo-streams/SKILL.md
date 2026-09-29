@@ -48,7 +48,7 @@ What you know about a stream comes from these four signals and nothing else:
 | Ticket status on the stream's tracker | the target repository's tracker configuration (its `## Agent skills` section), read in the stream's worktree |
 | The stream agent's end-of-turn message | `get_agent_activity` on the stream agent |
 | Paseo agent status and activity | `get_agent_status`, `get_agent_activity`, `list_pending_permissions` (step 5), `paseo ls -g --label stream=<slug> --json`, and `paseo ls -g --json` unfiltered for a wave run outside any stream (step 0) |
-| Git diff | `git -C <worktree> diff`, `git -C <worktree> log` on the integration branch; `git -C <cwd> worktree list` for where an agent's checkout sits (steps 0 and 5) |
+| Git diff | `git -C <worktree> diff`, `git -C <worktree> log` on the integration branch; `git -C <repository> worktree list` (step 5) and `git -C <cwd> worktree list` (step 0) for where a checkout sits |
 
 You never read wave files (`wave*-common-rules.md` or anything else the wave skill writes to record a wave): their format belongs to the wave skill and may change. To learn where a stream stands, prompt its stream agent ("where does the stream stand?") and let the wave skill's step 0 answer.
 
@@ -310,7 +310,7 @@ The stream's status line ("The status line", The index) is the loop's only memor
 
 Every prompt you send a stream agent, in any step, goes with `send_agent_prompt`, `background: true` and `notifyOnFinish: true`: the agent's answer reaches you only as a finish notification, and a prompt without one leaves the stream waiting on a message no one reads.
 
-One stream may match several rows of the table below; each row it matches acts, in table order.
+One stream may match several rows of the table below; each row it matches acts, in table order, and a stream gets at most one restart per tick.
 
 | Observed, for one stream | Action |
 |---|---|
@@ -430,7 +430,7 @@ Answer yes, no, or yes keeping <path> in.
 | Yes keeping `<path>` in | Write `keeps <path>` into the status line; cut the ship branch again with that path in the kept row, check its merge again, then "Push and open" |
 | Anything else | The stream stays unshipped |
 
-Append each answer to `decisions.md` ("Decisions, memory, machine and credentials"); the status line keeps only `ship question asked at <head>`.
+Append each answer to `decisions.md` ("Decisions, memory, machine and credentials"); no answer text goes into the status line.
 
 Ask again only when the user brings it up or the integration branch's head moves (a later wave merged), since the status line then records no ship question for the current head.
 
