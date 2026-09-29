@@ -531,50 +531,50 @@ Ranked by payoff over cost. Every lesson below was decided by the user.
 
 ## Tickets
 
-One GitHub issue per adopted lesson, labelled `ready-for-agent` and `plugin`. Issues marked for the plugin repository move there once it exists.
+One GitHub issue per adopted lesson, labelled `ready-for-agent` and `plugin`. The 19 plugin-code issues were moved to `hanh9898/matt-with-paseo-plugin`; the rest stay here.
 
 | Lesson | Name | Issue |
 |---|---|---|
-| 1 | Lifecycle hooks instead of heartbeats | #69 |
-| 2 | Pinned load-bearing lines | #70 |
-| 3 | Two-way tolerated-exception list | #71 |
-| 4 | Plugin decides mechanics, never acceptance | #72 |
-| 5 | Platform facts section | #73 |
-| 6 | Seat-facing version gate | #74 |
-| 7 | Three-part brief with answered challenges | #75 |
-| 8 | Evidence tags | #76 |
-| 9 | Anti-patterns rated by how they are caught | #77 |
-| 10 | Ask with a recommendation and a default while silent | #78 |
-| 11 | Git guard for ticket agents | #79 |
-| 12 | Retrospective with two sightings | #80 |
-| 13 | Host version range in the manifest | #81 |
-| 14 | Read-back of defaults while away | #82 |
-| 15 | One narrow host port | #83 |
-| 16 | Situational instruction rides the event | #84 |
-| 17 | Authority on separate axes (SLP) | #85 |
-| 18 | Roles and harnesses as data | #86 |
-| 19 | Trigger coverage: structural check plus opt-in model eval | #87 |
-| 21 | A cheap sensor before a judging seat | #88 |
-| 22 | Dynamically narrowed MCP tool schemas | #89 |
-| 23 | Decisions and status in Paseo's own surfaces | #90 |
-| 24 | Report card from the record | #91 |
-| 25 | Count whether each mechanism changes the work | #92 |
-| 26 | Cap concurrent gates to a share of the machine | #93 |
-| 27 | Human words to a worker reach the orchestrator | #94 |
-| 28 | User's language at the one door, English elsewhere | #95 |
-| 29 | State outside the repo, one marked block inside | #96 |
-| 30 | Cost levels per role | #97 |
-| 31 | Measure the orchestrator's own overhead before adding ceremony | #98 |
-| 32 | Cut for content, not for a word count | #99 |
-| 33 | Role identity on labels, not one provider per role | #100 |
-| 34 | Widen the host range as a routine release step | #101 |
-| 35 | One version token for every identifier | #102 |
-| 36 | One clause per sentence | #103 |
-| 37 | Automate the free checks even without CI | #104 |
-| 38 | A cheap eval slice in the gate | #105 |
-| 39 | Plain words on screen, precise words in docs | #106 |
-| 40 | Single-source liveness for cleanup | #107 |
-| 41 | Explicit sandbox capability per harness | #108 |
+| 1 | Lifecycle hooks instead of heartbeats | [plugin#1](https://github.com/hanh9898/matt-with-paseo-plugin/issues/1) |
+| 2 | Pinned load-bearing lines | [#70](https://github.com/hanh9898/matt-with-paseo/issues/70) |
+| 3 | Two-way tolerated-exception list | [#71](https://github.com/hanh9898/matt-with-paseo/issues/71) |
+| 4 | Plugin decides mechanics, never acceptance | [#72](https://github.com/hanh9898/matt-with-paseo/issues/72) |
+| 5 | Platform facts section | [#73](https://github.com/hanh9898/matt-with-paseo/issues/73) |
+| 6 | Seat-facing version gate | [#74](https://github.com/hanh9898/matt-with-paseo/issues/74) |
+| 7 | Three-part brief with answered challenges | [#75](https://github.com/hanh9898/matt-with-paseo/issues/75) |
+| 8 | Evidence tags | [#76](https://github.com/hanh9898/matt-with-paseo/issues/76) |
+| 9 | Anti-patterns rated by how they are caught | [#77](https://github.com/hanh9898/matt-with-paseo/issues/77) |
+| 10 | Ask with a recommendation and a default while silent | [#78](https://github.com/hanh9898/matt-with-paseo/issues/78) |
+| 11 | Git guard for ticket agents | [plugin#2](https://github.com/hanh9898/matt-with-paseo-plugin/issues/2) |
+| 12 | Retrospective with two sightings | [#80](https://github.com/hanh9898/matt-with-paseo/issues/80) |
+| 13 | Host version range in the manifest | [plugin#3](https://github.com/hanh9898/matt-with-paseo-plugin/issues/3) |
+| 14 | Read-back of defaults while away | [#82](https://github.com/hanh9898/matt-with-paseo/issues/82) |
+| 15 | One narrow host port | [plugin#4](https://github.com/hanh9898/matt-with-paseo-plugin/issues/4) |
+| 16 | Situational instruction rides the event | [plugin#5](https://github.com/hanh9898/matt-with-paseo-plugin/issues/5) |
+| 17 | Authority on separate axes (SLP) | [#85](https://github.com/hanh9898/matt-with-paseo/issues/85) |
+| 18 | Roles and harnesses as data | [plugin#6](https://github.com/hanh9898/matt-with-paseo-plugin/issues/6) |
+| 19 | Trigger coverage: structural check plus opt-in model eval | [#87](https://github.com/hanh9898/matt-with-paseo/issues/87) |
+| 21 | A cheap sensor before a judging seat | [plugin#7](https://github.com/hanh9898/matt-with-paseo-plugin/issues/7) |
+| 22 | Dynamically narrowed MCP tool schemas | [plugin#8](https://github.com/hanh9898/matt-with-paseo-plugin/issues/8) |
+| 23 | Decisions and status in Paseo's own surfaces | [plugin#9](https://github.com/hanh9898/matt-with-paseo-plugin/issues/9) |
+| 24 | Report card from the record | [#91](https://github.com/hanh9898/matt-with-paseo/issues/91) |
+| 25 | Count whether each mechanism changes the work | [#92](https://github.com/hanh9898/matt-with-paseo/issues/92) |
+| 26 | Cap concurrent gates to a share of the machine | [plugin#10](https://github.com/hanh9898/matt-with-paseo-plugin/issues/10) |
+| 27 | Human words to a worker reach the orchestrator | [plugin#11](https://github.com/hanh9898/matt-with-paseo-plugin/issues/11) |
+| 28 | User's language at the one door, English elsewhere | [#95](https://github.com/hanh9898/matt-with-paseo/issues/95) |
+| 29 | State outside the repo, one marked block inside | [plugin#12](https://github.com/hanh9898/matt-with-paseo-plugin/issues/12) |
+| 30 | Cost levels per role | [plugin#13](https://github.com/hanh9898/matt-with-paseo-plugin/issues/13) |
+| 31 | Measure the orchestrator's own overhead before adding ceremony | [#98](https://github.com/hanh9898/matt-with-paseo/issues/98) |
+| 32 | Cut for content, not for a word count | [#99](https://github.com/hanh9898/matt-with-paseo/issues/99) |
+| 33 | Role identity on labels, not one provider per role | [plugin#14](https://github.com/hanh9898/matt-with-paseo-plugin/issues/14) |
+| 34 | Widen the host range as a routine release step | [plugin#15](https://github.com/hanh9898/matt-with-paseo-plugin/issues/15) |
+| 35 | One version token for every identifier | [plugin#16](https://github.com/hanh9898/matt-with-paseo-plugin/issues/16) |
+| 36 | One clause per sentence | [#103](https://github.com/hanh9898/matt-with-paseo/issues/103) |
+| 37 | Automate the free checks even without CI | [plugin#17](https://github.com/hanh9898/matt-with-paseo-plugin/issues/17) |
+| 38 | A cheap eval slice in the gate | [#105](https://github.com/hanh9898/matt-with-paseo/issues/105) |
+| 39 | Plain words on screen, precise words in docs | [plugin#18](https://github.com/hanh9898/matt-with-paseo-plugin/issues/18) |
+| 40 | Single-source liveness for cleanup | [#107](https://github.com/hanh9898/matt-with-paseo/issues/107) |
+| 41 | Explicit sandbox capability per harness | [plugin#19](https://github.com/hanh9898/matt-with-paseo-plugin/issues/19) |
 
 ## Doesn't transfer, and why
 

@@ -24,7 +24,7 @@ Each step lists what to read, what it must settle, and when it is done.
   - `setup-pre-commit`;
   - `retro`;
   - `prototype`.
-- **Settles:** the vocabulary and the ready-made pieces for tickets #83, #79, #104 and #80.
+- **Settles:** the vocabulary and the ready-made pieces for tickets matt-with-paseo-plugin#4, #2 and #17, and matt-with-paseo#80.
 - **Done when:** each of those tickets names the Matt skill it builds on and the delta it adds.
 
 ## 3. The Paseo plugin API
@@ -50,7 +50,7 @@ Each step lists what to read, what it must settle, and when it is done.
   - `plugin/server/catalog/seat/launch.ts` and `seat-bin.ts` (MCP servers and env in `before('agent.create')`, PATH, Windows `.cmd`);
   - `plugin/server/catalog/seat/seat-files.ts` and `plugin/harness/*/harness.json` (skills provisioned per agent config dir);
   - `AGENTS.md` lines 269–304 (Paseo 0.9 facts).
-- **Settles:** the shape of the harness descriptor (ticket #86). Claude stays `native` in the first release.
+- **Settles:** the shape of the harness descriptor (matt-with-paseo-plugin#6). Claude stays `native` in the first release.
 - **Done when:** `harness/claude.json` can be written from what was read.
 
 ## 5. Prototype (throwaway)
@@ -62,6 +62,7 @@ The prototype lives in a scratch repository and must prove three things nobody h
 3. **`before('agent.create')` on Windows:** it adds an MCP server and an env marker to a Claude agent within the 30-second limit, without failing the create.
 
 - **Done when:** each of the three is shown working or shown impossible, and the result is written as ADR 0001 of the plugin repository.
+- **Result:** done on 2026-09-29, see [ADR 0001](https://github.com/hanh9898/matt-with-paseo-plugin/blob/main/docs/adr/0001-checkpoints-use-paseo-native-questions-answered-by-the-plugin.md). The card button round trip stays unproven.
 
 ## 6. The contract between the two repositories
 
