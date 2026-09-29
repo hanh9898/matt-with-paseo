@@ -3,6 +3,7 @@ not, as data (plugins/matt-with-paseo/triggers/cases.json). check-triggers.py ch
 without a model; run-triggers.py asks a model on demand."""
 
 import json
+import re
 
 MIN_BRIEFS = 3
 MIN_NEAR_MISSES = 2
@@ -77,3 +78,35 @@ def skill_cards(plugin_root):
             raise TriggerError(f"{skill_md}: no description in the front matter, so no card can be made.")
         cards[fields.get("name", skill_md.parent.name)] = description
     return cards
+
+
+ANSWER = re.compile(r'\{\s*"skills"\s*:\s*\[[^\]]*\]\s*\}')
+
+
+def trigger_prompt(cards, brief):
+    """What the model sees: each skill's card, then the brief, and nothing of what the case expects."""
+    lines = ["Choose which skills a brief should open. Each skill below is a command a user can type; "
+             "its card is its name and its description.", "", "Skills:"]
+    lines += [f"- {name}: {description}" for name, description in cards.items()]
+    lines += ["", 'Answer with the skills this brief should open, as one line of JSON and nothing after it: '
+              '{"skills": ["<skill name>"]}. Answer {"skills": []} when none of them fits.',
+              "", "Your brief:", brief]
+    return "\n".join(lines)
+
+
+def opened_skills(output):
+    """The skill names in the last {"skills": [...]} the model printed, or None when it printed none."""
+    answers = ANSWER.findall(output)
+    if not answers:
+        return None
+    names = json.loads(answers[-1])["skills"]
+    return names if all(isinstance(name, str) for name in names) else None
+
+
+def right_run(one, opened):
+    return opened is not None and set(opened) == set(one["expect"])
+
+
+def majority(right, runs):
+    """A case passes when more than half of its runs were right."""
+    return right * 2 > runs
