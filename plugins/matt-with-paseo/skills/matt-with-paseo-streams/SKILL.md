@@ -56,7 +56,7 @@ You talk to stream agents only. You never prompt, cancel, kill or archive a tick
 
 ## Decisions, memory, machine and credentials
 
-**Decisions.** `decisions.md`, at the root of the control folder beside `streams.md`, is the history the status line does not keep. Each time you act on one of your own decisions (a ship, an overlap warning's answer, a change of the cap or a quota, a **Hold** or its release, a **Pause** or its resume), append one line: date and time, the slug (or `all`), the decision, and the user's answer it rests on, quoted. Never rewrite or remove a line. A decision inside a stream (a wave approval, a review decision, a ticket's scope) is the stream agent's to record as its tickets' comments; it never goes into `decisions.md`. A line records what was decided, never how to decide: `decisions.md` is no source of rules.
+**Decisions.** `decisions.md`, at the root of the control folder beside `streams.md`, is the history the status line does not keep. Each time you act on one of your own decisions (a ship, an overlap warning's answer, a change of the cap or a quota, a **Hold** or its release, a **Pause** or its resume), append one line: date and time, the slug (or `all`), the decision, and the user's answer it rests on, quoted (for a quota a split changed, the cap and priorities it read). Never rewrite or remove a line. A decision inside a stream (a wave approval, a review decision, a ticket's scope) is the stream agent's to record as its tickets' comments; it never goes into `decisions.md`. A line records what was decided, never how to decide: `decisions.md` is no source of rules.
 
 **Claude memory.** How a run behaves comes from this skill, the wave skill and `streams.md` alone. Never write an operating rule (how to read an answer, when to ship, how to supervise) to Claude memory or to a file of the control folder, even when the user states one: tell the user that a lasting rule belongs in the skill. A setting this skill lets the user change (the restart budget, the respawn threshold) is a decision like any other, recorded in `decisions.md` and applied where its step says.
 
@@ -127,7 +127,7 @@ The status line is the reconcile loop's only memory (step 5): every step writes 
 | A finding reported to the user | step 5 | `reported: open pull request not recorded` |
 | A nudge sent to an idle stream agent, for the message the status line records | step 5 | `nudged 11:40` |
 | Nothing to ship, for the integration branch's head | step 6 | `nothing to ship at 1a2b3c4` |
-| Ship question asked, for the integration branch's head, and the user's answer | step 6 | `ship question asked at 1a2b3c4, user said wait` |
+| Ship question asked, for the integration branch's head | step 6 | `ship question asked at 1a2b3c4` |
 | Paths the user kept in the ship branch | step 6 | `keeps docs/agents/issue-tracker.md` |
 | Ship blocked by a conflict with the PR target, for the integration branch's head | step 6 | `ship blocked at 1a2b3c4: conflicts with test` |
 | Shipped, with the pull request's or merge request's link | step 6 | `shipped https://…/pull/12, waits on the reviewers` |
@@ -147,7 +147,7 @@ A running stream with no ticket left for agents (every ticket resolved or waitin
 
 With the example above, billing-export having 3 ready tickets and login-bug 4, and neither started: billing-export takes 1 + quota 3, leaving 2; login-bug takes 1 + quota 1, leaving 0.
 
-Changing the cap or a priority in the index takes effect at the next wave boundary: it changes the next split, never a quota a stream is running a wave with. A cap lowered below the slots in use is reached as each stream comes to its boundary.
+Changing the cap or a priority in the index takes effect at the next wave boundary: it changes the next split, never a quota a stream is running a wave with. A cap lowered below the slots in use is reached as each stream comes to its boundary. Append each quota a split changes, and each change of the cap or a priority, to `decisions.md`.
 
 ## Replace a stream agent
 
@@ -425,7 +425,9 @@ Answer yes, no, or yes keeping <path> in.
 |---|---|
 | Yes | "Push and open" below |
 | Yes keeping `<path>` in | Write `keeps <path>` into the status line; cut the ship branch again with that path in the kept row, check its merge again, then "Push and open" |
-| Anything else | The stream stays unshipped; write what the user said beside the ship question in the status line |
+| Anything else | The stream stays unshipped |
+
+Append each answer to `decisions.md` ("Decisions, memory, machine and credentials"); the status line keeps only `ship question asked at <head>`.
 
 Ask again only when the user brings it up or the integration branch's head moves (a later wave merged), since the status line then records no ship question for the current head.
 
@@ -493,6 +495,8 @@ The next question round is the next time you present questions to the user (step
 | Continue both | nothing; the next merged wave of either stream warns again with the list as it then stands |
 | Defer one | no prompt to any agent; the stream's running wave finishes. When its agent next asks to approve a wave, relay that question verbatim as step 4 says, noting under it that the user deferred the stream over the overlap with `<other>`; the stream waits there until the user approves. Its status line reads: date, stage, waits on the user (deferred, overlaps `<other>`) |
 
+Append each answer to `decisions.md` ("Decisions, memory, machine and credentials").
+
 **A need on another stream.** A stream agent's end-of-turn message (step 4) may say that the stream needs work of another open stream (the tests of "Which streams") whose status line does not record it as shipped: a ticket that cannot start without a change only the other integration branch holds. The user may say so too. Only such a declared need counts; you never derive one from tickets or diffs, since the stream layer holds no dependency graph (ADR 0001). Put one item in the next question round, headed with both slugs, the waiting stream first:
 
 ```
@@ -506,6 +510,8 @@ The message's own question, such as a wave approval, is still relayed verbatim b
 |---|---|
 | Merge the two | no prompt to any agent; write `merge with <other> agreed` into both status lines. Which stream stays, and how the other's tickets and integration branch move into it, is the user's to do or to tell you step by step; you never move or write a ticket |
 | Hold `<waiting>` until `<other>` ships | `send_agent_prompt` to `<waiting>`'s stream agent with `hold`, `background: true`, `notifyOnFinish: true`: it spawns nothing new while its running agents carry on (the wave skill's **Hold**). Write `held until <other> ships` into its status line. On each step 4 notification and each tick of step 5, read `<other>`'s status line; once it records `<other>` shipped, send `release` the same way, drop the item from the status line, and tell the user in the next round that `<waiting>` was released and that the work reaches `<waiting>`'s base branch only once `<other>`'s pull request merges there |
+
+Append each answer, and each `release` you send, to `decisions.md`.
 
 You never defer, hold, block or delay a stream without the user's answer, and never pick an answer for them.
 

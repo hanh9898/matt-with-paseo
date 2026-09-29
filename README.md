@@ -171,6 +171,8 @@ The index is `streams.md` at the root of that folder. With no index yet, the ski
 - the **agent cap**, above the table: the most agents running at once across every stream;
 - one row per stream: its slug, the absolute path of a local checkout of its repository, its owner, where its tickets live (a folder for a local-markdown tracker; a label or a parent spec issue for GitHub or GitLab), its base branch, its pull-request target, its forge (GitHub or GitLab), its priority, and a status line the skill keeps current.
 
+Beside it, `decisions.md` keeps the history the status lines do not: one appended line for each decision the skill acts on (a ship, an overlap or need answer, a quota or cap change, a hold or pause), with the answer it rests on.
+
 An empty base branch or target falls back to the default the target repository declares next to its `## Agent skills` section, then to the remote's default branch. An empty forge is read from the remote's host (`github.com`, `gitlab.com`) or from the tracker configuration, the only way a self-hosted GitLab is known. A base branch that gathers several people's unfinished work, such as a shared `test` branch, draws a warning, never a block.
 
 **Setup checks.** Before a stream gets its worktree, the skill fetches the remote and checks that the pull-request target exists there (a branch only in your checkout is not enough), that the base branch carries a tracker configuration, and that the forge is known. It then stops once with every problem it found and what you can do about each. An unreachable remote comes with its URL and git's error. A base branch without tracker configuration comes with two choices: land the setup on the base branch as a change of its own (proposed first), or commit it on the stream branch, where the pull request leaves it out. The index only says where each stream's tickets live; the tracker stays the one source of truth for them. The field table and an example are in [The index](plugins/matt-with-paseo/skills/matt-with-paseo-streams/SKILL.md#the-index).
@@ -286,9 +288,10 @@ Files it writes, next to your ticket folder:
 
 - `wave<N>-common-rules.md`: the rules every agent of wave N reads, followed by the wave's agent table and review log.
 
-The stream skill writes one file, in its control folder:
+The stream skill writes two files, in its control folder:
 
 - `streams.md`: the index, the agent cap and one row per stream with its status line.
+- `decisions.md`: one appended line per decision the skill acts on.
 
 Files in this repo:
 
