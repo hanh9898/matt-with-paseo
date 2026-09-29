@@ -190,3 +190,56 @@ Every other wave 1 ticket is merged, so #74 starts last, on 1db5368.
 Not run per wave (the user's rule for this stream): the whole stream diff is reviewed once, after the last wave, on both axes, followed by one fix pass and the one eval run. The findings noted above in this log go into that review.
 
 Wave 1 cleaned: 18 tickets merged, every row stopped, clean and merged, and archived with its workspace; temp directories removed (#75 and #77 kept only a copy of their posted `Resolved:` comment); no heartbeat was created; `paseo ls -g --label stream=mwp-seatworks --label wave=1` lists nothing. #78, #82, #91 stay out of this stream (held for #67); #98 stays open with `ready-for-human` for criterion 2.
+
+## Stream review
+
+User's rule: one review of the whole stream after the last wave. Fixed point `785b1c1`, head `fb38f6a` (40 files, +2320/−40). Before it, the one full test run on `fb38f6a`: `python -B -m unittest discover -s scripts` ran 78 tests, OK; `python -B scripts/drift-check.py` exit 0. The review ran in the orchestrator's session with two read-only sub-agents. **Standards: 15 findings (7 hard, 8 judgement calls); Spec: 12 findings.** Every known item from the log above holds. Orchestrator checks: P1 confirmed by reading the case folders; `claude plugin eval --help` lists `--case <glob>`, so P9's doubt about the flag is dropped.
+
+| # | Where | Finding | Axis |
+|---|---|---|---|
+| S1 | Wave skill steps 7, 8 | "mechanism" and "decision round" used undefined; L2 wants **Checkpoint** | Std (W4, L2) |
+| S2 | TROUBLESHOOTING.md intro | Rating words caught / asked / nothing yet defined nowhere; the intro line is stale | Std (W4, W8), Spec P7 |
+| S3 | CODING_STANDARDS H3, README, `check-version-gate.py` | "gate" has three meanings; "seat-facing" is defined only in a script | Std (W4) |
+| S4 | TROUBLESHOOTING.md, README "Known Paseo behaviour" | Facts restated from PASEO-FACTS.md (#73's pointer sweep) | Std (W6), Spec P8 |
+| S5 | Wave skill step 8 | The live-row rule is stated twice | Std (W7, W6) |
+| S6 | `check-version-gate.py`, `drift-check.py` | A missing input file gives a traceback (exit 1) instead of exit 2; the skip path exits 0 without saying so in the header | Std (S2) |
+| S7 | README "Behaviour evals" | "A full run is 26 cases"; there are 32 | Std, Spec P12 |
+| S8, S9, S12, S13 | `scripts/` | Duplicated `frontmatter`/`fail`/list parsing across five scripts; two phrase-in-file checkers; cases passed as bare dicts; `majority()` is a middle man | Judgement |
+| S10 | `seat-facing-paths.txt` | The list repeats `skills/**` | Judgement |
+| S11 | `triggers/cases.json`, trigger scripts | Key `brief` clashes with the words-block **Brief**; README calls it "request" | Judgement (W4) |
+| S14 | Wave skill step 8 | The retro rules table is a rare-case block in a step every run reads | Judgement (W2) |
+| S15 | OWNERSHIP.md | "the question round" in a new file; should be checkpoint | Std (§2) |
+| P1 | `evals/wave-95-user-language-one-door` | Front matter and observed-state block sit in `case.yaml`; `prompt.md` is one line (every other case keeps them in `prompt.md`) | Spec (#95), high |
+| P2 | Stream skill close row; wave step 8 | Cleanup still looks up live state: the stream workspace "that step 2's table finds", and step 8's closing `paseo ls` scan archives what it lists | Spec (#107) |
+| P3 | Wave skill | No step says who answers a challenge to a chosen default, or where | Spec (#75) |
+| P4 | Wave skill step 7 | Checkpoints are marked `took the recommendation`, not whether they changed the work; steps 1 and 2 are unmarked | Spec (#92) |
+| P5 | `evals/wave-75-chosen-default-challenge` | Grades the orchestrator's step 3, not a ticket agent's challenge | Spec (#75) |
+| P6 | `test_version_gate.py`, `check-version-gate.py` | Compares with `main`: red in every later stream until its release bumps; the test repeats the six paths | Spec (#74) |
+| P7 | TROUBLESHOOTING.md | "Agent stops midway" is `caught` by a pointer back to itself; "Report is correct but incomplete" is rated `asked` although step 5 is a check; "question-type permission" is `caught` only by the stream skill's tick | Spec (#77) |
+| P8 | PASEO-FACTS.md | 14 of 24 rows read "version not recorded" | Spec (#73) |
+| P9 | Wave skill, stream skill ship path | The eval-gate rule lives only in README and H3; nothing where merges or ships happen names it | Spec (#105) |
+| P10 | Stream skill | Shorter only against #103's base (17842 → 17769 words), not against 785b1c1 | Spec (#103), note |
+| P11 | `evals/wave-76-hidden-assumption-report` | One grader; a base model re-running the decisive claim might pass it | Spec (#76), low |
+| P12 | Template | "A challenge alone does not move the ticket to ready-for-human" was not asked for | Spec (#75), minor |
+| K | README line 305 | `--pin v0.4.2` after the bump to 0.5.0; no README line on running the version gate or the ratings script | Std, known |
+
+**User's decisions (2026-09-29), recorded on #74, #92, #75:**
+- P6: compare with the latest release tag (`v*`), not `main`; the template's "Failing on base" notes the self-test until a stream bumps once. Fix pass.
+- S8, S9, S10, S12, S13 (scripts smells): not fixed and no issue opened; they go to this log and to the ship pull request's follow-ups, and the user brings them in through triage.
+- P4: every checkpoint (steps 1, 2, 7) is marked `changed the work: yes|no`; `took the recommendation` stays. Fix pass.
+- P5: the limit is written on #75 and goes to the ship pull request's follow-ups; no issue opened.
+- From now on: no question by AskUserQuestion; questions end the turn in the message, with options and a recommendation.
+
+**Orchestrator's outcome for the rest** (fix pass unless said otherwise): S1, S2, S3, S4 (with #73's sweep), S5, S6, S7, S11, S15, P1, P2, P3, P7, P9, K: fixed in the fix pass. S14: skipped, #80's criterion puts the two rules "written once, where that pointer is". P8: skipped, the Paseo version of those facts was never recorded and is not invented. P10: skipped, #103's criterion is met against its base. P11: skipped, low; the one-case rule holds. P12: kept, it keeps a challenge from bypassing the criteria contract.
+
+### Follow-ups for the ship pull request
+- `scripts/` smells (S8, S9, S10, S12, S13): one `scripts/common.py` (`frontmatter`, list parsing, one exit-2 error), one shared phrase-in-file check for `pinned-lines.json` and the troubleshooting ratings, cases as a small type, inline `majority()`, a glob instead of `seat-facing-paths.txt`.
+- #75: an eval case where a ticket agent challenges a chosen default with evidence (the current case grades only the orchestrator's step 3).
+
+### Fix pass
+
+| Ticket | Agent id | Workspace id | Branch | Base commit | Private resources | Cleaned |
+|---|---|---|---|---|---|---|
+| stream review fixes | 04f6230e-ebc2-4bed-acb6-1d8bd04321bb | wks_b88746edc51041c6 | `mwp-seatworks/wave1/stream-review-fixes` | `fb38f6a` | temp `%TEMP%\mwp-seatworks-review-fixes` | [ ] |
+
+**User's decision (2026-09-29):** no test re-run after the fix pass (the rule is one test run, and it ran on fb38f6a). Merge the fix pass, run the one eval, and list every test the fix pass may have broken in the ship pull request's **Merge Danger** as not re-run after the fix.
