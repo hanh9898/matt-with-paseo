@@ -108,6 +108,7 @@ Every open ticket has a zone below, so each joins this wave by rolling start onc
 | #64 (replacement 1/2) | e5b1e0ae-24a4-4fbb-bf2b-10ace2ba97d3 | wks_88cf06dc96b2858d | `matt-with-paseo-0-4-2/wave3/64-commit-messages` | `9556ea3` | temp `%TEMP%\matt-with-paseo-0-4-2-wave3-64` | [x] |
 | #63 | 83a585f6-8e07-4b93-8c0d-42697a4e8699 | wks_a9fbea4aed37bf4d | `matt-with-paseo-0-4-2/wave3/63-pull-request-shape` | `7b789eb` (rolling start) | temp `%TEMP%\matt-with-paseo-0-4-2-wave3-63` | [x] |
 | #65 | 49fa65a0-e4f5-42d0-9d5c-097ba65cb8f0 | wks_8ef1a07b6328e658 | `matt-with-paseo-0-4-2/wave3/65-ship-rules-release-notes` | `a295dc5` (rolling start) | temp `%TEMP%\matt-with-paseo-0-4-2-wave3-65` | [x] |
+| stream review fixes | 5f1c1a4c-89c8-4887-8eb6-cfbe5f3b6c8c | wks_9756b76953a7782f | `matt-with-paseo-0-4-2/wave3/stream-review-fixes` | `e484061` | temp `%TEMP%\matt-with-paseo-0-4-2-stream-fixes` | [x] |
 
 2026-09-29 09:15: #61 (303k of a 200k window, 3 commits plus much uncommitted work) and #45 (217k, no commit yet) ran past their context. Both were told to commit now and report, and #61 to stop iterating on an unrun fixture. Heartbeat `00bcf805` (every 15 min, expires 4h) watches them. git commands in this checkout were slow (over 60 s) at the same time.
 
@@ -148,3 +149,5 @@ User's rule: one review of the whole stream after the last wave. Fixed point `ec
 | S8 | `evals/streams-61-ship-rules` | Graders `no-setup-stop` and `overdue-tick-covers-invoice-close` also pass on the base skill (#61's own note) | Replace them with ship-rules-specific checks, or drop them | Spec 6 |
 
 Skipped: Standards 8, `docs/agents/domain.md`'s generic GLOSSARY walkthrough. It predates the stream (written by `setup-matt-pocock-skills`, before `ec29c8e`), so trimming it would be out of the stream's scope. It is left for a separate ticket.
+
+**Outcomes of the stream fix pass** (agent 5f1c1a4c, branch `matt-with-paseo-0-4-2/wave3/stream-review-fixes`, merged as `2bf35cd`; 13 unit tests OK, drift check exit 0, no markers; workspace archived). All fixed, none skipped: S1 S2 `caf0344` · S3 S6 `763f3b6` · S4 S7 `4ca0653` · S5 S8 `22ff3e5`. S5 extends `streams-61-ship-rules` with the grader `relays-merge-message-pattern`. S8 drops two graders that also passed on base.
