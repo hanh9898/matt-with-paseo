@@ -134,6 +134,7 @@ The status line is the reconcile loop's only memory (step 5): every step writes 
 | Deferred over an overlap | step 7 | `waits on the user (deferred, overlaps login-bug)` |
 | Held until another stream ships | step 7 | `held until login-bug ships` |
 | Merge with another stream agreed | step 7 | `merge with login-bug agreed` |
+| Paused for a machine restart | Pause and resume | `paused` |
 
 ### Split the cap into quotas
 
@@ -165,6 +166,18 @@ Archiving a parent agent archives and interrupts its running children (probe C1)
 A replacement at a wave boundary never counts against the restart budget of step 5; only a restart does, once per failure, whether it ends as a resume, a hold, or a replacement.
 
 **Done when**: the stream agent was archived only after the check passed, a hung one killed first, and the status line holds the new agent id or "waits on the cap", or it records the resume sent or the restart held.
+
+## Pause and resume
+
+**Pause** holds every stream and waits for the machine to go quiet before it is safe to restart:
+
+1. **Hold.** `send_agent_prompt` `hold`, `background: true`, `notifyOnFinish: true`, to every stream's stream agent (`paseo ls -g --json`, keeping the agents without a `wave` label), running or idle alike, whether or not its status line already records `held until <other> ships`. A stream with no stream agent (waits on the cap, shipped, or stopped) has nothing to hold. This never touches ticket agents; each stream agent's own wave skill holds them the same way (its "Prompts under `stream`" table).
+2. **Wait.** Run a tick (step 5) and read `paseo ls -g --json`: while it lists any agent this skill spawned, a stream agent or one of its ticket agents, still running, the pause is not done. Run another tick and check again.
+3. **Record.** Once nothing runs, write `paused` into every stream's status line, alongside whatever item it already holds (a stream held per step 7 keeps its `held until <other> ships` item too), and append one line to `decisions.md` ("Decisions, memory, machine and credentials").
+
+**Resume** needs no procedure of its own: it is one tick, the same way recovery is (step 5). The tick table's `paused` row drops the item and sends `release` to every stream agent Pause held, except a stream step 7 holds until another stream ships: that hold lifts only when step 7 does, never here. Append each release to `decisions.md`.
+
+**Done when**: every running stream agent has been sent `hold`, a tick found no agent this skill spawned still running, and `paused` is written into every stream's status line; and, on the tick that follows a resume, `paused` is gone from every status line that held it and `release` has reached every stream agent the pause held, except one step 7 still holds.
 
 ## 0. Pick the stream
 
@@ -325,6 +338,7 @@ One stream may match several rows of the table below; each row it matches acts, 
 | Stream agent idle on the message the status line records, and its context past the respawn threshold | None; the respawn waits for the stream's next wave boundary (step 4), so a running wave is never cut |
 | Every ticket of the stream resolved or in the ready for human or needs info role, the stream agent idle, and the status line records neither shipped nor, for the integration branch's current head, nothing to ship or the ship question asked | Step 6 |
 | The status line records `held until <other> ships`, and `<other>`'s status line records it shipped | Step 7's `release` ("A need on another stream") |
+| The status line records `paused` | "Pause and resume": drop `paused` and, unless the line also records `held until <other> ships`, send `release`, `background: true`, `notifyOnFinish: true`, to the stream agent |
 | A `stream=<slug>` agent without a `wave` label for a row that should not run (other than a shipped stream's own idle stream agent) or a slug not in the index, two such agents for one slug, or an open pull request the status line does not record, and the status line does not yet record this finding as reported | Report it to the user and take no other action; the status line records that it was reported, so a later tick does not report it again |
 
 The loop's own heartbeat is reconciled in the same tick:
