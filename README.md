@@ -280,7 +280,7 @@ npx skills add hanh9898/matt-with-paseo --skill '*' -g -a claude-code
 gh skill install hanh9898/matt-with-paseo --all --agent claude-code --scope user
 ```
 
-`--all` takes both skills. This resolves the latest tagged release; add `--pin v0.4.1` to fix a version. The commands are `/matt-with-paseo` and `/matt-with-paseo-streams`.
+`--all` takes both skills. This resolves the latest tagged release; add `--pin v0.4.2` to fix a version. The commands are `/matt-with-paseo` and `/matt-with-paseo-streams`.
 
 ### Option 4: Manual copy
 
@@ -334,7 +334,7 @@ Files in this repo:
 | [`plugins/matt-with-paseo/skills/matt-with-paseo-streams/SKILL.md`](plugins/matt-with-paseo/skills/matt-with-paseo-streams/SKILL.md) | The stream orchestrator: the index, then steps 0 to 7 |
 | [`.claude-plugin/marketplace.json`](.claude-plugin/marketplace.json) | The marketplace that lists the plugin |
 | [`plugins/matt-with-paseo/`](plugins/matt-with-paseo/) | The plugin itself: its manifest, both skills, its listing README and license; the only folder an install copies |
-| [`docs/adr/`](docs/adr/) | Architecture decisions behind the stream skill: streams share no dependencies, one wave-skill agent per stream, one integration branch per stream, the reconcile loop |
+| [`docs/adr/`](docs/adr/) | Architecture decisions behind the stream skill: streams share no dependencies (0001), one wave-skill agent per stream (0002), one integration branch per stream (0003), the reconcile loop (0004), intake agents on request (0005), hold, release and quota by prompt (0006), the ship branch (0007), ship rules stay with the target repository (0008) |
 | [`scripts/`](scripts/) | The drift check against Matt's installed skills, and its tests |
 
 ## Design principles
@@ -389,7 +389,7 @@ cd plugins/matt-with-paseo
 claude plugin eval . --scaffold
 ```
 
-`--scaffold` runs each case's `fixture.sh` as you, to build its repository; read them first. The first run in a directory asks you to trust the plugin, so start it from an interactive terminal; from a script, CI or an agent session, add `--trust-plugin` once you have read the suite. A full run is 9 cases, 3 runs each, in two arms (with and without the plugin). The last full run scored 1.00 with the plugin on every case, against 0.20 to 0.67 without it. Each fixture strips carriage returns before it runs, so a CRLF checkout on Windows works too.
+`--scaffold` runs each case's `fixture.sh` as you, to build its repository; read them first. The first run in a directory asks you to trust the plugin, so start it from an interactive terminal; from a script, CI or an agent session, add `--trust-plugin` once you have read the suite. A full run is 26 cases (7 from the 0.4.1 baseline, 19 added for 0.4.2), 3 runs each, in two arms (with and without the plugin); the report scores each arm case by case. Each fixture strips carriage returns before it runs, so a CRLF checkout on Windows works too.
 
 ## Acknowledgements
 
