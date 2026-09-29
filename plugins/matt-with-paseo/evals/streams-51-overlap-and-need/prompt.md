@@ -17,7 +17,7 @@ append_system_prompt: |
     - search: `docs/agents/issue-tracker.md`, `src/search/index.ts`
     - checkout: `src/checkout/pay.ts`, `src/shared/money.ts`, `src/shared/prices.ts`
   - `git -C /srv/worktrees/<slug> rev-parse stream/<slug>:<path>`:
-    - `docs/agents/issue-tracker.md`: cart `8d1f0c2e5b7a4d3c9e6f1a2b3c4d5e6f7a8b9c0d`, search `8d1f0c2e5b7a4d3c9e6f1a2b3c4d5e6f7a8b9c0d` (both streams copied the same tracker configuration).
+    - `docs/agents/issue-tracker.md`: cart `8d1f0c2e5b7a4d3c9e6f1a2b3c4d5e6f7a8b9c0d`, search `8d1f0c2e5b7a4d3c9e6f1a2b3c4d5e6f7a8b9c0d`.
     - `src/shared/prices.ts`: cart `2a9b4c1d6e3f8a5b0c7d2e9f4a1b6c3d8e5f0a7b`, checkout `7c4e1f8a3b6d9c2e5f0a4b7c1d8e3f6a9b2c5d0e`.
 ---
 
