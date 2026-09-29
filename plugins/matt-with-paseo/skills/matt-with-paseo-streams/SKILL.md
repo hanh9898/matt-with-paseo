@@ -93,6 +93,7 @@ The status line is the reconcile loop's only memory (step 5): every step writes 
 | Item | Written by | Example |
 |---|---|---|
 | Date, stage, who the stream waits on | every step that updates the line (step 4 from each end-of-turn message) | `2026-09-27 wave 1 running, waits on the stream agent` |
+| Adopted from a wave run outside any stream, with its integration branch | step 0 | `adopted from feature/reports` |
 | Setup stopped, with the problems found | step 1 | `setup stopped: PR target release not on origin` |
 | The tracker configuration goes on the stream branch | step 1 | `tracker setup on the stream branch` |
 | The stream agent's id | steps 3 and "Replace a stream agent" | `agent 3e0a7953` |
@@ -151,7 +152,18 @@ Before anything else, check whether the stream already runs: `paseo ls -g --labe
 
 A stream whose Tickets point at nothing yet has no work to run. Work enters a stream through Matt's usual routes, typed by the user in the target repository: `/mattpocock-skills:triage` for raw issues, and for larger work grilling or `/mattpocock-skills:wayfinder`, then `/mattpocock-skills:to-spec`, then `/mattpocock-skills:to-tickets`. Suggest the route and stop.
 
-**Done when**: one row is chosen, its slug, repository, owner and tickets are filled in, and the stream has no running stream agent, or one tick of step 5 has run for the one it has.
+**A wave run outside any stream.** A run of the wave skill started without `stream` (by the user, or before this skill took over) can be adopted as a stream instead of being left orphaned (ADR 0005). Look for one each time step 0 runs, with `paseo ls -g --json` alone, never by searching the disks: keep the agents that carry a `wave` label and no `stream` label (the wave skill's step 8 archives a wave's agents, so an unfinished wave always has them listed), and place each in its repository with `git -C <its cwd> worktree list`, whose first line is the main checkout and whose other lines show the run's ticket branches. A run in a row's Repository whose main checkout is on the branch that row's `adopted from` names is that row's, not a new run. Report each new run in the same message as the index or the chosen row, headed `[unstreamed] <repository>`: its agents with their labels and statuses, its ticket branches, and the proposal to adopt it, with a slug you suggest and each mapping below. It is the user's to answer. Its agents are not stream agents, so you never prompt, cancel, kill, archive or relabel them, before adoption or after.
+
+| Of the run found | In the stream |
+|---|---|
+| Its integration branch: the branch its own session stood on (the wave skill's precondition), suggested as the branch its main checkout is on, and confirmed by the user | The Base branch cell. Step 2 cuts `stream/<slug>` from it, so the merged waves and the wave files that run's step 8 committed come along, and the stream agent's wave skill finds them at its step 0 and numbers its next wave after them |
+| Its tickets: the folder, label or spec its ticket agents' `ticket` labels belong to | The Tickets cell, as the user confirms it |
+| The branch its work was meant for | The PR target cell, as the user gives it |
+| Its labels (`wave`, `ticket`, no `stream`) and ticket branches (`wave<N>/…`) | Nothing: they stay as they are. The stream agent lists only agents with its own `stream` label and ticket branches of its own shape, so it never sees them |
+
+On the user's yes, write the row (slug, Repository, Owner, Tickets, Base branch, PR target) with `adopted from <integration branch>` in its status line. The row goes on to step 1 only once the run is quiet: `paseo ls -g --json` lists no agent of it, and `git -C <repository> branch --list "wave*/*" --no-merged <integration branch>` prints nothing. Until then the proposal and the status line say that the run's own session finishes and cleans up its wave first (the wave skill's steps 5 to 8), since a stream agent would not see that wave, and step 0 checks again each time it takes the row. Once quiet, the user ends that run's own session, since the stream agent takes over the same tickets and one ticket set takes one orchestrator, and the row goes on as a stream never started. A run with no agent left (between waves, or its session ended after its step 8) is not found by the search; the user may name one, its repository and integration branch, and it is adopted the same way.
+
+**Done when**: one row is chosen, its slug, repository, owner and tickets are filled in, and the stream has no running stream agent, or one tick of step 5 has run for the one it has; and every wave run outside any stream the search found has been reported with an adoption proposal, became a row only on the user's yes, and an adopted row went past step 0 only once its run was quiet.
 
 ## 1. Check the setup
 
