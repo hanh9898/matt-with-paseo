@@ -231,6 +231,9 @@ class ModelRunParts(unittest.TestCase):
         self.assertEqual(trigger_cases.opened_skills('{"skills": []}'), [])
         self.assertIsNone(trigger_cases.opened_skills("I would open alpha."))
 
+    def test_an_answer_that_is_not_valid_json_counts_as_no_answer_instead_of_crashing(self):
+        self.assertIsNone(trigger_cases.opened_skills('{"skills": [alpha]}'))
+
     def test_a_run_is_right_only_when_it_opened_exactly_the_expected_skills(self):
         near_miss = case("b", ["alpha"], near="beta")
 
