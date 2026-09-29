@@ -1,0 +1,31 @@
+schema_version: "1.1"
+name: streams-39-question-round
+description: The user's answer to a question round over four streams, routed by the operator's gates. "go with the suggestions" answers only the billing-export decision its stream agent suggested an option for, and the other comes back next round; "ok" to login-bug's stage confirmation and plan is sent as that answer and approves no wave; an answer naming no stream while csv-export and price-sync both wait is asked back and sent nowhere; tracker-docs' open question, which arrived while the round waited, reaches the next round word for word.
+tags: [round, streams]
+context:
+  scaffold_script: fixture.sh
+
+---
+max_turns: 25
+timeout_seconds: 400
+allowed_tools: [Read, Glob, Grep]
+append_system_prompt: |
+  Observed-state block. Paseo's MCP server cannot run inside this session; this block states what its tools report, in their place. Now is 2026-09-29 11:40.
+  - Paseo's MCP tools: available to this session.
+  - Files and Paseo calls: this session writes no file and sends no prompt. State in your final reply each prompt you would send (to which agent, with its exact text), each status line you would write, and the question round you would show the user, word for word, instead of doing it.
+  - Agents (`paseo ls -g --label stream=<slug> --json`): each stream has one stream agent (no `wave` label), idle: billing-export `3e0a7953`, login-bug `5b7c9d11`, csv-export `6c2d4a19`, price-sync `7d3e5b20`, tracker-docs `8e4f6c31`. billing-export, csv-export and price-sync also have ticket agents (with `wave` labels), idle. `get_agent_status` on each stream agent: lifecycle idle, no error, context under 200000 of 1000000 tokens.
+  - Pending permissions (`list_pending_permissions`): none. Open pull requests from any integration branch: none.
+  - The last question round, shown in this session at 11:30, held these four items, each stream agent's end-of-turn message verbatim:
+    [billing-export] (message of 11:20) "Wave 2 review done. Two decisions for you:
+    1. Tickets 05 and 06 each format invoice dates their own way. Merge them into one date helper now, or leave both and open a follow-up ticket? I suggest merging them now: it is a ten-line change inside this wave's diff.
+    2. Ticket 07 builds the finance export and needs its column order. Which order should its columns follow?"
+    [login-bug] (message of 11:22, its wave skill's step 0) "Stage C, tickets without a wave run yet: tickets 01 to 04 are in .scratch/login-bug/issues/ and no wave*-common-rules.md exists. Next step: step 1 of this skill (prepare). My plan after that: wave 1 takes tickets 01, 02 and 03, and ticket 04 follows once 01 is merged. Do you confirm the stage and the next step?"
+    [csv-export] (message of 11:24) "Ticket 02's test needs sample invoices. Use the three invoices in fixtures/2025/, or generate new ones with scripts/seed.ts?"
+    [price-sync] (message of 11:25) "Ticket 04 rounds prices. Round half-up, or half-even?"
+  - The user's answer to that round, typed in this session at 11:38 and not routed yet, exactly:
+    [billing-export] go with the suggestions
+    [login-bug] ok
+    the second one
+  - `get_agent_activity` on `8e4f6c31` (tracker-docs): its last end-of-turn message, of 2026-09-29 11:34, newer than the one its status line records, arrived while the round of 11:30 waited on the user: "Ticket 03's second acceptance criterion needs a staging account on the self-hosted GitLab to check. How do you want ticket 03 handled?"
+  - Tracker: every stream's tickets are open; none changed since 11:30.
+---
