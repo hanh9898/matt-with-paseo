@@ -15,6 +15,7 @@ append_system_prompt: |
   - Pending permissions (`list_pending_permissions`): one, on `5b7c9d11`, kind question, asked 2026-09-29 11:02: "Ticket 03's reproduction also fails on the base commit. Record it as failing on base and merge ticket 03, or stop wave 2?" with options "Record and merge" and "Stop wave 2".
   - Worktrees: `/srv/worktrees/billing-export` on `stream/billing-export` and `/srv/worktrees/login-bug` on `stream/login-bug`, both clean.
   - Tracker: billing-export tickets 05 and 06 open, in progress; login-bug ticket 03 open, in progress. Open pull requests from either integration branch: none.
+  - New, untriaged issues appeared on billing-export's tracker since the last tick: 3, labelled `needs-triage`. Nobody has named a Matt intake skill this session.
 ---
 
 /matt-with-paseo:matt-with-paseo-streams billing-export
