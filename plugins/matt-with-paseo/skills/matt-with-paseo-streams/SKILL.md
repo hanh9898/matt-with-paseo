@@ -55,6 +55,8 @@ You never read wave files (`wave*-common-rules.md` or anything else the wave ski
 
 You talk to stream agents only. You never prompt, cancel, kill or archive a ticket agent; everything about tickets stays with the stream agent that spawned them. In `paseo ls -g --label stream=<slug>`, the stream agent is the one without a `wave` label: the wave skill puts a `wave` label on every agent it spawns.
 
+Ownership: when the question is who decides or may do something (yours, a stream agent's, an intake agent's, a ticket agent's), read the table in [`OWNERSHIP.md`](OWNERSHIP.md) (each role's ownership, its lines of speech and its never-items).
+
 ## Decisions, memory, machine and credentials
 
 **Decisions.** `decisions.md`, at the root of the control folder beside `streams.md`, is the history the status line does not keep. Each time you act on one of your own decisions (a ship, an overlap warning's answer, a change of the cap or a quota, a **Hold** or its release, a **Pause** or its resume), append one line: date and time, the slug (or `all`), the decision, and the user's answer it rests on, quoted (for a quota a split changed, the cap and priorities it read). Never rewrite or remove a line. A decision inside a stream (a wave approval, a review decision, a ticket's scope) is the stream agent's to record as its tickets' comments; it never goes into `decisions.md`. A line records what was decided, never how to decide: `decisions.md` is no source of rules.
