@@ -240,6 +240,27 @@ User's rule: one review of the whole stream after the last wave. Fixed point `78
 
 | Ticket | Agent id | Workspace id | Branch | Base commit | Private resources | Cleaned |
 |---|---|---|---|---|---|---|
-| stream review fixes | 04f6230e-ebc2-4bed-acb6-1d8bd04321bb | wks_b88746edc51041c6 | `mwp-seatworks/wave1/stream-review-fixes` | `fb38f6a` | temp `%TEMP%\mwp-seatworks-review-fixes` | [ ] |
+| stream review fixes | 04f6230e-ebc2-4bed-acb6-1d8bd04321bb | wks_b88746edc51041c6 | `mwp-seatworks/wave1/stream-review-fixes` | `fb38f6a` | temp `%TEMP%\mwp-seatworks-review-fixes` | [x] |
 
 **User's decision (2026-09-29):** no test re-run after the fix pass (the rule is one test run, and it ran on fb38f6a). Merge the fix pass, run the one eval, and list every test the fix pass may have broken in the ship pull request's **Merge Danger** as not re-run after the fix.
+
+Fix pass merged (2026-09-29, by stream agent `3d33bfa1`, replacing `79dd4c98`): `8f7ede8`, conflict-marker search empty. The fix agent reported 22 findings fixed in 15 commits; it ran no suite (it ran `py_compile` and the three single checks `check-version-gate.py`, `troubleshooting-ratings.py`, `check-triggers.py`, each exit 0). New tests it wrote were not run: 5 in `test_version_gate.py`, 6 in `test_drift_check.py`, plus the rewritten tag-based gate tests. They go to the ship pull request's **Merge Danger**. Agent and workspace archived; temp directory gone. The fix agent's own notes for the ship pull request:
+- P4: a new log section `## Checkpoints` (template, steps 3 and 8); the prompt said steps 0, 2, 7, the log said 1, 2, 7; it followed the prompt.
+- P6: `test_the_list_names_every_file…` still repeats the six paths (not in the user's decision).
+- Eval risk it named: `evals/streams-41-hung-agents` gives `paseo ls` a workspace but no `get_agent_status` `workspaceId`; the new close rule (P2) may make that case report instead of archive.
+
+### Eval run
+
+The stream's one eval run, on `8f7ede8` (2026-09-29), with the user's command from `plugins/matt-with-paseo`: 32 cases, 1 run each, 749 s, $5.97, exit 1. **22 pass, 10 fail.** The eval gate's slice passes (`wave-not-configured`, `streams-no-paseo-tools`, `streams-free-text-argument`, each 1.00). Report at `plugins/matt-with-paseo/evals/results/2026-09-29T16-03-02-474Z/` (gitignored). No earlier full run is recorded, so this run alone cannot separate regressions from failures already there.
+
+| Case | Score | Failed graders |
+|---|---|---|
+| wave-75-chosen-default-challenge (new, #75) | 0.00 | answer-names-reason, challenge-not-ready-for-human, chosen-default-open-to-challenge |
+| wave-95-user-language-one-door (new, #95; P1 changed it) | 0.00 | two-languages |
+| streams-61-ship-rules | 0.40 | reads-target-not-stream-branch, relays-merge-message-pattern, shows-merge-options |
+| streams-41-hung-agents (the fix agent named it at risk from P2) | 0.50 | closes-clean-merged-stream, names-kill-agent, reports-subagent-not-kills |
+| streams-48-timeout-adopts-in-project | 0.50 | agent-carries-workspace-id |
+| streams-52-answer-and-machine | 0.50 | status-line-drops-answer |
+| wave-tickets-with-width | 0.67 | asks-model-and-mode |
+| streams-49-ship-branch | 0.78 | honours-kept-path, pushes-only-ship-branch |
+| streams-40-silent-supervision | 0.80 | writes-last-tick |
