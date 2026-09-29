@@ -70,8 +70,8 @@ Read the signals on the real repo through its tracker configuration: the `## Age
 | B. Spec, no tickets | A spec exists where the tracker configuration puts specs; no ticket belongs to it yet | The user types `/mattpocock-skills:to-tickets <spec>`, in the same session that wrote the spec |
 | C. Tickets, no wave run yet | Tickets exist; no `wave*-common-rules.md` file | With `stream`, a single ticket: step 1 of this skill, as a one-ticket wave. Otherwise a single ticket, or a pure chain where no two tickets can ever run side by side: `/mattpocock-skills:implement` in this session. Any width at all: step 1 of this skill |
 | D. N waves done, tickets left | A `wave*-common-rules.md` file exists, no wave is in progress (stage E does not match), and at least one ticket is still open | Back to step 2, building the graph from the open tickets; run step 1 first if this session has not |
-| E. Wave in progress | A `wave<N>-common-rules.md` file exists, and a ticket of that wave (listed in the file's title) is neither `resolved` nor in the ready for human role; or the file has `## Wave agents` but no `## Review`, or the "cleaned" column is not fully checked | Resume at the missing step, see right below the table |
-| F. No work left for agents | At least one ticket exists, and every ticket is `resolved` or in the ready for human role | Summarize per step 8; list the work waiting on humans |
+| E. Wave in progress | A `wave<N>-common-rules.md` file exists, and a ticket of that wave (listed in the file's title) is neither `resolved` nor in the ready for human or needs info role; or the file has `## Wave agents` but no `## Review`, or its `## Review` has a finding that reads **waiting on the user's decision**, or the "cleaned" column is not fully checked | Resume at the missing step, see right below the table |
+| F. No work left for agents | At least one ticket exists, and every ticket is `resolved` or in the ready for human or needs info role | Summarize per step 8; list the work waiting on humans |
 
 Ticket status is the primary signal for stage E; the two log sections `## Wave agents` and `## Review` only tell you which step is missing, as their cells read in the file: a "cleaned" cell counts as checked only once ticked, whatever a commit message says. A wave file with no `## Wave agents` whose tickets are all done is an old, finished wave, not stage E. The wave files and tickets that count are the ones in this checkout of the integration branch, committed or not (a wave file stays uncommitted until step 8); a copy inside a worktree (a path `git worktree list` prints) or on another branch does not count.
 
@@ -112,7 +112,7 @@ Load the `paseo` skill and call `list_profiles`, reading each profile's `notes`,
 
 Identify the tracker from `docs/agents/issue-tracker.md`. Identify the integration branch with `git branch --show-current`, never from the directory name. Read `stream <slug>` and `quota <N>` from the input when given.
 
-Read the triage label file the `## Agent skills` section points to (its triage labels entry): it maps each triage role to the label string this repo writes. This skill names triage states only by role (needs triage, ready for agent, ready for human); wherever it names one, use the label string the file maps it to, and fill the template's `<ready for human label from the triage label file>` placeholder with it in step 3. When the repo has no triage label file, use the default label strings `mattpocock-skills:setup-matt-pocock-skills` defines.
+Read the triage label file the `## Agent skills` section points to (its triage labels entry): it maps each triage role to the label string this repo writes. This skill names triage states only by role (needs triage, needs info, ready for agent, ready for human); wherever it names one, use the label string the file maps it to, and fill the template's `<ready for human label from the triage label file>` placeholder with it in step 3. When the repo has no triage label file, use the default label strings `mattpocock-skills:setup-matt-pocock-skills` defines.
 
 Read the repo's evidence standards file when it declares one: an `## Evidence standards` section of `CLAUDE.md`/`AGENTS.md`, outside the `## Agent skills` block, pointing to a file of free prose on how this repo proves a change works. Fill the template's `<path to the evidence standards file, or "none declared">` placeholder with its path in step 3. When the section or its file is absent, write "none declared" there and continue; nothing else in the wave changes.
 
@@ -141,13 +141,13 @@ Then hunt for lost width, and list every case with the one thing that would reco
 
 With `quota <N>`, the upcoming wave starts at most N tickets (see "Quota" in step 4). When more can run now, propose the N to start first, those that unblock the most tickets first, and list the rest as waiting on the quota: they belong to this wave and join it by rolling start (step 6). A ticket waiting on the quota is not lost width.
 
-Present the graph, the upcoming wave, and the lost-width list to the user, and wait for approval. A wave of one ticket is a signal to resolve the lost-width list first when the user can, unless the quota is 1.
+Present the graph, the upcoming wave, and the lost-width list to the user, and wait for approval. A wave of one ticket is a signal to resolve the lost-width list first when the user can, unless the quota is 1 or, with `stream`, it is stage C's single ticket (ADR 0006).
 
 **Done when**: every open ticket has a wave number, every case of lost width has been named to the user with its unblocking question, and the user has approved the upcoming wave.
 
 ## 3. Write the wave's common rules
 
-Pin the base commit: `git rev-parse <integration branch>`. Write `wave<N>-common-rules.md` next to the ticket folder, following [`COMMON-RULES-TEMPLATE.md`](COMMON-RULES-TEMPLATE.md); its first section is the graph from step 2, with each ticket's wave and status, so the dependency tree lives on disk.
+Pin the base commit: `git rev-parse <integration branch>`. Write `wave<N>-common-rules.md` next to the ticket folder, following [`COMMON-RULES-TEMPLATE.md`](COMMON-RULES-TEMPLATE.md); its first section is the graph from step 2, with each ticket's wave and status, so the dependency tree lives on disk. You run each verification command the repo has on the base commit yourself, before the first spawn, and write what fails into its "Failing on base" section.
 
 Once the first agent is spawned, the rules part of the file is **frozen**: agents read it at any moment, so an edit mid-wave reaches some of them and not others. A rule that must change mid-wave goes to each running agent with `send_agent_prompt` and into the next wave's rules; only the log sections below the rules keep growing.
 
@@ -203,7 +203,7 @@ If the wave's first agent reports it cannot find a skill, the plugin has not rea
 
 Leave `notifyOnFinish` at its default. Each agent reports when it finishes; between reports, spend the time on other work of the wave. A finish the notification misses is caught in step 5.
 
-**Done when**: every ticket in the wave has exactly one running agent and one row in the table, except, with `quota`, the tickets waiting on it.
+**Done when**: every ticket in the wave has exactly one running agent and one row in the table, except, with `quota` or while a hold stands, the tickets waiting on it.
 
 ## 5. Check each report
 
@@ -216,6 +216,7 @@ Each time an agent reports done, check the real artifacts, not the report's word
 - the report's most decisive claim is re-run once by you (call the endpoint, open the screen, look at the screenshot); for a change the user sees, the screenshots include the screen scrolled past its first view and at a narrow width;
 - the ticket's comments carry the `mattpocock-skills:code-review` result: the number of findings per axis and the outcome of each. Missing means the agent did not finish its flow;
 - symptom tickets: the report shows the loop **red before** the fix and green after, each as a run's command and output; a red read from the code is no loop. Green alone does not tell you whether the fix hit the right place or only masked the symptom;
+- a failure the report names is not the agent's when the common rules' "Failing on base" lists it; any other failure is explained in the report;
 - the report names every change outside the ticket's file zone or outside git (a file in another checkout, a machine setting, a created resource), and `git -C <worktree> status --porcelain` is empty or each file it lists is named there;
 - the report lists the private resources the agent created, for step 8 to remove.
 
@@ -248,7 +249,7 @@ After each merge, run the cheapest verification the repo has (install, build, li
 
 Conflict, a file the conflict-marker search prints, failure after a merge, or a test count after the merge that does not match the test files git tracks: see [`TROUBLESHOOTING.md`](TROUBLESHOOTING.md).
 
-**Done when**: every ticket in the wave is merged, every ticket its merges unblocked has been started in the wave, and verification is green after the last merge.
+**Done when**: every ticket in the wave is merged, the conflict-marker search printed nothing for each merge, every ticket its merges unblocked has been started in the wave unless a hold stands, and verification is green after the last merge.
 
 ## 7. Review where the tickets touch, fix, close
 
