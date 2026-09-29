@@ -71,6 +71,9 @@ Copy in only what an agent cannot look up: an unwritten convention, the reason b
 
 ## Repo and user rules
 - <commit and comment language>, <accepted way to verify>, <lint command>, <test accounts>.
+- Commit format: <the commit-message format the repository's own agent documents declare, repeated here
+  in full rather than pointed to, since a ticket agent commits often and cannot re-read those documents
+  before each one>; <or "none declared: match this repo's existing commit style">.
 - Credentials: never read, print or pass on a token or credential (no `gh auth token`, no reading a CLI's
   hosts or config file or a token's environment variable, no token in a URL or a command). A `gh`, `glab`,
   push or upload failure goes into your report with the command and its error as printed; never work
