@@ -627,7 +627,7 @@ Append each answer to `decisions.md` ("Decisions, memory, machine and credential
 
 Ask again only when the user brings it up or the integration branch's head moves (a later wave merged), since the status line then records no ship question for the current head — the same rule that lets a stream reopened per **After ship** ask again, once its next wave gives the integration branch a new head.
 
-**Skill changes of this plugin's own repository.** When a changed path lies under `plugins/matt-with-paseo/skills/`, the eval gate has passed before the push below: README, "Behaviour evals", "Eval gate", and `CODING_STANDARDS.md` H3 give the slice and how to run it.
+**Skill changes of this plugin's own repository.** When a changed path lies under `plugins/matt-with-paseo/skills/`, the eval gate has passed before the push below: README, "Behaviour evals", "Eval gate", and `CODING_STANDARDS.md` H3 give the slice and how to run it. Otherwise tell the user, headed with the slug, and push nothing.
 
 **Push and open.** On the user's yes, in this order:
 

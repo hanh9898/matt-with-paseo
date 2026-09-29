@@ -265,7 +265,7 @@ The wave skill reads the file while preparing a wave, points every agent to it f
 
 ### Known Paseo behaviour
 
-Paseo does some things a run does not expect: a finish notification that never arrives, a heartbeat tick that is skipped, a `create_workspace` that times out while it still makes the worktree, an archive that removes uncommitted files, a parent's archive that takes its running children along. Each such fact has one row in [`PASEO-FACTS.md`](plugins/matt-with-paseo/skills/matt-with-paseo/PASEO-FACTS.md), written for the agents that run the skills: what was seen, how it was learned, the Paseo version it was seen on (`version not recorded` where nobody wrote it down). The skills read the row that matches before the step it touches. On Windows the shells and a fixed service `port` behave as the `paseo.json` notes above say.
+The skills act on what Paseo is known to do: they check the real artifacts instead of trusting "finished", every heartbeat tick re-reads the agents' real state and every heartbeat expires, they read `git worktree list` before calling `create_workspace` again, they archive only a stopped agent with a clean, merged worktree, and they replace a stream agent only when no ticket agent runs. The why is one row per fact in [`PASEO-FACTS.md`](plugins/matt-with-paseo/skills/matt-with-paseo/PASEO-FACTS.md), written for the agents that run the skills, each with its basis and the Paseo version it was seen on (`version not recorded` where nobody wrote it down). On Windows the shells and a fixed service `port` behave as the `paseo.json` notes above say.
 
 ## Installation
 
@@ -362,7 +362,7 @@ Files in this repo:
 - **State lives on disk.** Ticket status and the wave file are enough for a fresh session to resume; for streams, the index and the agents' labels are.
 - **Each layer talks only to the layer below it.** The stream skill prompts, restarts and archives stream agents, never ticket agents, and reads only public signals (tracker status, end-of-turn messages, agent status, git), never a wave file ([ADR 0002](docs/adr/0002-nested-orchestration-per-stream.md)).
 - **Reconcile, do not just report.** The stream skill's heartbeat compares the index with what it observes and takes one idempotent action per gap, so a new session recovers by running one tick ([ADR 0004](docs/adr/0004-stream-heartbeat-is-a-reconcile-loop-with-supervision.md)).
-- **Never archive a parent while its children run.** Archiving a Paseo agent archives its running child agents too (measured, probe C1), so a stream agent is replaced only when no ticket agent of its stream runs.
+- **Never archive a parent while its children run.** A stream agent is replaced only when no ticket agent of its stream runs (the archive row of the workspaces and worktrees table in [`PASEO-FACTS.md`](plugins/matt-with-paseo/skills/matt-with-paseo/PASEO-FACTS.md) says why).
 
 ## Limitations
 
