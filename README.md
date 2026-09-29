@@ -413,6 +413,14 @@ claude plugin eval . --scaffold
 
 `--scaffold` runs each case's `fixture.sh` as you, to build its repository; read them first. The first run in a directory asks you to trust the plugin, so start it from an interactive terminal; from a script, CI or an agent session, add `--trust-plugin` once you have read the suite. A full run is 26 cases (7 from the 0.4.1 baseline, 19 added for 0.4.2), 3 runs each, in two arms (with and without the plugin); the report scores each arm case by case. Each fixture strips carriage returns before it runs, so a CRLF checkout on Windows works too.
 
+**Eval gate.** A change under `plugins/matt-with-paseo/skills/` merges only after the gate slice passes. The slice is three cases, one per entry point the skills guard, each with a one-line prompt, read-only tools and no observed-state block: `wave-not-configured` (the wave skill sends an unconfigured repository to setup and stops), `streams-no-paseo-tools` (the stream skill stops when Paseo's tools are missing) and `streams-free-text-argument` (the stream skill stops on an argument that is not a slug). At 3 runs in two arms that is 18 agent runs. Cost: measured in the stream's final eval run. Run it from `plugins/matt-with-paseo`, one command per case, and merge only when all three exit 0 (the default threshold is 1.0, so any case below a perfect score fails); from a script, add `--trust-plugin` as above:
+
+```
+for c in wave-not-configured streams-no-paseo-tools streams-free-text-argument; do claude plugin eval . --scaffold --case "$c" || exit 1; done
+```
+
+The full suite runs for a release, not for each change.
+
 ## Acknowledgements
 
 - [Matt Pocock](https://github.com/mattpocock) for the [skills](https://github.com/mattpocock/skills) this orchestrates (MIT).
