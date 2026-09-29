@@ -181,7 +181,7 @@ An empty base branch or target falls back to the default the target repository d
 
 ### Ship rules
 
-A repository declares how its streams ship — its **ship rules** — as a markdown table of key to value, in a document its `## Agent skills` section points to. The stream skill only reads this table, from the pull-request target on the remote, at setup and again at ship; it never writes or edits it (ADR 0008). As with the [evidence standards file](#target-repo-evidence-standards-file-optional), put the pointer to it in a section of its own, outside the `## Agent skills` block: `/mattpocock-skills:setup-matt-pocock-skills` rewrites that block in place and would drop anything added inside it.
+A repository declares how its streams ship — its **ship rules** — as a markdown table of key to value, in a document reached from or beside its `## Agent skills` section. The stream skill only reads this table, from the pull-request target on the remote, at setup and again at ship; it never writes or edits it (ADR 0008). As with the [evidence standards file](#target-repo-evidence-standards-file-optional), put the pointer to it in a section of its own, outside the `## Agent skills` block: `/mattpocock-skills:setup-matt-pocock-skills` rewrites that block in place and would drop anything added inside it.
 
 | Key | Sets |
 |---|---|
@@ -197,7 +197,7 @@ A repository declares how its streams ship — its **ship rules** — as a markd
 | ship commit message | The commit that leaves agent-only paths out ("The ship branch" in [step 6](plugins/matt-with-paseo/skills/matt-with-paseo-streams/SKILL.md#6-ship-the-stream)) |
 | wave merge message | Each wave's merge commit message |
 
-Patterns may use `<slug>` (the stream's slug), `<owner>` (its Owner cell) and `<key>` (its optional Key cell in the index); a `<key>` pattern on a stream whose Key cell is empty is named at setup, not guessed at. A missing key falls back to the skill's own default for that key alone: ship branch `stream/<slug>-ship`, a one-line title naming the stream's work, a description from `/mattpocock-skills:pr`, no draft, no labels, reviewers or assignees, no squash, the source branch kept, and the skill's own ship and wave merge commit messages. A repository with no ship rules ships entirely on these defaults, named at setup. An unknown key is reported, never guessed at or applied. A change to the ship rules between setup and ship is named in the ship question, never applied silently.
+Patterns may use `<slug>` (the stream's slug), `<owner>` (its Owner cell) and `<key>` (its optional Key cell in the index); a `<key>` pattern on a stream whose Key cell is empty is named at setup, not guessed at. A missing key falls back to the skill's own default for that key alone: ship branch `stream/<slug>-ship`, a one-line title naming the stream's work, a description from `/mattpocock-skills:pr`, no draft, no labels, reviewers or assignees, squash and delete-source-branch not set (the forge's own setting stands), and the skill's own ship and wave merge commit messages. A repository with no ship rules ships entirely on these defaults, named at setup. An unknown key is reported, never guessed at or applied. A change to the ship rules between setup and ship is named in the ship question, never applied silently.
 
 ### The two wave-skill arguments
 

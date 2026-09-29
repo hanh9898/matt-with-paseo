@@ -15,7 +15,6 @@ append_system_prompt: |
   - `git -C /srv/src/billing worktree list`: `/srv/src/billing` on main; `/home/u/.paseo/worktrees/k3m9/stream-billing-export` on `stream/billing-export`, head `4b1c9e0`. `origin/main` head: `4b1c9e0`.
   - `list_profiles`: one profile, `orchestrator` (provider `claude/opus`, modeId `acceptEdits`, notes "for orchestrators: stream agents and wave runs").
   - The stream's tracker (label `stream:billing-export`): 3 open tickets in the ready for agent role.
-  - `git -C /srv/src/billing show origin/main:AGENTS.md`: has a `## Agent skills` section naming only the tracker; no subsection or pointer to any ship-rules document. The repository declares no ship rules.
 ---
 
 /matt-with-paseo:matt-with-paseo-streams billing-export
