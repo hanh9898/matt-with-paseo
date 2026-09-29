@@ -150,5 +150,45 @@ class SkillCards(unittest.TestCase):
         self.assertIn(str(Path("bare") / "SKILL.md"), str(raised.exception))
 
 
+def make_plugin(root):
+    for name, description in CARDS.items():
+        write(root / "skills" / name / "SKILL.md", f"---\nname: {name}\ndescription: {description}\n---\n")
+
+
+class CheckTriggers(unittest.TestCase):
+    def setUp(self):
+        self.tmp = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, self.tmp, ignore_errors=True)
+        make_plugin(self.tmp / "plugin")
+
+    def run_check(self, cases=None):
+        path = self.tmp / "cases.json"
+        if cases is not None:
+            write(path, json.dumps(cases))
+        return subprocess.run(
+            [sys.executable, "-B", str(CHECK), "--cases", str(path), "--plugin-root", str(self.tmp / "plugin")],
+            capture_output=True, text=True)
+
+    def test_exits_clean_and_silent_when_every_skill_is_covered(self):
+        result = self.run_check(covering("alpha") + covering("beta"))
+
+        self.assertEqual(result.stdout, "")
+        self.assertEqual(result.returncode, 0)
+
+    def test_prints_one_line_per_finding_and_exits_one(self):
+        result = self.run_check(covering("beta") + covering("alpha")[1:])
+
+        self.assertEqual(result.stdout.splitlines(),
+                         ["alpha: 2 briefs that should open it; write at least 3"])
+        self.assertEqual(result.returncode, 1)
+
+    def test_a_missing_cases_file_is_one_line_on_stderr_and_exit_two(self):
+        result = self.run_check()
+
+        self.assertEqual(result.stdout, "")
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("cases.json", result.stderr)
+
+
 if __name__ == "__main__":
     unittest.main()
