@@ -276,7 +276,9 @@ Fix each finding. Before sending new work into an existing worktree, fast-forwar
 
 Append a `## Review` section to the end of the common rules file: the fixed point, the number of findings per axis, and the outcome of each finding. A finding whose question is asked and not yet answered reads **waiting on the user's decision**; update it once the answer comes. While any finding reads so, the wave stays open: step 8 does not start, and the question comes back in the next round. An answer that puts the question off names the ticket that will carry it, and that is the finding's outcome.
 
-**Done when**: every finding has an outcome (fixed, skipped with a reason, or put off to a named ticket), none reads waiting on the user's decision, every decision is recorded in a ticket, and the `## Review` section is written.
+Mark the outcome of the mechanisms in `## Review`, so step 8 can count them. Each review run gets `changed the work: yes` when a fix or a decision it raised altered a merged file or a ticket, and `changed the work: no` when every finding was skipped or put off, or it found none. Each decision round (a checkpoint of this step) gets `took the recommendation: yes` or `took the recommendation: no`, or `no recommendation` when the round offered none. The "not applicable" line of a one-ticket wave is no review run and carries no mark.
+
+**Done when**: every finding has an outcome (fixed, skipped with a reason, or put off to a named ticket), none reads waiting on the user's decision, every decision is recorded in a ticket, every review run and decision round in the `## Review` section carries its mark, and the section is written.
 
 ## 8. Clean up the wave, open the next
 
@@ -296,6 +298,6 @@ Then commit the wave file on the integration branch, alone in its commit (`git a
 
 Before returning to step 2, run step 1 again, reading its files and `list_profiles` afresh rather than from what this session read before. Compare with what step 1 stated last time (its six things, the profile's `notes` included): a change to the tracker configuration, the triage label file, a profile or the evidence standards file is named to the user in step 2's presentation, and the next wave follows the new version. For the tracked files, `git diff <this wave's base commit> HEAD -- <their paths>` shows the change. Read [`COMMON-RULES-TEMPLATE.md`](COMMON-RULES-TEMPLATE.md) again too: a section it has and this wave's rules lack, or the reverse (the log sections `## Wave agents` and `## Review` aside), is named the same way, and step 3 writes the next wave's rules from this reading.
 
-Return to step 2 with the new base commit. When no open ticket can join a wave, report a summary: which tickets are `resolved`, which wait on a human, and which remain open and what blocks them.
+Return to step 2 with the new base commit. When no open ticket can join a wave, report a summary: which tickets are `resolved`, which wait on a human, and which remain open and what blocks them. End it with the mechanism counts, added up over the `## Review` of every wave file of the run: review runs and how many marked `changed the work: yes`, decision rounds and how many marked `took the recommendation: yes`. A count of zero reads `0 of 0`, and a mark missing from a wave file is reported as missing, never counted as `no`.
 
-**Done when**: every row in the table is checked as cleaned or has a reason for keeping it that the user has been told, no heartbeat of the wave remains, the wave file is committed, step 1 has run again, and the next wave is open or the summary is reported.
+**Done when**: every row in the table is checked as cleaned or has a reason for keeping it that the user has been told, no heartbeat of the wave remains, the wave file is committed, step 1 has run again, and the next wave is open or the summary, with the mechanism counts, is reported.
