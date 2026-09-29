@@ -105,6 +105,37 @@ class VersionGate(unittest.TestCase):
         self.assertEqual(result.returncode, 1, result.stderr)
         self.assertIn("NEW.md", result.stdout)
 
+    def test_outside_a_git_checkout_it_skips_with_a_note_on_stderr_and_no_finding(self):
+        with tempfile.TemporaryDirectory() as bare:
+            write(Path(bare) / PLUGIN_JSON, manifest("0.4.2"))
+            write(Path(bare) / WAVE_SKILL, "step 1\n")
+
+            result = self.run_check(root=bare)
+
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual(result.stdout, "")
+        self.assertIn("skipped", result.stderr)
+
+    def test_a_folder_inside_another_checkout_is_not_a_checkout_of_its_own(self):
+        inner = self.root / "vendored"
+        write(inner / PLUGIN_JSON, manifest("0.4.2"))
+        write(inner / WAVE_SKILL, "changed\n")
+
+        result = self.run_check(root=inner)
+
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn("skipped", result.stderr)
+
+    def test_without_a_main_branch_it_skips_instead_of_failing(self):
+        git(self.root, "branch", "-q", "-m", "main", "trunk")
+        write(self.root / WAVE_SKILL, "step 1, reworded\n")
+
+        result = self.run_check()
+
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual(result.stdout, "")
+        self.assertIn("skipped", result.stderr)
+
     def test_a_change_to_a_file_the_list_does_not_name_passes(self):
         write(self.root / "plugins/matt-with-paseo/triggers/cases.json", '[{"brief": "x"}]\n')
         self.commit("add a trigger case")
