@@ -162,18 +162,63 @@ sequenceDiagram
     S->>You: link, posted on the spec or tickets
 ```
 
+Beyond the two streams above, the stream skill also holds, ships and takes in new work:
+
+**Pause.** Ask it to `pause` and it sends `hold` to every stream's agent, not just the one you're talking to, and once nothing is left running writes `paused` into each status line — the point where you can restart the machine. Asking to resume afterwards, or just opening a new session in the control folder, is one reconcile tick, the same as any other recovery. See [Pause and resume](plugins/matt-with-paseo/skills/matt-with-paseo-streams/SKILL.md#pause-and-resume).
+
+**Intake agents.** Name one of Matt's intake skills — `triage`, `grilling` or `wayfinder` — for an existing stream or for work that has no stream yet, and the stream skill spawns an **intake agent** to run it (an existing stream is held at its next wave boundary first, so only one agent writes its worktree at a time). Nothing else ever writes a spec or a ticket: not the stream skill, not a stream agent. See [Intake agents](plugins/matt-with-paseo/skills/matt-with-paseo-streams/SKILL.md#intake-agents).
+
+Shipping goes through a **ship branch**, never the integration branch itself (see [Ship the stream](plugins/matt-with-paseo/skills/matt-with-paseo-streams/SKILL.md#6-ship-the-stream) and [ADR 0007](docs/adr/0007-pull-request-comes-from-a-ship-branch.md)), and a running stream also takes `hold`, `release` and `quota <N>` prompts between waves (see [The two wave-skill arguments](#the-two-wave-skill-arguments) below).
+
 ### The control folder and its index
 
 The stream skill is user-invoked only, like the wave skill, and runs from a **control folder** outside every repository: create an empty folder, open a Claude Code session in it, and type `/matt-with-paseo-streams` (`/matt-with-paseo:matt-with-paseo-streams` with the plugin install), or `/matt-with-paseo-streams <slug>` for one stream.
 
-The index is `streams.md` at the root of that folder. With no index yet, the skill writes it and asks you for its fields:
+The index is `streams.md` at the root of that folder. With no index yet, the skill writes it and asks you for its fields; it asks you for each repository's path rather than searching your disks:
 
 - the **agent cap**, above the table: the most agents running at once across every stream;
-- one row per stream: its slug, the absolute path of a local checkout of its repository, its owner, where its tickets live (a folder for a local-markdown tracker; a label or a parent spec issue for GitHub or GitLab), its base branch, its pull-request target, its priority, and a status line the skill keeps current.
+- one row per stream: its slug, the absolute path of a local checkout of its repository, its owner, where its tickets live (a folder for a local-markdown tracker; a label or a parent spec issue for GitHub or GitLab), its base branch, its pull-request target, its forge (GitHub or GitLab), an optional external key for its ship rules' `<key>` placeholder, its priority, and a status line the skill keeps current.
 
-An empty base branch or target falls back to the default the target repository declares next to its `## Agent skills` section, then to the remote's default branch. A base branch that gathers several people's unfinished work, such as a shared `test` branch, draws a warning, never a block. The index only says where each stream's tickets live; the tracker stays the one source of truth for them. The field table and an example are in [The index](plugins/matt-with-paseo/skills/matt-with-paseo-streams/SKILL.md#the-index).
+Beside it, `decisions.md` keeps the history the status lines do not: one appended line for each decision the skill acts on (a ship, an overlap or need answer, a quota or cap change, a hold or pause), with the answer it rests on.
+
+An empty base branch or target falls back to the default the target repository declares next to its `## Agent skills` section, then to the remote's default branch. An empty forge is read from the remote's host (`github.com`, `gitlab.com`) or from the tracker configuration, the only way a self-hosted GitLab is known. A base branch that gathers several people's unfinished work, such as a shared `test` branch, draws a warning, never a block.
+
+**Setup checks.** Before a stream gets its worktree, the skill fetches the remote and checks that the pull-request target exists there (a branch only in your checkout is not enough), that the base branch carries a tracker configuration, and that the forge is known. It then stops once with every problem it found and what you can do about each. An unreachable remote comes with its URL and git's error. A base branch without tracker configuration comes with two choices: land the setup on the base branch as a change of its own (proposed first), or commit it on the stream branch, where the pull request leaves it out. The index only says where each stream's tickets live; the tracker stays the one source of truth for them. The field table and an example are in [The index](plugins/matt-with-paseo/skills/matt-with-paseo-streams/SKILL.md#the-index).
 
 **How the cap is split.** Each running stream uses one slot for its stream agent plus its quota, the number of ticket agents it may run at once. Streams take slots in priority order, first come first served by default, so a cap below 2 runs no stream. A stream left without room waits on the cap and starts at a later wave boundary; a running wave is never cut for capacity.
+
+### Picking a cap
+
+The agent cap counts every agent the machine runs for the skills at once: every stream agent, every ticket agent, and any intake, diagnosis or review agent a stream spawns. Size it to what the machine can actually carry, not to how many tickets are ready:
+
+- **Per-agent memory.** Each agent is a Claude Code session plus a git worktree; measure one running agent's resident memory on your machine (`docker stats`, Task Manager, `ps`) rather than guessing, then divide the machine's spare memory by that figure.
+- **Containers a ticket starts.** A ticket agent's own verification (a dev server, a database, a test runner) may start containers of its own; budget for the heaviest ticket's containers alongside its agent, not the agent alone.
+- **Memory reserved elsewhere.** Subtract what a VM (WSL2's `.wslconfig`, a Docker Desktop VM) or another process on the same machine already reserves before dividing; a cap sized off total RAM alone overcommits the moment the VM's own reservation is fixed.
+- **One shared usage limit.** Every agent, in every stream, draws on the same Claude usage limit; a higher cap runs more agents at once, not more work overall, and spends that shared limit faster.
+
+Start low, watch one wave run, and raise the cap only once you have measured room to spare. A tick that finds the machine choking (commands far slower than usual, `create_workspace` timing out) proposes holding streams or lowering the cap instead of guessing; nothing about memory or CPU is measured automatically.
+
+### Ship rules
+
+A repository declares how its streams ship — its **ship rules** — as a markdown table of key to value, in a document reached from or beside its `## Agent skills` section. The stream skill only reads this table, from the pull-request target on the remote, at setup and again at ship; it never writes or edits it (ADR 0008). As with the [evidence standards file](#target-repo-evidence-standards-file-optional), put the pointer to it in a section of its own, outside the `## Agent skills` block: `/mattpocock-skills:setup-matt-pocock-skills` rewrites that block in place and would drop anything added inside it.
+
+| Key | Sets |
+|---|---|
+| ship branch | The ship branch's name |
+| title | The pull request's title |
+| description template | The template its description is filled from |
+| draft | Whether the pull request opens as a draft |
+| labels | Labels applied to it |
+| reviewers | Reviewers requested on it |
+| assignees | Assignees set on it |
+| squash | Whether the merge squashes |
+| delete source branch | Whether the source branch is deleted on merge |
+| ship commit message | The commit that leaves agent-only paths out ("The ship branch" in [step 6](plugins/matt-with-paseo/skills/matt-with-paseo-streams/SKILL.md#6-ship-the-stream)) |
+| wave merge message | Each wave's merge commit message |
+
+Patterns may use `<slug>` (the stream's slug), `<owner>` (its Owner cell) and `<key>` (its optional Key cell in the index); a `<key>` pattern on a stream whose Key cell is empty is named at setup, not guessed at. A missing key falls back to the skill's own default for that key alone: ship branch `stream/<slug>-ship`, a one-line title naming the stream's work, a description from `/mattpocock-skills:pr`, no draft, no labels, reviewers or assignees, squash and delete-source-branch not set (the forge's own setting stands), and the skill's own ship and wave merge commit messages. A repository with no ship rules ships entirely on these defaults, named at setup. An unknown key is reported, never guessed at or applied. A change to the ship rules between setup and ship is named in the ship question, never applied silently.
+
+Ship rules are the target repository's own. This plugin's own rules for its skills, agent documents and scripts are [`CODING_STANDARDS.md`](CODING_STANDARDS.md) (see [Contributing](#contributing)); they are never applied to a target repository, which declares its ship rules instead.
 
 ### The two wave-skill arguments
 
@@ -187,6 +232,14 @@ The stream agent runs the wave skill with two optional arguments, which you can 
 - `quota <N>` caps the ticket agents the run lets run at once.
 
 The wave skill runs in a checkout of its integration branch, whoever calls it. Without `stream` it behaves exactly as in 0.3.0; without `quota` a wave takes every ticket that can run.
+
+With `stream`, the run also takes three prompts while it runs, typed into its session by the stream skill or by you (ADR 0006):
+
+- `hold`: it starts no new agent, rolling start included, while the agents already running carry on and finished tickets still merge.
+- `release`: lifts the hold; waiting tickets start at once, within the quota.
+- `quota <N>`: a new quota. A raise starts waiting tickets at once; a cut stops no agent and takes effect as agents finish.
+
+With `stream`, a single ticket also runs as a one-ticket wave, rather than the skill suggesting `/mattpocock-skills:implement`. And the run never ships: it pushes nothing and opens no pull request. Asked to, it answers that shipping belongs to the stream skill.
 
 ## Requirements
 
@@ -237,7 +290,7 @@ npx skills add hanh9898/matt-with-paseo --skill '*' -g -a claude-code
 gh skill install hanh9898/matt-with-paseo --all --agent claude-code --scope user
 ```
 
-`--all` takes both skills. This resolves the latest tagged release; add `--pin v0.4.1` to fix a version. The commands are `/matt-with-paseo` and `/matt-with-paseo-streams`.
+`--all` takes both skills. This resolves the latest tagged release; add `--pin v0.4.2` to fix a version. The commands are `/matt-with-paseo` and `/matt-with-paseo-streams`.
 
 ### Option 4: Manual copy
 
@@ -276,9 +329,10 @@ Files it writes, next to your ticket folder:
 
 - `wave<N>-common-rules.md`: the rules every agent of wave N reads, followed by the wave's agent table and review log.
 
-The stream skill writes one file, in its control folder:
+The stream skill writes two files, in its control folder:
 
 - `streams.md`: the index, the agent cap and one row per stream with its status line.
+- `decisions.md`: one appended line per decision the skill acts on.
 
 Files in this repo:
 
@@ -290,7 +344,7 @@ Files in this repo:
 | [`plugins/matt-with-paseo/skills/matt-with-paseo-streams/SKILL.md`](plugins/matt-with-paseo/skills/matt-with-paseo-streams/SKILL.md) | The stream orchestrator: the index, then steps 0 to 7 |
 | [`.claude-plugin/marketplace.json`](.claude-plugin/marketplace.json) | The marketplace that lists the plugin |
 | [`plugins/matt-with-paseo/`](plugins/matt-with-paseo/) | The plugin itself: its manifest, both skills, its listing README and license; the only folder an install copies |
-| [`docs/adr/`](docs/adr/) | Architecture decisions behind the stream skill: streams share no dependencies, one wave-skill agent per stream, one integration branch per stream, the reconcile loop |
+| [`docs/adr/`](docs/adr/) | Architecture decisions behind the stream skill: streams share no dependencies (0001), one wave-skill agent per stream (0002), one integration branch per stream (0003), the reconcile loop (0004), intake agents on request (0005), hold, release and quota by prompt (0006), the ship branch (0007), ship rules stay with the target repository (0008) |
 | [`scripts/`](scripts/) | The drift check against Matt's installed skills, and its tests |
 
 ## Design principles
@@ -314,11 +368,7 @@ Files in this repo:
 
 ## Contributing
 
-Issues and pull requests are welcome. Both skills follow Matt Pocock's [`mattpocock-skills:writing-for-agents`](https://github.com/mattpocock/skills) guidance, so a good change usually:
-
-- adds a row to a table rather than a new prose branch (new agent flows go in the wave skill's step 4 flow table);
-- gives every step a checkable completion criterion;
-- moves material only some runs need into `TROUBLESHOOTING.md` or a new file behind a pointer, keeping `SKILL.md` short.
+Issues and pull requests are welcome. Every document an agent reads, and every script, follows [`CODING_STANDARDS.md`](CODING_STANDARDS.md): Matt Pocock's [`mattpocock-skills:writing-for-agents`](https://github.com/mattpocock/skills) as checkable rules, the loop design rules, and the scripts' conventions. `mattpocock-skills:code-review` reads it on its Standards axis, so each finding cites one of its rules.
 
 When a fix comes from a real incident, describe the symptom you saw in the pull request.
 
@@ -328,26 +378,28 @@ Before a release, run the drift check by hand (Python 3, standard library only):
 python scripts/drift-check.py
 ```
 
-It lists every `mattpocock-skills:<name>` reference in both skills (`plugins/matt-with-paseo/skills/matt-with-paseo/`, `plugins/matt-with-paseo/skills/matt-with-paseo-streams/`), the plugin's README and this README and compares each one with the Matt plugin installed on your machine, not with a pinned version: it reads the user-scope `mattpocock-skills` entry of `~/.claude/plugins/installed_plugins.json` (pass `--plugin-root <dir>` to compare against another copy). A reference fails when the plugin's manifest does not ship that skill, or when it sits in an agent flow (step 4 of the wave skill's `SKILL.md`, or anywhere in `COMMON-RULES-TEMPLATE.md`; the stream skill spawns only the wave skill, so it has none) and the skill sets `disable-model-invocation`. The check only sees prefixed names, so always name Matt's skills as `mattpocock-skills:<name>`.
+It lists every `mattpocock-skills:<name>` reference in the documents the standards cover (both skills, `AGENTS.md`, `CLAUDE.md`, `docs/agents/`, the eval prompts and graders), `CODING_STANDARDS.md` itself, the plugin's README and this README, and compares each one with the Matt plugin installed on your machine, not with a pinned version: it reads the user-scope `mattpocock-skills` entry of `~/.claude/plugins/installed_plugins.json` (pass `--plugin-root <dir>` to compare against another copy). A reference fails when the plugin's manifest does not ship that skill, or when it sits in an agent flow (step 4 of the wave skill's `SKILL.md`, or anywhere in `COMMON-RULES-TEMPLATE.md`; the stream skill spawns only the wave skill, so it has none) and the skill sets `disable-model-invocation`. The reference check only sees prefixed names, so always name Matt's skills as `mattpocock-skills:<name>`. It also fails on any line naming the beta skill whose loop lens the standards carry unnamed (`BETA_LENS` in the script holds its name), so that no document comes to depend on it.
 
 | Exit | Output | Meaning |
 |---|---|---|
 | 0 | nothing | no stale reference |
-| 1 | one line per stale reference | fix each line before releasing |
+| 1 | one line per stale reference, or per line naming that beta skill | fix each line before releasing |
 | 2 | one error line | the check could not run: no plugin found, or the wave skill's `SKILL.md` has no `## 4.` step |
 
 Its tests: `python -B -m unittest discover -s scripts`.
 
 ### Behaviour evals
 
-The plugin carries an eval suite for [`claude plugin eval`](https://code.claude.com/docs/en/plugin-evals) in `plugins/matt-with-paseo/evals/`. Each case builds a small repository with a fixture script, types one of the two commands, and grades what the skill decides: the locating step of the wave skill (not configured, no spec, a spec without tickets, tickets with width, a pure chain, a wayfinder map) and the stream skill's first run with no index. The runs are read-only, and Paseo's MCP server is not available inside an eval run, so the suite checks decisions, not spawning; the real multi-agent run is the acceptance run of #23. Every case also runs without the plugin, so the report shows what the plugin adds.
+The plugin carries an eval suite for [`claude plugin eval`](https://code.claude.com/docs/en/plugin-evals) in `plugins/matt-with-paseo/evals/`. Each case builds a small repository with a fixture script, types one of the two commands, and grades what the skill decides: the locating step of the wave skill (not configured, no spec, a spec without tickets, tickets with width, a pure chain, a wayfinder map) and the stream skill's entry guards and first run (no Paseo tools, free text instead of a slug, no index). The runs are read-only, and Paseo's MCP server is not available inside an eval run, so the suite checks decisions, not spawning; the real multi-agent run is the acceptance run of #23. Every case also runs without the plugin, so the report shows what the plugin adds.
+
+**Observed state in the prompt.** A stream-skill case that needs Paseo describes what Paseo would report instead of calling it: an observed-state block in the case's `append_system_prompt` (`prompt.md` frontmatter) states, one line each, that the tools are available and what they return (the agents with their labels and statuses, activity counts and last activity entries, pending questions and permissions, the user's latest answer). The stream skill's entry guard takes such a block in place of the tools, and only for what it states; the command in the prompt's body stays alone, so its argument stays what the case types. The case then grades what the skill decides from that state (what it sends, to whom, what it refuses, what it asks), never its phrasing. `streams-no-index` is the smallest example; `streams-no-paseo-tools` is the one case that states nothing, to check the guard stops.
 
 ```
 cd plugins/matt-with-paseo
 claude plugin eval . --scaffold
 ```
 
-`--scaffold` runs each case's `fixture.sh` as you, to build its repository; read them first. The first run in a directory asks you to trust the plugin, so start it from an interactive terminal; from a script, CI or an agent session, add `--trust-plugin` once you have read the suite. A full run is 7 cases, 3 runs each, in two arms (with and without the plugin). The last full run scored 1.00 with the plugin on every case, against 0.20 to 0.50 without it. Each fixture strips carriage returns before it runs, so a CRLF checkout on Windows works too.
+`--scaffold` runs each case's `fixture.sh` as you, to build its repository; read them first. The first run in a directory asks you to trust the plugin, so start it from an interactive terminal; from a script, CI or an agent session, add `--trust-plugin` once you have read the suite. A full run is 26 cases (7 from the 0.4.1 baseline, 19 added for 0.4.2), 3 runs each, in two arms (with and without the plugin); the report scores each arm case by case. Each fixture strips carriage returns before it runs, so a CRLF checkout on Windows works too.
 
 ## Acknowledgements
 

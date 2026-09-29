@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: streams-49-ship-branch
+description: "A reconcile tick over five streams at their last stage. The stream skill must ship through a ship branch - list the ticket folder and wave file as left out in a clean stream's ship question, report a conflicting stream with no ship question, and keep in the path the user kept when planning a third stream's ship commit; that third stream's `gh pr create` then fails to upload its evidence, which is reported to the user with no attempt to fetch or use a token. A fourth stream, cut from a `develop` branch three commits ahead of its `main` PR target, must have its ship question split the pull request's commits into the stream's own wave (1) and the base branch's own (3), and propose shipping `develop` into `main` first or cutting the stream again, since the base's share is the majority (#64). A fifth stream, `support-tickets`, already answered yes: its ship rules declare two labels, one the forge does not recognise; the pull request opens with the label the forge accepted, and the reply must report the refused one afterwards, never invent or work around it, and never propose creating the missing label (#63)."
+tags: [ship, streams, commit-split]
+context:
+  scaffold_script: fixture.sh

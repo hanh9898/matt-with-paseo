@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: streams-free-text-argument
+description: The stream skill given free text instead of a stream slug must stop and say what it accepts, without picking a stream for the user.
+tags: [guard, streams]
+context:
+  scaffold_script: fixture.sh

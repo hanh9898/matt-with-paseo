@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: wave-54-repro-and-no-code-flow
+description: Three tickets, no wave yet; the symptom ticket's only reproduction is a comment that read the code, and one ticket changes only documentation. At step 2, with the flow each ticket would get, the wave skill must not accept the symptom as reproduced and must give the documentation ticket the flow for tickets that change no code.
+tags: [graph, spawn, wave]
+context:
+  scaffold_script: fixture.sh

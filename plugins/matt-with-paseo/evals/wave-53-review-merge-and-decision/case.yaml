@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: wave-53-review-merge-and-decision
+description: A reopened session finds wave 1 in its review step. One finding's fix is merging back, merged by git without a conflict but carrying conflict markers the ticket branch committed; another finding still waits on the user's decision. The wave skill must report the markers and leave that merge uncommitted, and bring the decision back to the user instead of cleaning up or opening the next wave.
+tags: [locate, merge, review, wave]
+context:
+  scaffold_script: fixture.sh

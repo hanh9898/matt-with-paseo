@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Check every mattpocock-skills:<name> reference against the installed Matt plugin."""
+"""Check every mattpocock-skills:<name> reference against the installed Matt plugin, and flag any
+line naming the beta loop lens that CODING_STANDARDS.md carries unnamed."""
 
 import argparse
 import json
@@ -9,13 +10,17 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
 PLUGIN = REPO / "plugins" / "matt-with-paseo"
+# The scope CODING_STANDARDS.md states, the standards file itself, and both READMEs.
 DEFAULT_TARGETS = [PLUGIN / "skills" / "matt-with-paseo", PLUGIN / "skills" / "matt-with-paseo-streams",
-                   PLUGIN / "README.md", REPO / "README.md"]
+                   REPO / "AGENTS.md", REPO / "CLAUDE.md", REPO / "docs" / "agents", PLUGIN / "evals",
+                   REPO / "CODING_STANDARDS.md", PLUGIN / "README.md", REPO / "README.md"]
 REFERENCE = re.compile(r"mattpocock-skills:([a-z0-9][a-z0-9-]*)")
+BETA_LENS = "loop-me"
+BETA_LENS_NAMED = re.compile(rf"(?<![a-z0-9-]){BETA_LENS}(?![a-z0-9-])")
 
 
 def fail(message):
-    """Exit 2: the check could not run. Exit 1 is kept for "mismatches found"."""
+    """Exit 2: the check could not run. Exit 1 is kept for "findings"."""
     print(message, file=sys.stderr)
     sys.exit(2)
 
@@ -91,12 +96,18 @@ def main():
 
     plugin_root = args.plugin_root or find_installed_plugin()
     skills = installed_skills(plugin_root)
-    mismatches = 0
+    findings = 0
     for path in markdown_files(args.targets or DEFAULT_TARGETS):
         lines = path.read_text(encoding="utf-8").splitlines()
         flow = agent_flow_lines(path, lines)
         for number, line in enumerate(lines, 1):
+            if BETA_LENS_NAMED.search(line):
+                print(f"{path}:{number}: {BETA_LENS}: named, but CODING_STANDARDS.md part 2 carries "
+                      "its loop lens without naming it")
+                findings += 1
             for name in REFERENCE.findall(line):
+                if name == BETA_LENS:
+                    continue
                 if name not in skills:
                     reason = "not in the installed plugin"
                 elif number in flow and skills[name].get("disable-model-invocation") == "true":
@@ -104,8 +115,8 @@ def main():
                 else:
                     continue
                 print(f"{path}:{number}: mattpocock-skills:{name}: {reason} (compared against {plugin_root})")
-                mismatches += 1
-    return 1 if mismatches else 0
+                findings += 1
+    return 1 if findings else 0
 
 
 if __name__ == "__main__":

@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: streams-39-question-round
+description: The user's answer to a question round over four streams, routed by the operator's gates. "go with the suggestions" answers only the billing-export decision its stream agent suggested an option for, and the other comes back next round; "ok" to login-bug's stage confirmation and plan is sent as that answer and approves no wave; an answer naming no stream while csv-export and price-sync both wait is asked back and sent nowhere; tracker-docs' open question, which arrived while the round waited, reaches the next round word for word.
+tags: [round, streams]
+context:
+  scaffold_script: fixture.sh

@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: streams-61-ship-rules
+description: "Two streams. `reports-export`, not started: its PR target (release) on the remote declares ship rules with a `<key>` pattern and a `<slug>/ship` branch name, while its own stream branch points to a stale, different draft of the same document; setup must read from the PR target, never the stream branch, and name that the title pattern needs `<key>` while the stream's Key cell is empty, without stopping setup over either. `invoice-close`, already at its last stage: an overdue last tick must reconcile it too, in the same reply, and its ship question must name that the ship rules changed since its own earlier setup (a new `labels` key), and must show its declared `squash` as a merge option of the planned pull request, `delete source branch` as not set since the rules never declare it (#63). `reads-target-not-stream-branch`, `names-empty-key`, `names-ship-rules-change`, `shows-merge-options` and `relays-merge-message-pattern` fail on the base skill, since it has no mention of ship rules, `<key>`, a Key column/cell, merge options in the ship question, or a `wave merge message` pattern sent to a spawned stream agent, anywhere."
+tags: [setup, ship, ship-rules, streams]
+context:
+  scaffold_script: fixture.sh

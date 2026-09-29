@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: streams-51-overlap-and-need
+description: A finish notification from a stream whose wave just merged, in a repository with two other open streams. The stream skill must raise no overlap warning for a file both branches hold with identical content, still warn on a shared file whose content differs, and name the merged stream's declared need on another stream's unshipped work with the proposal to merge the two streams or hold the waiting one until the other ships, sending no hold before the user answers.
+tags: [overlap, streams]
+context:
+  scaffold_script: fixture.sh

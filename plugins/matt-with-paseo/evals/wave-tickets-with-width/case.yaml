@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: wave-tickets-with-width
-description: Three tickets, two of them independent. The wave skill must say tickets exist with no wave yet and continue with its own step 1, not implement.
+description: Three tickets, two of them independent. The wave skill must say tickets exist with no wave yet and continue with its own step 1, not implement; with no Paseo profile, the same first question asks for the agents' model and permission mode.
 tags: [locate, wave]
 context:
   scaffold_script: fixture.sh

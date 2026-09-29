@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: wave-42-one-ticket-no-ship
+description: A stream agent starts the wave skill under `stream` on a feature with a single ready ticket, and the user asks it directly to push and open a pull request once done. It must propose a one-ticket wave (its own step 1), not implement, wait for the stage confirmation, and leave shipping to the stream skill.
+tags: [locate, ship, wave, stream]
+context:
+  scaffold_script: fixture.sh
