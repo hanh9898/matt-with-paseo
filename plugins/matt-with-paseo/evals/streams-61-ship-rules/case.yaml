@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: streams-61-ship-rules
+description: A stream whose PR target (release) on the remote declares ship rules with a `<key>` pattern and a `<slug>/ship` branch name, while the stream's own local branch holds a stale, different draft of the same document. Setup must read the rules from the PR target, never the stream's own branch, and name that the title pattern needs `<key>` while the stream's Key cell is empty, without stopping setup over either.
+tags: [setup, ship-rules, streams]
+context:
+  scaffold_script: fixture.sh
