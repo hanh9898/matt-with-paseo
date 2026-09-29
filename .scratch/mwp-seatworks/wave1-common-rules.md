@@ -264,3 +264,23 @@ The stream's one eval run, on `8f7ede8` (2026-09-29), with the user's command fr
 | wave-tickets-with-width | 0.67 | asks-model-and-mode |
 | streams-49-ship-branch | 0.78 | honours-kept-path, pushes-only-ship-branch |
 | streams-40-silent-supervision | 0.80 | writes-last-tick |
+
+**User's decisions on the eval run (2026-09-30):**
+- One bounded fix pass (as D16): Sonnet 5.5 high, no review, only for the two new cases `wave-75` and `wave-95`; for each, decide skill wrong or grader wrong and fix that side. Then re-run only those two cases with the D9 command plus `--case`.
+- `wave-95`: the grader stands; the skill must make agent prompts English (#95, D27).
+- No baseline run, no fix for the other eight: they go into the ship PR's **Merge Danger** as partial scores with no baseline to compare, with the eval fix pass's unrun tests.
+
+### Eval fix pass
+
+| Ticket | Agent id | Workspace id | Branch | Base commit | Private resources | Cleaned |
+|---|---|---|---|---|---|---|
+| eval fixes | 9837d708-5977-48e1-a0b3-35262feeb9df | wks_9b9c13a775c032e6 | `mwp-seatworks/wave1/eval-fixes` | `d18de93` | temp `%TEMP%\mwp-seatworks-eval-fixes` | [x] |
+
+The eval fix agent judged **skill wrong** in both cases and changed only the wave skill's `SKILL.md` (2 commits, `c5d7390`, `e15341d`; 5 lines in, 3 out; `check-version-gate.py` and `troubleshooting-ratings.py` exit 0; no temp directory). Merged: `c843bf7`, conflict-marker search empty. Agent and workspace archived; `paseo ls -g --label stream=mwp-seatworks --label wave=1` lists nothing.
+
+Re-run (D9 command plus `--case`, one command per case, on `c843bf7`): `wave-75` **0.33** (was 0.00: `chosen-default-open-to-challenge` now passes; `answer-names-reason`, `challenge-not-ready-for-human` fail, FAIL FAIL FAIL), $0.19; `wave-95` **0.00** (`two-languages`, FAIL FAIL FAIL), $0.14. Reports under `evals/results/2026-09-29T17-11-15-259Z/` and `2026-09-29T17-12-57-909Z/`.
+
+Orchestrator's reading of the two final replies, against the grader text:
+- `wave-95`: every `create_agent` prompt is English, and the message to the user once both agents run is Vietnamese, which is what the grader asks for. The judge still voted FAIL three times.
+- `wave-75`: the "Chosen for you" row picks ISO 8601 with a reason, a challenge route by evidence in ticket comments and the report, and "whoever answers writes why the plan changes or stands". `answer-names-reason` still fails. `challenge-not-ready-for-human` has a reason to fail: the reply never says the agent keeps working, and it states the ready-for-human rule of the criteria row next to it.
+- The LLM grader defaults to `haiku` (`claude plugin eval --help`: `--judge-model`), and a vote gives no reason. So from this run alone a judge error cannot be told apart from a skill gap.
