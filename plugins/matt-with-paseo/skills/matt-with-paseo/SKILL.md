@@ -28,6 +28,7 @@ Words used throughout:
 - **Checkpoint**: a point where the run stops for the user to verify or decide (a question, an approval). Pushed right: the run does all the work it can first, so the user is asked once, late, with everything prepared.
 - **Brief**: what a checkpoint shows the user: a tight, decision-ready summary of what was produced and why, with a link to the asset itself, never the raw output.
 - **Hold**: a run with `stream` told `hold` spawns nothing new, rolling start included, while its running agents carry on; `release` lifts it (ADR 0006).
+- **User's language**: the language the user writes to you in; your own text to the user (a stage, a brief, a question, a status) follows it, while every prompt to an agent, every report and the common rules stay English, and text you relay verbatim stays as its author wrote it.
 
 ## Names this run writes
 
