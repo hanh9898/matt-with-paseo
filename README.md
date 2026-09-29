@@ -169,7 +169,7 @@ The stream skill is user-invoked only, like the wave skill, and runs from a **co
 The index is `streams.md` at the root of that folder. With no index yet, the skill writes it and asks you for its fields; it asks you for each repository's path rather than searching your disks:
 
 - the **agent cap**, above the table: the most agents running at once across every stream;
-- one row per stream: its slug, the absolute path of a local checkout of its repository, its owner, where its tickets live (a folder for a local-markdown tracker; a label or a parent spec issue for GitHub or GitLab), its base branch, its pull-request target, its forge (GitHub or GitLab), its priority, and a status line the skill keeps current.
+- one row per stream: its slug, the absolute path of a local checkout of its repository, its owner, where its tickets live (a folder for a local-markdown tracker; a label or a parent spec issue for GitHub or GitLab), its base branch, its pull-request target, its forge (GitHub or GitLab), an optional external key for its ship rules' `<key>` placeholder, its priority, and a status line the skill keeps current.
 
 Beside it, `decisions.md` keeps the history the status lines do not: one appended line for each decision the skill acts on (a ship, an overlap or need answer, a quota or cap change, a hold or pause), with the answer it rests on.
 
@@ -178,6 +178,26 @@ An empty base branch or target falls back to the default the target repository d
 **Setup checks.** Before a stream gets its worktree, the skill fetches the remote and checks that the pull-request target exists there (a branch only in your checkout is not enough), that the base branch carries a tracker configuration, and that the forge is known. It then stops once with every problem it found and what you can do about each. An unreachable remote comes with its URL and git's error. A base branch without tracker configuration comes with two choices: land the setup on the base branch as a change of its own (proposed first), or commit it on the stream branch, where the pull request leaves it out. The index only says where each stream's tickets live; the tracker stays the one source of truth for them. The field table and an example are in [The index](plugins/matt-with-paseo/skills/matt-with-paseo-streams/SKILL.md#the-index).
 
 **How the cap is split.** Each running stream uses one slot for its stream agent plus its quota, the number of ticket agents it may run at once. Streams take slots in priority order, first come first served by default, so a cap below 2 runs no stream. A stream left without room waits on the cap and starts at a later wave boundary; a running wave is never cut for capacity.
+
+### Ship rules
+
+A repository declares how its streams ship — its **ship rules** — as a markdown table of key to value, in a document its `## Agent skills` section points to. The stream skill only reads this table, from the pull-request target on the remote, at setup and again at ship; it never writes or edits it (ADR 0008). As with the [evidence standards file](#target-repo-evidence-standards-file-optional), put the pointer to it in a section of its own, outside the `## Agent skills` block: `/mattpocock-skills:setup-matt-pocock-skills` rewrites that block in place and would drop anything added inside it.
+
+| Key | Sets |
+|---|---|
+| ship branch | The ship branch's name |
+| title | The pull request's title |
+| description template | The template its description is filled from |
+| draft | Whether the pull request opens as a draft |
+| labels | Labels applied to it |
+| reviewers | Reviewers requested on it |
+| assignees | Assignees set on it |
+| squash | Whether the merge squashes |
+| delete source branch | Whether the source branch is deleted on merge |
+| ship commit message | The commit that leaves agent-only paths out ("The ship branch" in [step 6](plugins/matt-with-paseo/skills/matt-with-paseo-streams/SKILL.md#6-ship-the-stream)) |
+| wave merge message | Each wave's merge commit message |
+
+Patterns may use `<slug>` (the stream's slug), `<owner>` (its Owner cell) and `<key>` (its optional Key cell in the index); a `<key>` pattern on a stream whose Key cell is empty is named at setup, not guessed at. A missing key falls back to the skill's own default for that key alone: ship branch `stream/<slug>-ship`, a one-line title naming the stream's work, a description from `/mattpocock-skills:pr`, no draft, no labels, reviewers or assignees, no squash, the source branch kept, and the skill's own ship and wave merge commit messages. A repository with no ship rules ships entirely on these defaults, named at setup. An unknown key is reported, never guessed at or applied. A change to the ship rules between setup and ship is named in the ship question, never applied silently.
 
 ### The two wave-skill arguments
 

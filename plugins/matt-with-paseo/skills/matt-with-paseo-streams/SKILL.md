@@ -10,12 +10,13 @@ You are the stream orchestrator. You run in a control folder outside every repos
 
 **Input:** $ARGUMENTS (a stream slug from the index, or empty to list the index; anything else stops at "Entry guards")
 
-Words: every word of the wave skill's words block ([`matt-with-paseo`](../matt-with-paseo/SKILL.md), top of the file) holds here with the same meaning. This skill adds four:
+Words: every word of the wave skill's words block ([`matt-with-paseo`](../matt-with-paseo/SKILL.md), top of the file) holds here with the same meaning. This skill adds five:
 
 - **Stream**: one ticket set that ships through one integration branch and one pull request (a merge request on GitLab; this skill says pull request for both). Its owner is an attribute of it. No dependency crosses a stream boundary; dependencies between tickets stay inside the stream, where the wave skill runs them.
 - **Intake agent**: a Paseo agent you spawn only when the user names a Matt intake skill (triage, grilling, wayfinder, and the spec and ticket steps that follow); its initial prompt starts with that skill's slash command, and it counts against the agent cap. It is the only way a spec or ticket gets written from the control folder (ADR 0005).
 - **Pause**: every stream held (the wave skill's **Hold**) until no agent runs, recorded as `paused` in each status line, so the machine can restart; resuming is one tick, which releases every stream except those step 7 holds until another stream ships (ADR 0006).
 - **Ship branch**: `stream/<slug>-ship`, cut afresh from the integration branch's head at each ship, plus one commit that restores the agent-only paths (the ticket folder, wave files, tracker configuration, binary evidence), except those the user keeps in, to the PR target's version; the stream's pull request comes from it, and the integration branch keeps everything (ADR 0007).
+- **Ship rules**: the target repository's own key-to-value table, in a document its `## Agent skills` section points to, giving the ship branch's name, the pull request's title and description template, its draft, labels, reviewers and assignees, squash and delete-source-branch, and the ship and wave merge commit messages, with `<slug>`, `<owner>` and `<key>` as placeholders. Read from the pull-request target on the remote, at setup and again at ship; a missing key falls back to the skill's own default for that key alone, an unknown key is reported, and this skill never writes or edits them (ADR 0008).
 
 ## Entry guards
 
@@ -86,6 +87,7 @@ The index is `streams.md` at the root of the control folder: one line for the ca
 | Base branch | The branch the integration branch is cut from; empty means resolve per step 1 |
 | PR target | The branch the stream's pull request goes to; empty means resolve per step 1 |
 | Forge | `GitHub` or `GitLab`: the forge that hosts the repository, where step 6 opens the pull request; empty means resolve per step 1, which writes it. An index without this column reads as empty; add the column when you write the row |
+| Key | The stream's external reference (an issue key, a ticket id), for a ship rules pattern's `<key>` placeholder; it is data about the stream, not a rule (ADR 0008). Empty means a pattern needing it is named at setup (step 1). An index without this column reads as empty; add the column when you write the row |
 | Priority | A number, 1 first; empty means the order of rows (first come first served) |
 | Status | The stream's status line: one line you keep current, holding only the items of "The status line" below |
 
@@ -97,10 +99,10 @@ Example:
 Agent cap: 6
 Last tick: 2026-09-27 14:15, heartbeat streams-reconcile 7f3e2a19 every 15 min, expires 2026-09-27 22:00
 
-| Slug | Repository | Owner | Tickets | Base branch | PR target | Forge | Priority | Status |
-|---|---|---|---|---|---|---|---|---|
-| billing-export | D:\src\opms | Lan | label `stream:billing-export` | | | GitLab | 1 | 2026-09-27 wave 1 running, waits on the stream agent |
-| login-bug | D:\src\opms | Minh | `.scratch/login-bug/issues/` | test | test | | 2 | 2026-09-27 not started |
+| Slug | Repository | Owner | Tickets | Base branch | PR target | Forge | Key | Priority | Status |
+|---|---|---|---|---|---|---|---|---|---|
+| billing-export | D:\src\opms | Lan | label `stream:billing-export` | | | GitLab | | 1 | 2026-09-27 wave 1 running, waits on the stream agent |
+| login-bug | D:\src\opms | Minh | `.scratch/login-bug/issues/` | test | test | | PROJ-482 | 2 | 2026-09-27 not started |
 ```
 
 With no index yet, write `streams.md` with the cap line and the table header, ask the user for the cap and each stream's fields, and write them in. Each Repository is the absolute path of a local checkout that the user gives; ask for it rather than searching the disks. Ask for each field by its name alone: the example's values above belong to no user and appear in no question, as a default or a suggestion. The Forge cell may stay empty; step 1 fills it.
@@ -115,6 +117,7 @@ The status line is the reconcile loop's only memory (step 5): every step writes 
 | Adopted from a wave run outside any stream, with its integration branch | step 0 | `adopted from feature/reports` |
 | Setup stopped, with the problems found | step 1 | `setup stopped: PR target release not on origin` |
 | The tracker configuration goes on the stream branch | step 1 | `tracker setup on the stream branch` |
+| The ship rules read from the PR target, by the head read | step 1, step 6 | `ship rules read at 9f8e7d6` |
 | The stream agent's id | steps 3 and "Replace a stream agent" | `agent 3e0a7953` |
 | Waits on the cap | step 3, and "Replace a stream agent" at a wave boundary | `waits on the cap` |
 | The last end-of-turn message handled, with its time | step 4 | `handled message of 2026-09-27 14:02` |
@@ -189,7 +192,7 @@ On the user's yes, write the row (slug, Repository, Owner, Tickets, Base branch,
 
 ## 1. Check the setup
 
-Step 1 finds, before anything is created, what the stream would otherwise meet only at ship time. Run every check below first, then write the values into the stream's row and go on to step 2 when no problem is found. With any problem, stop at one checkpoint: its brief, headed `[<slug>]`, lists every problem found with what the user can do about each, and `setup stopped:` with the problems goes into the status line. Run step 1 again, from its first check, once the user answers.
+Step 1 finds, before anything is created, what the stream would otherwise meet only at ship time. Run every check below first, then write the values into the stream's row and go on to step 2 when no problem is found. With any problem, stop at one checkpoint: its brief, headed `[<slug>]`, lists every problem found with what the user can do about each, and `setup stopped:` with the problems goes into the status line. Run step 1 again, from its first check, once the user answers. A ship rules finding (check 5) is never a problem on its own, the way "Shared base branch" below is never a block: name it, in the same brief when a problem already stops setup, or on its own, headed `[<slug>]`, when nothing else does, and go on to step 2 regardless.
 
 1. **Fetch.** `git -C <repository> fetch origin`.
 2. **Branches.** Resolve the base branch and the PR target separately, each by the first source that gives a value:
@@ -203,14 +206,18 @@ Step 1 finds, before anything is created, what the stream would otherwise meet o
    The base branch exists when `git -C <repository> rev-parse --verify <branch>` succeeds for `<branch>` or `origin/<branch>`. The PR target exists only on the remote: `git -C <repository> ls-remote --exit-code --heads origin <PR target>`, since the pull request goes to origin's branch.
 3. **Tracker configuration.** The `## Agent skills` section of `CLAUDE.md` or `AGENTS.md` on the base branch, read at `<base ref>` (`git -C <repository> show <base ref>:AGENTS.md`, and the same for `CLAUDE.md`), where `<base ref>` is `origin/<base>` when it exists on the remote, else `<base>`, the ref step 2 cuts from. The checkout's working tree may hold another branch, so it does not count. When the status line records `tracker setup on the stream branch` (the second choice below), read `stream/<slug>` instead; while that branch does not exist or lacks the section, the check passes and step 1 hands on to step 2 as that choice says.
 4. **Forge.** The Forge cell when it is filled; otherwise the host of `git -C <repository> remote get-url origin` (`github.com` is GitHub, `gitlab.com` is GitLab) and the tracker configuration read in check 3 when it names a forge (a GitHub or GitLab tracker, or `gh` or `glab` commands). A self-hosted GitLab is known only from the tracker configuration.
+5. **Ship rules.** Read the target repository's own **ship rules** from `origin/<PR target>` (never `<base ref>`, the working tree, `stream/<slug>`, or a PR target that exists only locally): `CLAUDE.md`/`AGENTS.md` there, reached from or beside its `## Agent skills` section, may point to a document giving a markdown table of key to value, keys `ship branch`, `title`, `description template`, `draft`, `labels`, `reviewers`, `assignees`, `squash`, `delete source branch`, `ship commit message` and `wave merge message`, with placeholders `<slug>`, `<owner>` and `<key>` filled from the stream's slug, its Owner cell and its Key cell (the README's "Ship rules" section documents the format in full). A missing key falls back to the skill's own default for that key alone: ship branch `stream/<slug>-ship`, title a one-line summary of the stream's work, description template `/mattpocock-skills:pr`, draft off, labels, reviewers and assignees empty, squash and delete source branch off, ship commit message `chore(ship): leave agent-only paths out` (step 6, "The ship branch"), wave merge message the wave skill's own merge-commit pattern (its [`SKILL.md`](../matt-with-paseo/SKILL.md), step 6, one merge commit per ticket). This check needs the PR target found on origin (check 2); while that fails, ship rules cannot yet be read, and the brief says so instead of guessing. Record what was read in the status line as `ship rules read at <hash>`, the PR target's short head (or nothing, while check 2 fails), so step 6 can tell whether they changed.
 
 | Found | In the brief |
 |---|---|
-| The fetch fails (unknown host, refused connection, authentication failed) | The remote's URL, git's error line, and what the user can do: restore the connection (network, VPN), sign in to the forge themselves, or correct the remote's URL. Checks 2 to 4 wait for a fetch that works, since they read the remote |
+| The fetch fails (unknown host, refused connection, authentication failed) | The remote's URL, git's error line, and what the user can do: restore the connection (network, VPN), sign in to the forge themselves, or correct the remote's URL. Checks 2 to 5 wait for a fetch that works, since they read the remote |
 | A base branch that exists neither locally nor on origin | The branch and the source it came from; the user names another in the Base branch cell |
 | A PR target missing on origin, including one that exists only as a local branch | The branch, and where it exists; the user pushes it to origin through the repository's own process or names another in the PR target cell. You push nothing |
 | No `## Agent skills` section on the base branch | The two choices of the table below, in its order, the first proposed |
 | No forge: the Forge cell is empty and neither source names GitHub or GitLab, or the two name different forges | The remote's host and what the tracker configuration says; the user writes `GitHub` or `GitLab` in the Forge cell. A repository on any other forge cannot ship through this skill (step 6) |
+| No ship rules found on `origin/<PR target>` (no pointer from its `## Agent skills` section, or no such section at all) | That the stream ships on the defaults above, with a pointer to the README's "Ship rules" section. Not a problem: named beside any other finding, never a reason on its own to stop |
+| A ship rules pattern using `<key>`, and the stream's Key cell empty | The pattern and the key it needs; the user fills the Key cell, or the pattern ships with `<key>` empty. Not a problem: named beside any other finding, never a reason on its own to stop |
+| An unknown key in the ship rules table | The key, reported, never guessed at or applied. Named beside any other finding, never a reason on its own to stop |
 
 | Choice | What follows |
 |---|---|
@@ -219,7 +226,7 @@ Step 1 finds, before anything is created, what the stream would otherwise meet o
 
 **Shared base branch.** A base branch that gathers several people's unfinished work (such as a `test` branch every owner merges into) draws a warning, never a block. It is shared when the repository's prose says so, or when it is not the remote's default branch and `git -C <repository> log --format=%ae <remote default>..<base>` lists more than one author. Tell the user which branch, the authors found, and that the stream's pull request will carry their unmerged work unless its target already holds it; then continue with the base branch the user keeps.
 
-**Done when**: every check has run; the base branch, the PR target and the forge each have a value and the source it came from, the PR target exists on origin, and the base branch carries the tracker configuration or the status line records `tracker setup on the stream branch`; the user has seen any shared-base warning; and the three values are written into the stream's row. Or: nothing was created, and one checkpoint has shown the user every problem found, recorded as `setup stopped:` in the status line.
+**Done when**: every check has run; the base branch, the PR target and the forge each have a value and the source it came from, the PR target exists on origin, and the base branch carries the tracker configuration or the status line records `tracker setup on the stream branch`; the ship rules were read from `origin/<PR target>` and the status line records `ship rules read at <hash>`, or naming why they could not be read yet; the user has seen any shared-base warning and any ship rules finding; and the three values are written into the stream's row. Or: nothing was created, and one checkpoint has shown the user every problem found, recorded as `setup stopped:` in the status line.
 
 ## 2. Create the stream's worktree
 
@@ -370,6 +377,8 @@ A **respawn** replaces a stream agent whose context has grown large before it hi
 
 A stream ships through one pull request from its **Ship branch** to its PR target; the integration branch keeps everything, so the next wave and a later ship see the same history. You open the pull request; you never merge it. Merging it, and any later promotion (such as `test` to `develop`), belongs to the repository's own process and its reviewers.
 
+**Ship rules.** Read the target repository's ship rules again, from `origin/<PR target>`, exactly as step 1's check 5 does. Compare the table read now with what the status line's `ship rules read at <hash>` recorded: a key whose value changed, a key newly present or gone, or the whole document appearing or disappearing since setup, is named in the ship question's ship-rules line below; no change, the line says so. Update the status line's `ship rules read at <hash>` to the head just read.
+
 **The last stage.** A stream reaches its last stage when two public signals agree:
 
 | Signal | Shows the last stage when |
@@ -420,6 +429,7 @@ Evidence to attach to the pull request, not committed: <path>, …
 Kept in at your word: <path>, …
 Merge danger: merges cleanly; <PR target> moved <n> commits since the cut, touching <paths>.
 Shipping unresolved, waiting on a human: <tickets>.
+Ship rules: <no change since setup | changed since setup: <key>: <old> -> <new>, …>
 <the shared-base warning of step 1, when it was raised>
 Answer yes, no, or yes keeping <path> in.
 ```
