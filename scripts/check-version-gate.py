@@ -11,6 +11,7 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
 PLUGIN_JSON = "plugins/matt-with-paseo/.claude-plugin/plugin.json"
+SKILLS = "plugins/matt-with-paseo/skills"
 SEAT_FACING = Path(__file__).resolve().with_name("seat-facing-paths.txt")
 
 
@@ -49,7 +50,19 @@ def skip_reason(root, base):
     return None
 
 
-def findings(root, paths, base):
+def list_findings(root, paths):
+    """The list against the tree: every listed path exists, and every file of a skill folder is listed."""
+    for path in paths:
+        if not (root / path).is_file():
+            yield f"{path}: on the seat-facing list, but missing; fix the list"
+    listed = set(paths)
+    for file in sorted((root / SKILLS).rglob("*")):
+        name = file.relative_to(root).as_posix()
+        if file.is_file() and name not in listed:
+            yield f"{name}: in a skill folder, but not on the seat-facing list; add it"
+
+
+def version_findings(root, paths, base):
     base_version = version_at(root, base)
     version = json.loads((root / PLUGIN_JSON).read_text(encoding="utf-8"))["version"]
     if base_version is None or version != base_version:
@@ -69,7 +82,8 @@ def main():
     if reason:
         print(f"version gate skipped: {reason}", file=sys.stderr)
         return 0
-    lines = findings(args.root, seat_facing_paths(args.paths), args.base)
+    paths = seat_facing_paths(args.paths)
+    lines = list(list_findings(args.root, paths)) + version_findings(args.root, paths, args.base)
     for line in lines:
         print(line)
     return 1 if lines else 0
