@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: streams-50-after-ship
+description: A tick over two shipped streams, both asked by the user to be fixed. invoice-hub's request just arrived and its reopened ticket is still open, so the stream skill sets `reopened after ship` in its status line and asks no ship question yet. billing-portal's request arrived earlier the same session and its ticket has since resolved with the integration branch at a new head; its status line still reads the stale `shipped …`, so the stream skill both catches it up to `reopened after ship` and asks the ship question again at the new head.
+tags: [ship, streams]
+context:
+  scaffold_script: fixture.sh

@@ -132,6 +132,8 @@ The status line is the reconcile loop's only memory (step 5): every step writes 
 | Paths the user kept in the ship branch | step 6 | `keeps docs/agents/issue-tracker.md` |
 | Ship blocked by a conflict with the PR target, for the integration branch's head | step 6 | `ship blocked at 1a2b3c4: conflicts with test` |
 | Shipped, with the pull request's or merge request's link | step 6 | `shipped https://…/pull/12, waits on the reviewers` |
+| Reopened after ship, on the user's request | **After ship** (step 6) | `reopened after ship` |
+| Closed after its pull request merged, with the date | step 5 | `merged 2026-09-29` |
 | Deferred over an overlap | step 7 | `waits on the user (deferred, overlaps login-bug)` |
 | Held until another stream ships | step 7 | `held until login-bug ships` |
 | Merge with another stream agreed | step 7 | `merge with login-bug agreed` |
@@ -333,6 +335,8 @@ One stream may match several rows of the table below; each row it matches acts, 
 | Stream agent idle on the message the status line records, and its context past the respawn threshold | None; the respawn waits for the stream's next wave boundary (step 4), so a running wave is never cut |
 | Every ticket of the stream resolved or in the ready for human or needs info role, the stream agent idle, and the status line records neither shipped nor, for the integration branch's current head, nothing to ship or the ship question asked | Step 6 |
 | The status line records `held until <other> ships`, and `<other>`'s status line records it shipped | Step 7's `release` ("A need on another stream") |
+| Status line records `shipped <link>`, the pull request at `<link>` reports merged (`gh pr view <link> --json state --jq .state` prints `MERGED`; on GitLab `glab mr view <link> --output json --jq .state` prints `merged`), and, after `git -C <worktree> fetch origin`, `git -C <worktree> branch --remote --merged origin/<PR target>` lists `origin/stream/<slug>-ship`, and `git -C <worktree> status --porcelain` is empty | Close it, the same clean-worktree check step 8 of the wave skill uses before archiving: `archive_agent` the stream agent (the one without a `wave` label), `archive_workspace` its workspace, write `merged <date>` into the status line, and keep the row |
+| The same, but `git -C <worktree> status --porcelain` prints something | Report it to the user instead, headed with the slug and what the worktree holds, and take no other action: `archive_workspace` never runs on an unclean worktree (the wave skill's [`TROUBLESHOOTING.md`](../matt-with-paseo/TROUBLESHOOTING.md), "Worktree has uncommitted changes"). The status line still records `shipped <link>`, so a later tick, once the worktree is clean, closes it; the finding is recorded as reported so a later tick does not report it twice |
 | A `stream=<slug>` agent without a `wave` label for a row that should not run (other than a shipped stream's own idle stream agent) or a slug not in the index, two such agents for one slug, or an open pull request the status line does not record, and the status line does not yet record this finding as reported | Report it to the user and take no other action; the status line records that it was reported, so a later tick does not report it again |
 | This tick's own commands (`git`, `paseo ls -g`, `get_agent_status`) ran far slower than on earlier ticks, or a `create_workspace` timed out, and the status line of the stream this happened for does not yet record the finding as reported | The machine may be choking. Report it to the user as an item in the next question round: what ran slow or timed out and how long, with a proposal to hold the streams it names or lower the Agent cap; write into that stream's status line that it was reported, so a later tick does not report it again. Take no other action until the user answers: a yes to holding sends `hold` to each named stream agent, `background: true`, `notifyOnFinish: true`, the same way step 7 sends it; a yes to a lower cap is written into the Agent cap line, taking effect as each stream reaches its next split ("Split the cap into quotas"). Nothing is measured automatically: this is only what the tick itself saw while it ran |
 
@@ -373,7 +377,7 @@ The **restart budget** is two restarts per wave, unless the user sets another nu
 
 A **respawn** replaces a stream agent whose context has grown large before it hits the ceiling. It happens only at the stream's wave boundary, where step 4 reads the context use and runs "Replace a stream agent"; in the middle of a wave the agent keeps supervising its running ticket agents. The status line records it as `respawned for context`.
 
-**Done when**: a tick has closed or reported every gap it found and a second tick right after it finds none, every stopped stream has been reported to the user, this session holds a reconcile heartbeat with an expiry exactly while a stream runs, and the index's Last tick line holds the last tick's time and that heartbeat.
+**Done when**: a tick has closed or reported every gap it found and a second tick right after it finds none, every stopped stream has been reported to the user, every stream whose pull request merged has been closed when its worktree was clean and reported when it was not, this session holds a reconcile heartbeat with an expiry exactly while a stream runs, and the index's Last tick line holds the last tick's time and that heartbeat.
 
 ## 6. Ship the stream
 
@@ -441,7 +445,7 @@ Answer yes, no, or yes keeping <path> in.
 
 Append each answer to `decisions.md` ("Decisions, memory, machine and credentials"); no answer text goes into the status line.
 
-Ask again only when the user brings it up or the integration branch's head moves (a later wave merged), since the status line then records no ship question for the current head.
+Ask again only when the user brings it up or the integration branch's head moves (a later wave merged), since the status line then records no ship question for the current head — the same rule that lets a stream reopened per **After ship** ask again, once its next wave gives the integration branch a new head.
 
 **Push and open.** On the user's yes, in this order:
 
@@ -462,7 +466,9 @@ Ask again only when the user brings it up or the integration branch's head moves
 
 Then write the link into the stream's status line: date, shipped, the pull request's URL, and that the stream waits on the repository's reviewers. The pull request stays open for them; you never merge it, on either forge.
 
-**Done when**: the stream is at its last stage by both signals, the forge is the row's Forge cell (step 1), the ship branch was cut from the integration branch's head with its left-out paths derived from the repository and its merge into the PR target checked clean, the user said yes to the ship question in a question round before anything was pushed (or a conflict was reported and no ship question asked), one pull request (a merge request on GitLab) goes from `stream/<slug>-ship` to the stream's PR target with a description written with `/mattpocock-skills:pr`, its link is posted on the stream's spec or tickets and written in the status line, and nothing was merged.
+**After ship.** A shipped stream runs again only on the user's request: naming its slug to this skill, or asking for it in a question round. On that request, write `reopened after ship` into the status line in place of `shipped <link>...`; the stream then rejoins "Split the cap into quotas" (The index) and step 5's reconcile tick like any stream that is not shipped, its existing stream agent, idle since the ship, picking up the tickets the request adds. Ship stays gated behind the last stage and "Ask first" above: once the reopened stream reaches its last stage again with its integration branch's head moved past the one already shipped, a new ship question is asked at that new head, cutting a fresh ship branch. A stream whose pull request merged, closed by step 5's tick ("Reconcile and supervise"), is never reopened this way; it runs again only as a new row.
+
+**Done when**: the stream is at its last stage by both signals, the forge is the row's Forge cell (step 1), the ship branch was cut from the integration branch's head with its left-out paths derived from the repository and its merge into the PR target checked clean, the user said yes to the ship question in a question round before anything was pushed (or a conflict was reported and no ship question asked), one pull request (a merge request on GitLab) goes from `stream/<slug>-ship` to the stream's PR target with a description written with `/mattpocock-skills:pr`, its link is posted on the stream's spec or tickets and written in the status line, nothing was merged, and a shipped stream reopens only on the user's request, with a new ship question asked once its head moves.
 
 ## 7. Warn when streams change the same file or need each other's work
 
