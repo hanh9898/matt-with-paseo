@@ -15,6 +15,7 @@ DEFAULT_TARGETS = [PLUGIN / "skills" / "matt-with-paseo", PLUGIN / "skills" / "m
                    REPO / "AGENTS.md", REPO / "CLAUDE.md", REPO / "docs" / "agents", PLUGIN / "evals",
                    REPO / "CODING_STANDARDS.md", PLUGIN / "README.md", REPO / "README.md"]
 REFERENCE = re.compile(r"mattpocock-skills:([a-z0-9][a-z0-9-]*)")
+TOLERATED = REPO / "scripts" / "tolerated-references.txt"
 BETA_LENS = "loop-me"
 BETA_LENS_NAMED = re.compile(rf"(?<![a-z0-9-]){BETA_LENS}(?![a-z0-9-])")
 
@@ -61,6 +62,16 @@ def find_installed_plugin():
              "Pass --plugin-root <the mattpocock-skills plugin directory>.")
 
 
+def tolerated_entries(path):
+    """{skill name: line number} from the tolerated list: one name per line, `#` starts a comment."""
+    entries = {}
+    for number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+        name = line.partition("#")[0].strip()
+        if name:
+            entries[name] = number
+    return entries
+
+
 def markdown_files(targets):
     for target in targets:
         if target.is_dir():
@@ -92,10 +103,14 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("targets", nargs="*", type=Path)
     parser.add_argument("--plugin-root", type=Path)
+    parser.add_argument("--tolerated", type=Path, default=TOLERATED,
+                        help="the list of Matt skills not yet released that references may name")
     args = parser.parse_args()
 
     plugin_root = args.plugin_root or find_installed_plugin()
     skills = installed_skills(plugin_root)
+    tolerated = tolerated_entries(args.tolerated)
+    needed = set()
     findings = 0
     for path in markdown_files(args.targets or DEFAULT_TARGETS):
         lines = path.read_text(encoding="utf-8").splitlines()
@@ -109,6 +124,9 @@ def main():
                 if name == BETA_LENS:
                     continue
                 if name not in skills:
+                    if name in tolerated:
+                        needed.add(name)
+                        continue
                     reason = "not in the installed plugin"
                 elif number in flow and skills[name].get("disable-model-invocation") == "true":
                     reason = "in an agent flow, but the skill sets disable-model-invocation"
@@ -116,6 +134,13 @@ def main():
                     continue
                 print(f"{path}:{number}: mattpocock-skills:{name}: {reason} (compared against {plugin_root})")
                 findings += 1
+    for name, number in tolerated.items():
+        if name in needed:
+            continue
+        reason = ("the installed plugin now ships it" if name in skills
+                  else "no reference names it any more")
+        print(f"{args.tolerated}:{number}: {name}: tolerated, but {reason}; remove this entry")
+        findings += 1
     return 1 if findings else 0
 
 

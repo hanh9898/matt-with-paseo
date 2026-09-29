@@ -245,5 +245,55 @@ class DriftCheck(unittest.TestCase):
         self.assertIn("## 4.", result.stderr)
 
 
+class ToleratedReferences(unittest.TestCase):
+    def setUp(self):
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        self.tmp = Path(tmp.name)
+        self.plugin = self.tmp / "plugin"
+        self.skill = self.tmp / "skill"
+        self.tolerated = self.tmp / "tolerated.txt"
+        make_plugin(self.plugin, {"tdd": False, "code-review": False, "to-spec": True})
+
+    def run_check(self):
+        return subprocess.run(
+            [sys.executable, "-B", str(SCRIPT), "--plugin-root", str(self.plugin),
+             "--tolerated", str(self.tolerated), str(self.skill)],
+            capture_output=True, text=True)
+
+    def test_accepts_a_reference_to_an_unreleased_skill_that_is_listed(self):
+        make_skill(self.skill, SKILL_MD + "\nThen `/mattpocock-skills:retro`.\n")
+        write(self.tolerated, "# Matt skills not yet released\nretro  # in-progress upstream\n")
+
+        result = self.run_check()
+
+        self.assertEqual(result.stdout, "")
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_reports_a_listed_entry_that_no_reference_names_any_more(self):
+        make_skill(self.skill)
+        write(self.tolerated, "# Matt skills not yet released\nretro  # in-progress upstream\n")
+
+        result = self.run_check()
+
+        self.assertEqual(result.returncode, 1, result.stderr)
+        lines = result.stdout.splitlines()
+        self.assertEqual(len(lines), 1, result.stdout)
+        for fragment in ("tolerated.txt:2:", "retro", "remove"):
+            self.assertIn(fragment, lines[0])
+
+    def test_reports_a_listed_entry_that_the_installed_plugin_now_ships(self):
+        make_skill(self.skill, SKILL_MD + "\nThen `/mattpocock-skills:code-review`.\n")
+        write(self.tolerated, "code-review\n")
+
+        result = self.run_check()
+
+        self.assertEqual(result.returncode, 1, result.stderr)
+        lines = result.stdout.splitlines()
+        self.assertEqual(len(lines), 1, result.stdout)
+        for fragment in ("tolerated.txt:1:", "code-review", "installed", "remove"):
+            self.assertIn(fragment, lines[0])
+
+
 if __name__ == "__main__":
     unittest.main()
