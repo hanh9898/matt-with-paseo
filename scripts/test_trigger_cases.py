@@ -190,5 +190,23 @@ class CheckTriggers(unittest.TestCase):
         self.assertIn("cases.json", result.stderr)
 
 
+class ShippedTriggerCases(unittest.TestCase):
+    """The gate's own run: the plugin's real cases against the plugin's real skills, no model."""
+
+    def test_the_shipped_cases_cover_the_wave_skill_and_the_stream_skill(self):
+        result = subprocess.run([sys.executable, "-B", str(CHECK)], capture_output=True, text=True)
+
+        self.assertEqual(result.stdout, "")
+        self.assertEqual(result.returncode, 0)
+
+    def test_the_plugin_ships_exactly_the_two_skills_the_cases_are_written_for(self):
+        self.assertEqual(sorted(trigger_cases.skill_cards(PLUGIN)), ["matt-with-paseo", "matt-with-paseo-streams"])
+
+    def test_no_brief_is_written_twice(self):
+        briefs = [one["brief"] for one in trigger_cases.load_cases(PLUGIN / "triggers" / "cases.json")]
+
+        self.assertEqual(len(briefs), len(set(briefs)))
+
+
 if __name__ == "__main__":
     unittest.main()
