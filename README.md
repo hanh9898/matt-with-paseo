@@ -162,6 +162,14 @@ sequenceDiagram
     S->>You: link, posted on the spec or tickets
 ```
 
+Beyond the two streams above, the stream skill also holds, ships and takes in new work:
+
+**Pause.** Ask it to `pause` and it sends `hold` to every stream's agent, not just the one you're talking to, and once nothing is left running writes `paused` into each status line — the point where you can restart the machine. Asking to resume afterwards, or just opening a new session in the control folder, is one reconcile tick, the same as any other recovery. See [Pause and resume](plugins/matt-with-paseo/skills/matt-with-paseo-streams/SKILL.md#pause-and-resume).
+
+**Intake agents.** Name one of Matt's intake skills — `triage`, `grilling` or `wayfinder` — for an existing stream or for work that has no stream yet, and the stream skill spawns an **intake agent** to run it (an existing stream is held at its next wave boundary first, so only one agent writes its worktree at a time). Nothing else ever writes a spec or a ticket: not the stream skill, not a stream agent. See [Intake agents](plugins/matt-with-paseo/skills/matt-with-paseo-streams/SKILL.md#intake-agents).
+
+Shipping goes through a **ship branch**, never the integration branch itself (see [Ship the stream](plugins/matt-with-paseo/skills/matt-with-paseo-streams/SKILL.md#6-ship-the-stream) and [ADR 0007](docs/adr/0007-pull-request-comes-from-a-ship-branch.md)), and a running stream also takes `hold`, `release` and `quota <N>` prompts between waves (see [The two wave-skill arguments](#the-two-wave-skill-arguments) below).
+
 ### The control folder and its index
 
 The stream skill is user-invoked only, like the wave skill, and runs from a **control folder** outside every repository: create an empty folder, open a Claude Code session in it, and type `/matt-with-paseo-streams` (`/matt-with-paseo:matt-with-paseo-streams` with the plugin install), or `/matt-with-paseo-streams <slug>` for one stream.
