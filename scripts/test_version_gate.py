@@ -143,3 +143,61 @@ class VersionGate(unittest.TestCase):
         result = self.run_check()
 
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_a_listed_path_that_does_not_exist_is_named_even_after_a_bump(self):
+        write(self.root / "list.txt", LISTED + "plugins/matt-with-paseo/skills/renamed/SKILL.md\n")
+        write(self.root / PLUGIN_JSON, manifest("0.5.0"))
+
+        result = self.run_check()
+
+        self.assertEqual(result.returncode, 1, result.stderr)
+        lines = result.stdout.splitlines()
+        self.assertEqual(len(lines), 1, result.stdout)
+        self.assertIn("plugins/matt-with-paseo/skills/renamed/SKILL.md", lines[0])
+        self.assertIn("missing", lines[0])
+
+    def test_a_skill_file_the_list_does_not_name_is_named_even_after_a_bump(self):
+        stream_file = "plugins/matt-with-paseo/skills/matt-with-paseo-streams/OWNERSHIP.md"
+        write(self.root / stream_file, "table\n")
+        write(self.root / PLUGIN_JSON, manifest("0.5.0"))
+
+        result = self.run_check()
+
+        self.assertEqual(result.returncode, 1, result.stderr)
+        lines = result.stdout.splitlines()
+        self.assertEqual(len(lines), 1, result.stdout)
+        self.assertIn(stream_file, lines[0])
+        self.assertIn("not on the seat-facing list", lines[0])
+
+
+REPO = SCRIPT.resolve().parent.parent
+
+
+class ThisRepository(unittest.TestCase):
+    """The real list and the real tree, read the way a maintainer would."""
+
+    def listed(self):
+        text = (REPO / "scripts" / "seat-facing-paths.txt").read_text(encoding="utf-8")
+        return [line.partition("#")[0].strip() for line in text.splitlines() if line.partition("#")[0].strip()]
+
+    def test_the_list_names_every_file_an_agent_reads_including_the_two_this_wave_added(self):
+        skills = "plugins/matt-with-paseo/skills"
+
+        self.assertEqual(sorted(self.listed()), sorted([
+            f"{skills}/matt-with-paseo/SKILL.md",
+            f"{skills}/matt-with-paseo/COMMON-RULES-TEMPLATE.md",
+            f"{skills}/matt-with-paseo/TROUBLESHOOTING.md",
+            f"{skills}/matt-with-paseo/PASEO-FACTS.md",
+            f"{skills}/matt-with-paseo-streams/SKILL.md",
+            f"{skills}/matt-with-paseo-streams/OWNERSHIP.md",
+        ]))
+
+    def test_the_list_leaves_out_the_trigger_data_and_the_human_facing_template(self):
+        for path in self.listed():
+            self.assertNotIn("triggers", path)
+            self.assertNotIn("acceptance-run-template", path)
+
+    def test_this_repository_passes_its_own_gate(self):
+        result = subprocess.run([sys.executable, "-B", str(SCRIPT)], capture_output=True, text=True)
+
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
