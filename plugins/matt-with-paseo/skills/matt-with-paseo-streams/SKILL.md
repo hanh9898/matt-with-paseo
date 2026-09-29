@@ -401,7 +401,7 @@ Then write the link into the stream's status line: date, shipped, the pull reque
 
 Two streams in one repository may edit the same file on their integration branches; each pull request then merges cleanly alone and conflicts with the other. A stream may also need work another stream has not shipped, a dependency across the stream boundary that ADR 0001 rules out. You look for both and tell the user, who decides. Neither item blocks on its own.
 
-**When.** On a step 4 notification whose end-of-turn message reports a wave merged into the stream's integration branch; `git -C <worktree> log stream/<slug>` shows the merge. A message that reports no merged wave triggers no check.
+**When.** On a step 4 notification whose end-of-turn message reports a wave merged into the stream's integration branch; `git -C <worktree> log stream/<slug>` shows the merge. A message that reports no merged wave triggers no overlap check; a declared need (below) counts in any end-of-turn message.
 
 **Which streams.** The stream whose wave merged is compared with every other open stream in the same repository:
 
