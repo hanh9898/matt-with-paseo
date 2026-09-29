@@ -248,5 +248,57 @@ class ModelRunParts(unittest.TestCase):
         self.assertTrue(trigger_cases.majority(3, 4))
 
 
+FAKE_AGENT = """\
+import sys
+brief = sys.stdin.read().split("Your brief:\\n")[1]
+print('{"skills": ["alpha"]}' if "alpha" in brief else '{"skills": ["beta"]}')
+"""
+
+
+class RunTriggers(unittest.TestCase):
+    """The model run, with a fake agent in place of the model: it answers alpha for a brief that says alpha."""
+
+    def setUp(self):
+        self.tmp = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, self.tmp, ignore_errors=True)
+        make_plugin(self.tmp / "plugin")
+        write(self.tmp / "fake_agent.py", FAKE_AGENT)
+
+    def run_triggers(self, cases, agent=None, extra=()):
+        write(self.tmp / "cases.json", json.dumps(cases))
+        agent = agent or [sys.executable, str(self.tmp / "fake_agent.py")]
+        return subprocess.run(
+            [sys.executable, "-B", str(RUN), "--cases", str(self.tmp / "cases.json"),
+             "--plugin-root", str(self.tmp / "plugin"), "--runs", "3", *extra, "--", *agent],
+            capture_output=True, text=True)
+
+    def test_exits_zero_when_every_case_is_right_on_a_majority_of_its_runs(self):
+        result = self.run_triggers([case("alpha please", ["alpha"]), case("beta please", ["beta"])])
+
+        self.assertEqual(result.returncode, 0)
+        self.assertIn("PASS 3/3", result.stdout)
+        self.assertNotIn("FAIL", result.stdout)
+
+    def test_a_case_the_agent_gets_wrong_fails_the_run_and_shows_both_answers(self):
+        result = self.run_triggers([case("alpha please", ["alpha"]), case("beta please", ["alpha"])])
+
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("PASS 3/3", result.stdout)
+        self.assertRegex(result.stdout, r"FAIL 0/3 .*expected \['alpha'\] .*opened \['beta'\]")
+
+    def test_an_agent_that_is_not_installed_is_one_line_on_stderr_and_exit_two(self):
+        result = self.run_triggers([case("alpha please", ["alpha"])], agent=["no-such-agent-program"])
+
+        self.assertEqual(result.returncode, 2)
+        self.assertEqual(result.stdout, "")
+        self.assertIn("no-such-agent-program", result.stderr)
+
+    def test_a_run_count_below_one_is_a_usage_error(self):
+        result = self.run_triggers([case("alpha please", ["alpha"])], extra=["--runs", "0"])
+
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("--runs", result.stderr)
+
+
 if __name__ == "__main__":
     unittest.main()
