@@ -1,0 +1,17 @@
+[
+  {"brief": "Run the twelve open tickets of the billing feature in waves: split them by what blocks what and give each one its own Paseo agent in this repository.", "expect": ["matt-with-paseo"]},
+  {"brief": "I have a spec for the invoice export but I do not know whether anyone made tickets from it. Tell me where the work stands and what to do next.", "expect": ["matt-with-paseo"]},
+  {"brief": "The first wave of agents reported back. Check their reports, merge their branches into the integration branch and open the next wave with at most two agents at once.", "expect": ["matt-with-paseo"]},
+  {"brief": "This project has never used the orchestrator. Check whether it is set up for the issue tracker and the triage labels, and say what is missing before any ticket runs.", "expect": ["matt-with-paseo"]},
+  {"brief": "I keep several ticket sets going at once, each for its own repository, and I want one place outside every repository to see how each stands and to answer their questions.", "expect": ["matt-with-paseo-streams"], "near": "matt-with-paseo"},
+  {"brief": "The ticket set is finished and merged on its integration branch. Open the one pull request that ships it to main, following the target repository's ship rules.", "expect": ["matt-with-paseo-streams"], "near": "matt-with-paseo"},
+  {"brief": "Implement issue 42 test-first in this worktree: write the failing test, then the code that passes it.", "expect": [], "near": "matt-with-paseo"},
+
+  {"brief": "I run three independent feature streams for different repositories from one control folder. Show me the index and the status line of each stream.", "expect": ["matt-with-paseo-streams"]},
+  {"brief": "Stream auth-rework is finished. Cut its ship branch and open the one pull request from it with the repository's ship rules.", "expect": ["matt-with-paseo-streams"]},
+  {"brief": "I have to restart my machine. Pause every stream until no agent runs, then let me resume them afterwards.", "expect": ["matt-with-paseo-streams"]},
+  {"brief": "Start a new stream called search-v2 for the search tickets of acme/web, with its own integration branch and an agent to run the waves.", "expect": ["matt-with-paseo-streams"]},
+  {"brief": "Split the tickets of this feature into waves by dependency and spawn a Paseo agent for each ticket in this repository, then merge the results as they come.", "expect": ["matt-with-paseo"], "near": "matt-with-paseo-streams"},
+  {"brief": "Where does the checkout feature stand here: is there a spec, are there tickets, and what is the next step?", "expect": ["matt-with-paseo"], "near": "matt-with-paseo-streams"},
+  {"brief": "Write the pull request description for the branch I just finished.", "expect": [], "near": "matt-with-paseo-streams"}
+]
