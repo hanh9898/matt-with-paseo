@@ -284,19 +284,19 @@ Mark the outcome of the mechanisms in `## Review`, so step 8 can count them. Eac
 
 ## 8. Clean up the wave, open the next
 
-The `## Wave agents` table is the one record of what is live: cleanup visits its rows and no other source, and never derives an agent, a workspace or a worktree from a directory name, a branch-name pattern or a `paseo ls` scan. A row not checked as cleaned is live, and a row that fails any of the three checks below stays live, and its worktree is never archived. Only the agent id and workspace id a row records are passed to `archive_agent` and `archive_workspace`.
+The `## Wave agents` table is the one record of what is live: a row not checked as cleaned is live, and cleanup visits its rows and no other source. Only the agent id and workspace id a row records are passed to `archive_agent` and `archive_workspace`; no agent, workspace or worktree is derived from a directory name, a branch-name pattern or a `paseo ls` scan.
 
-`archive_workspace` deletes the worktree directory and `archive_agent` interrupts a running agent, so for each row in the `## Wave agents` table, check three things first:
+`archive_workspace` deletes the worktree directory and `archive_agent` interrupts a running agent, so check three things for each live row first:
 
 - `get_agent_status` shows the agent has stopped;
 - `git -C <worktree> status --porcelain` is empty;
 - the ticket's branch appears in `git branch --merged <integration branch>`.
 
-The clean-worktree check is mandatory, never skipped: Paseo archives a worktree with uncommitted or untracked files without warning and deletes them with it.
+A row that fails any check stays live and its worktree is never archived; see [`TROUBLESHOOTING.md`](TROUBLESHOOTING.md). The clean-worktree check is mandatory, never skipped: Paseo archives a worktree with uncommitted or untracked files without warning and deletes them with it (the workspaces and worktrees table of [`PASEO-FACTS.md`](PASEO-FACTS.md), read below).
 
 Read [`PASEO-FACTS.md`](PASEO-FACTS.md) (verified Paseo behaviour, each row with its version): its workspaces and worktrees table when an archive returns what these checks did not predict (a `removedDirectory` value, a child agent archived along with its parent).
 
-With all three, `archive_agent`, `archive_workspace`, clean up the non-Paseo resources listed in the private resources column, then check the "cleaned" column. If any is missing, leave the row as is and see [`TROUBLESHOOTING.md`](TROUBLESHOOTING.md). Delete every heartbeat created for the wave. Then `paseo ls -g --label wave=<N>`, with the label filter of "Names this run writes", must list nothing; an agent still listed has no row in the table, which is a gap in the record: write its row first, then check and clean it by that row, unless it carries a `stream` label this run does not have (see [`TROUBLESHOOTING.md`](TROUBLESHOOTING.md)).
+With all three passed, `archive_agent`, `archive_workspace`, clean up the non-Paseo resources listed in the private resources column, then check the "cleaned" column. Delete every heartbeat created for the wave. Then `paseo ls -g --label wave=<N>`, with the label filter of "Names this run writes", only reports: it should list nothing. An agent it lists has no row, a gap in the record: write its row, name the agent to the user, and clean it only through that row, unless it carries a `stream` label this run does not have (see [`TROUBLESHOOTING.md`](TROUBLESHOOTING.md)).
 
 Then commit the wave file on the integration branch, alone in its commit (`git add <wave file>`, `git commit -m "docs: wave <N> log"`). Until this point it stays uncommitted in this checkout, so no worktree of the wave carries a copy of it (step 4).
 
@@ -311,4 +311,4 @@ Learning across waves is Matt's `/mattpocock-skills:retro` (the user invokes it;
 
 Return to step 2 with the new base commit. When no open ticket can join a wave, report a summary: which tickets are `resolved`, which wait on a human, and which remain open and what blocks them. End it with the mechanism counts, added up over the `## Review` of every wave file of the run: review runs and how many marked `changed the work: yes`, decision rounds and how many marked `took the recommendation: yes`. A count of zero reads `0 of 0`, and a mark missing from a wave file is reported as missing, never counted as `no`.
 
-**Done when**: every row in the table is checked as cleaned or has a reason for keeping it that the user has been told, no agent or workspace outside the table was archived, no heartbeat of the wave remains, the wave file is committed, step 1 has run again, and the next wave is open or the summary, with the mechanism counts, is reported, the message that follows naming `/mattpocock-skills:retro`.
+**Done when**: every row in the table is checked as cleaned or has a reason for keeping it that the user has been told, no agent or workspace outside the table was archived, every agent the closing `paseo ls` scan listed has a row and was named to the user, no heartbeat of the wave remains, the wave file is committed, step 1 has run again, and the next wave is open or the summary, with the mechanism counts, is reported, the message that follows naming `/mattpocock-skills:retro`.
