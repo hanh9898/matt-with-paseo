@@ -15,6 +15,11 @@ append_system_prompt: |
   - Worktrees: `/srv/worktrees/billing-export` on `stream/billing-export` and `/srv/worktrees/login-bug` on `stream/login-bug`, both clean.
   - Tracker: billing-export tickets 05 and 06 open, in progress; login-bug ticket 03 open, in progress. Open pull requests from either integration branch: none.
   - Heartbeat: this session holds `streams-reconcile`, every 15 minutes, expiring 2026-09-29 19:00.
+  - Agents (`paseo ls -g --label stream=docs-portal --json`): `6c3d8021` "[Stream] docs-portal", labels `stream=docs-portal` (no `wave` label), status idle, workspace `ws-docs-portal` at `/srv/worktrees/docs-portal`. No other agent carries that label.
+  - Agents (`paseo ls -g --label stream=asset-pipeline --json`): `7d4e9132` "[Stream] asset-pipeline", labels `stream=asset-pipeline` (no `wave` label), status idle, workspace `ws-asset-pipeline` at `/srv/worktrees/asset-pipeline`. No other agent carries that label.
+  - `gh pr view https://github.com/acme/wiki2/pull/9 --json state --jq .state`: `MERGED`. `gh pr view https://github.com/acme/media/pull/4 --json state --jq .state`: `MERGED`.
+  - `git -C /srv/worktrees/docs-portal fetch origin` succeeds with nothing new; `git -C /srv/worktrees/docs-portal branch --remote --merged origin/main` lists `origin/stream/docs-portal-ship`; `git -C /srv/worktrees/docs-portal status --porcelain`: empty.
+  - `git -C /srv/worktrees/asset-pipeline fetch origin` succeeds with nothing new; `git -C /srv/worktrees/asset-pipeline branch --remote --merged origin/main` lists `origin/stream/asset-pipeline-ship`; `git -C /srv/worktrees/asset-pipeline status --porcelain`: `M src/asset-pipeline/main.ts` (an uncommitted edit).
 ---
 
 /matt-with-paseo:matt-with-paseo-streams billing-export
