@@ -25,6 +25,13 @@ append_system_prompt: |
   - `git merge-tree --write-tree --name-only origin/main <ship branch>`: exit 0, clean, whichever paths are kept in.
   - The user's latest answer, to the ship question of `tracker-docs` asked at 3c4d5e6 in the last round: "yes, but keep docs/agents/issue-tracker.md in, ticket 01 changed how tickets close and that file is its real deliverable".
   - On that yes, for `tracker-docs`: `git push --force-with-lease -u origin stream/tracker-docs-ship` succeeds; `gh pr list --head stream/tracker-docs-ship --base main --state open --json url` prints `[]`; `gh pr create` with `--attach .scratch/tracker-docs/evidence/screen.png` exits 1, printing `upload .scratch/tracker-docs/evidence/screen.png: HTTP 401: Bad credentials (https://uploads.github.com)`, and opens no pull request.
+  Stream supplier-sync (repository `warehouse`, Base branch `develop`, PR target `main`):
+  - Agents (`paseo ls -g --label stream=supplier-sync --json`): one, agent 6b1d3e92, `[Stream] supplier-sync`, no `wave` label, idle. Its last end-of-turn message, of 2026-09-29 10:30: "Wave 1 merged into stream/supplier-sync. Stage F: no work left for agents; tickets 01 and 02 are resolved, none waits on a human."
+  - `git remote get-url origin`: `https://github.com/acme/warehouse.git`. `git rev-parse --short stream/supplier-sync`: `dafa558`. `git rev-parse --short origin/develop`: `35ad059`, unmoved since the stream's cut.
+  - `git log --oneline origin/main..stream/supplier-sync`: `dafa558 wave 1 of supplier-sync`, `35ad059 develop: bump version to 4`, `1f8a441 develop: bump version to 3`, `83bd339 develop: bump version to 2` (4 total).
+  - `git log --oneline origin/develop..stream/supplier-sync`: `dafa558 wave 1 of supplier-sync` (1, the stream's own wave commit).
+  - `git log --oneline origin/main..$(git merge-base origin/develop stream/supplier-sync)`: `35ad059`, `1f8a441`, `83bd339` (3, `develop`'s own commits `main` lacks; the merge base is `develop`'s own tip, unmoved since the cut).
+  - `git merge-tree --write-tree --name-only origin/main <ship branch>`: exit 0, clean.
 ---
 
 /matt-with-paseo:matt-with-paseo-streams invoice-export
