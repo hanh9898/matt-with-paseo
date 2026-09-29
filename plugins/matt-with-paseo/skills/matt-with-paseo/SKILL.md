@@ -24,7 +24,8 @@ Words used throughout:
 - **Wave**: a set of tickets run in parallel. A ticket joins a wave once every ticket it depends on is `resolved` and merged.
 - **Integration branch**: the branch collecting the results of every wave. Each wave branches its worktrees off a **base commit** pinned on this branch.
 - **Common rules**: what every agent of the wave needs to know that its own prompt does not carry. Written once per wave (step 3).
-- **Ticket agent**: the Paseo agent step 4 spawns to work one ticket, carrying that ticket's label. The review agent of step 7 is not one.
+- **Bundle**: a group of tickets that step 2 plans for one ticket agent, worked one after another in one worktree, on one branch. A ticket that is not grouped is a bundle of one (ADR 0010).
+- **Ticket agent**: the Paseo agent step 4 spawns to work one bundle, carrying that bundle's labels. The review agent of step 7 is not one.
 - **Checkpoint**: a point where the run stops for the user to verify or decide (a question, an approval). Pushed right: the run does all the work it can first, so the user is asked once, late, with everything prepared.
 - **Brief**: what a checkpoint shows the user: a tight, decision-ready summary of what was produced and why, with a link to the asset itself, never the raw output.
 - **Hold**: a run with `stream` told `hold` spawns nothing new, rolling start included, while its running agents carry on; `release` lifts it (ADR 0006).
@@ -36,10 +37,10 @@ This table is the only place the naming rule lives; the steps point here. With `
 
 | Name | Without `stream` | With `stream` |
 |---|---|---|
-| Ticket agent labels (step 4) | `labels: { wave: "<N>", ticket: "<NN>" }` | `labels: { stream: "<stream>", wave: "<N>", ticket: "<NN>" }` |
+| Ticket agent labels (step 4) | `labels: { wave: "<N>", bundle: "<NN>", tickets: "<NN>,<NN>" }` (`bundle` is the bundle's first ticket; `tickets` lists every ticket of the bundle in order) | `labels: { stream: "<stream>", wave: "<N>", bundle: "<NN>", tickets: "<NN>,<NN>" }` |
 | Review agent labels (step 7) | `labels: { wave: "<N>" }` | `labels: { stream: "<stream>", wave: "<N>" }` |
-| Label filter of every `paseo ls` (steps 0 and 8) | the `wave` (and `ticket`) labels only | the same, plus `--label stream=<stream>` |
-| Ticket branch (step 4) | `wave<N>/<NN>-<slug>` | `<stream>/wave<N>/<NN>-<slug>` |
+| Label filter of every `paseo ls` (steps 0 and 8) | the `wave` label only | the same, plus `--label stream=<stream>` |
+| Ticket branch (step 4; a bundle works on its first ticket's ticket branch, `<NN>` and `<slug>` being that ticket's) | `wave<N>/<NN>-<slug>` | `<stream>/wave<N>/<NN>-<slug>` |
 | Private resource names: database, volume, temp directory (step 4) | as the ticket needs them | each starts with `<stream>-` |
 
 The common rules file (`wave<N>-common-rules.md`), its sections and the agent titles are the same in both columns: the file sits in the checkout of this run's integration branch, which no other run shares.
@@ -85,13 +86,13 @@ For stage E, a previous session may have ended mid-step (a crash, a closed windo
 - Every background job or heartbeat the previous session started: its output, if any, may hold a report nobody processed.
 - A merge left in progress on the integration branch (`git status` says it is still merging): run step 6's conflict-marker search on it before anything else. A file the search prints goes into what you report, and the merge stays uncommitted.
 
-Then take each unfinished ticket of the wave. Find its agent in the `## Wave agents` table, or else with `paseo ls -g --label wave=<N> --label ticket=<NN>` and the label filter of "Names this run writes":
+Then take each unfinished ticket of the wave. Find its agent in the `## Wave agents` table, or else in the sweep's list of the wave's agents (by `wave`, and `stream` under `stream`): the agent whose `tickets` label holds the ticket's number is its agent. A label filter cannot match inside `"70,71"`, so read each agent's `tickets` label instead of filtering on it:
 
 - No agent: step 4, spawning only for that ticket.
 - Agent still running (`get_agent_status`): wait, then step 5. If this session did not spawn the agent it will not receive the agent's notification, so create a heartbeat per step 5.
 - Agent stopped with the ticket unfinished: handle it per "Agent stops midway" in [`TROUBLESHOOTING.md`](TROUBLESHOOTING.md). This ticket's branch is not merged yet.
 
-A `## Wave agents` row whose ticket is `review` is step 7's review agent; it carries no `ticket` label, so its row is the only way to find it. Still running: wait, with a heartbeat per step 5 if this session did not spawn it (its ticks check only `get_agent_status`, since it has no ticket branch), then continue step 7 with its findings. Stopped with no `## Review` yet: continue step 7 with its findings. It has no ticket branch to merge.
+A `## Wave agents` row whose ticket is `review` is step 7's review agent; it carries no `bundle` or `tickets` label, so its row is the only way to find it. Still running: wait, with a heartbeat per step 5 if this session did not spawn it (its ticks check only `get_agent_status`, since it has no ticket branch), then continue step 7 with its findings. Stopped with no `## Review` yet: continue step 7 with its findings. It has no ticket branch to merge.
 
 Once every ticket of the wave is done, the first row that matches is the step to resume:
 
