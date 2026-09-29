@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: streams-61-ship-rules
+description: Two streams. `reports-export`, not started: its PR target (release) on the remote declares ship rules with a `<key>` pattern and a `<slug>/ship` branch name, while its own stream branch points to a stale, different draft of the same document; setup must read from the PR target, never the stream branch, and name that the title pattern needs `<key>` while the stream's Key cell is empty, without stopping setup over either. `invoice-close`, already at its last stage: an overdue last tick must reconcile it too, in the same reply, and its ship question must name that the ship rules changed since its own earlier setup (a new `labels` key). `no-setup-stop` and `overdue-tick-covers-invoice-close` also pass on the base skill, which already reconciles an overdue tick and a stage-F stream's ordinary ship question without any ship-rules check to stop on; `reads-target-not-stream-branch`, `names-empty-key` and `names-ship-rules-change` fail on it, since the base skill has no mention of ship rules, `<key>` or a Key column/cell anywhere.
+tags: [setup, ship, ship-rules, streams]
+context:
+  scaffold_script: fixture.sh
