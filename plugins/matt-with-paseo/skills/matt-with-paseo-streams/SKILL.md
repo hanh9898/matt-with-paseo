@@ -57,6 +57,8 @@ You talk to stream agents only. You never prompt, cancel, kill or archive a tick
 
 Ownership: when the question is who decides or may do something (yours, a stream agent's, an intake agent's, a ticket agent's), read the table in [`OWNERSHIP.md`](OWNERSHIP.md) (each role's ownership, its lines of speech and its never-items).
 
+Read the wave skill's [`PASEO-FACTS.md`](../matt-with-paseo/PASEO-FACTS.md) (verified Paseo behaviour, each row with its version): its turns and notifications table when a stream agent's finish notification is missing.
+
 ## Decisions, memory, machine and credentials
 
 **Decisions.** `decisions.md`, at the root of the control folder beside `streams.md`, is the history the status line does not keep. Each time you act on one of your own decisions (a ship, an overlap warning's answer, a change of the cap or a quota, a **Hold** or its release, a **Pause** or its resume), append one line: date and time, the slug (or `all`), the decision, and the user's answer it rests on, quoted (for a quota a split changed, the cap and priorities it read). Never rewrite or remove a line. A decision inside a stream (a wave approval, a review decision, a ticket's scope) is the stream agent's to record as its tickets' comments; it never goes into `decisions.md`. A line records what was decided, never how to decide: `decisions.md` is no source of rules.
@@ -291,6 +293,8 @@ Every `create_workspace` here passes `projectId`, the repository's Paseo project
 
 A call that times out picks again from the table: run the two git commands before calling anything. Then check `git -C <worktree> branch --show-current` prints `stream/<slug>` and `git -C <worktree> rev-parse HEAD` equals the base branch's head.
 
+Read the wave skill's [`PASEO-FACTS.md`](../matt-with-paseo/PASEO-FACTS.md) (verified Paseo behaviour, each row with its version): its workspaces and worktrees table before the first `create_workspace`.
+
 **Done when**: a worktree exists on `stream/<slug>`, its head checked against the base branch, and you hold its workspace id and path, the workspace in the repository's Paseo project.
 
 ## 3. Spawn the stream agent
@@ -418,6 +422,8 @@ Everything a tick does stays at the stream agent's level: a tick never prompts, 
 | Running, its activity count unchanged for three ticks, and its last activity entry one that contract calls not hung | Not failed: report it to the user, headed with the slug, with that last entry and how long it has run, once (the status line records it as reported); never kill, cancel or prompt it on this signal | Spends none |
 | Stopped on a session or usage limit that resets | Not failed: after the reset, `send_agent_prompt` "where does the stream stand?" to the same agent, `background: true`, `notifyOnFinish: true` | Spends none |
 | Idle with a question, or idle between waves | Not failed: step 4 handles it | Spends none |
+
+Read the wave skill's [`PASEO-FACTS.md`](../matt-with-paseo/PASEO-FACTS.md) (verified Paseo behaviour, each row with its version): its workspaces and worktrees table before archiving or killing a stream agent, and its status calls and heartbeats table when this session's heartbeat stops ticking.
 
 A **restart** touches only that stream's row, agent and worktree; the other streams are untouched. It runs "Replace a stream agent" (the section before step 0): the agent is replaced at once when no agent with a `wave` label runs for the stream, and resumed or held while one does. A hung agent is never cancelled or prompted, only killed and replaced once the check passes: a prompt only queues behind its stuck tool call, and a cancel gets no acknowledgement, while Paseo keeps reporting it `running`. A replacement's wave skill locates the stream at its step 0 and, for a wave in progress, runs its recovery sweep, which finds the wave's ticket agents through its wave file and their labels. A failure is counted once, when its restart starts; while the status line records it as `resume sent` or `restart held`, later ticks carry on the procedure without counting it again.
 

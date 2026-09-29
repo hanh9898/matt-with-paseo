@@ -263,6 +263,18 @@ If the target repo has its own standard for proving a change works (measure on r
 
 The wave skill reads the file while preparing a wave, points every agent to it from the common rules instead of copying it, and names it in every `mattpocock-skills:code-review` call, because the review's Standards axis reads only documents on how code is written (such as `CODING_STANDARDS.md`) on its own. The file is about how to prove a change works, so keep it separate from those. A repo without the section runs exactly as before.
 
+### Known Paseo behaviour
+
+What you may notice when the skills run on Paseo (daemon 0.9.2 unless a line says otherwise), and what the skills do about it:
+
+- A finish notification reaches only the session that sent the prompt, and none comes for a turn an agent starts on its own after a background command (10 of 10 in a probe). The skills check the real artifacts instead of trusting "finished", and a heartbeat watches agents this session did not spawn.
+- A heartbeat can skip a tick: one due while its session was busy was not delivered in one run (daemon version not recorded). Every tick of the skills' heartbeats re-reads the agents' real state, and every heartbeat expires.
+- `create_workspace` can time out after 120 s on a loaded machine while the worktree still gets made (daemon version not recorded). The skills read `git worktree list` before calling again.
+- `archive_workspace` deletes a worktree that holds uncommitted files without a warning, and archiving a parent agent archives its running children (the second: daemon version not recorded). The skills archive only a stopped agent with a clean, merged worktree, and replace a stream agent only when no ticket agent runs.
+- On Windows the shells and a fixed service `port` behave as the `paseo.json` notes above say.
+
+Each fact with its basis and the version it was seen on is in [`PASEO-FACTS.md`](plugins/matt-with-paseo/skills/matt-with-paseo/PASEO-FACTS.md), written for the agents that run the skills.
+
 ## Installation
 
 The plugin lives in [`plugins/matt-with-paseo/`](plugins/matt-with-paseo/), which follows the [Agent Skills](https://agentskills.io/specification) layout (`plugins/matt-with-paseo/skills/matt-with-paseo/SKILL.md`, `plugins/matt-with-paseo/skills/matt-with-paseo-streams/SKILL.md`), and the repo root is a Claude Code plugin marketplace that lists it, so any of these works. Only that folder is installed: design notes, ADRs and scripts stay in the repo. Every option installs both skills side by side, since the stream skill points to files of the wave skill's folder. Pick one; installing twice gives you two copies of each command.
