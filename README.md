@@ -179,6 +179,17 @@ An empty base branch or target falls back to the default the target repository d
 
 **How the cap is split.** Each running stream uses one slot for its stream agent plus its quota, the number of ticket agents it may run at once. Streams take slots in priority order, first come first served by default, so a cap below 2 runs no stream. A stream left without room waits on the cap and starts at a later wave boundary; a running wave is never cut for capacity.
 
+### Picking a cap
+
+The agent cap counts every agent the machine runs for the skills at once: every stream agent, every ticket agent, and any intake, diagnosis or review agent a stream spawns. Size it to what the machine can actually carry, not to how many tickets are ready:
+
+- **Per-agent memory.** Each agent is a Claude Code session plus a git worktree; measure one running agent's resident memory on your machine (`docker stats`, Task Manager, `ps`) rather than guessing, then divide the machine's spare memory by that figure.
+- **Containers a ticket starts.** A ticket agent's own verification (a dev server, a database, a test runner) may start containers of its own; budget for the heaviest ticket's containers alongside its agent, not the agent alone.
+- **Memory reserved elsewhere.** Subtract what a VM (WSL2's `.wslconfig`, a Docker Desktop VM) or another process on the same machine already reserves before dividing; a cap sized off total RAM alone overcommits the moment the VM's own reservation is fixed.
+- **One shared usage limit.** Every agent, in every stream, draws on the same Claude usage limit; a higher cap runs more agents at once, not more work overall, and spends that shared limit faster.
+
+Start low, watch one wave run, and raise the cap only once you have measured room to spare. A tick that finds the machine choking (commands far slower than usual, `create_workspace` timing out) proposes holding streams or lowering the cap instead of guessing; nothing about memory or CPU is measured automatically.
+
 ### The two wave-skill arguments
 
 The stream agent runs the wave skill with two optional arguments, which you can also type yourself:
