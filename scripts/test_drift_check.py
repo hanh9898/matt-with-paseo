@@ -295,5 +295,140 @@ class ToleratedReferences(unittest.TestCase):
             self.assertIn(fragment, lines[0])
 
 
+PINNED_TABLE = SCRIPT.with_name("pinned-lines.json")
+TROUBLESHOOTING = PLUGIN / "skills" / "matt-with-paseo" / "TROUBLESHOOTING.md"
+STUCK_CALL = "a prompt only queues behind the stuck call"
+STUCK_REASON = "bug 06: a cancel gets no acknowledgement"
+
+
+class PinnedLines(unittest.TestCase):
+    def setUp(self):
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        self.tmp = Path(tmp.name)
+        self.root = self.tmp / "repo"
+        self.plugin = self.tmp / "plugin"
+        self.table = self.tmp / "pinned.json"
+        make_plugin(self.plugin, {"tdd": False})
+        write(self.root / "skills" / "rules.md",
+              f"Never cancel a hung agent: {STUCK_CALL}.\nAnother line.\n")
+        self.pin({"file": "skills/rules.md", "phrase": STUCK_CALL, "reason": STUCK_REASON})
+
+    def pin(self, *rows):
+        write(self.table, json.dumps(list(rows)))
+
+    def run_check(self, table=None):
+        return subprocess.run(
+            [sys.executable, "-B", str(SCRIPT), "--plugin-root", str(self.plugin),
+             "--pinned", str(table or self.table), "--pinned-root", str(self.root),
+             str(self.root / "skills")],
+            capture_output=True, text=True)
+
+    def test_accepts_a_table_whose_phrases_are_all_present(self):
+        result = self.run_check()
+
+        self.assertEqual(result.stdout, "")
+        self.assertEqual(result.returncode, 0)
+
+    def test_reports_a_removed_phrase_in_one_line_naming_the_file_and_the_reason(self):
+        write(self.root / "skills" / "rules.md", "Never cancel a hung agent.\nAnother line.\n")
+
+        result = self.run_check()
+
+        self.assertEqual(result.returncode, 1, result.stderr)
+        lines = result.stdout.splitlines()
+        self.assertEqual(len(lines), 1, result.stdout)
+        for fragment in ("rules.md", "pinned phrase missing", STUCK_CALL, STUCK_REASON):
+            self.assertIn(fragment, lines[0])
+
+    def test_reports_each_missing_phrase_on_its_own_line(self):
+        self.pin({"file": "skills/rules.md", "phrase": STUCK_CALL, "reason": STUCK_REASON},
+                 {"file": "skills/rules.md", "phrase": "an absent sentence", "reason": "reason two"},
+                 {"file": "skills/rules.md", "phrase": "Another line", "reason": "reason three"},
+                 {"file": "skills/rules.md", "phrase": "a second absent sentence", "reason": "reason four"})
+
+        result = self.run_check()
+
+        self.assertEqual(result.returncode, 1, result.stderr)
+        lines = result.stdout.splitlines()
+        self.assertEqual(len(lines), 2, result.stdout)
+        self.assertIn("an absent sentence", lines[0])
+        self.assertIn("reason two", lines[0])
+        self.assertIn("a second absent sentence", lines[1])
+        self.assertIn("reason four", lines[1])
+
+    def test_a_phrase_split_over_two_lines_is_missing(self):
+        write(self.root / "skills" / "rules.md", "Never cancel a hung agent: a prompt only\nqueues behind the stuck call.\n")
+
+        result = self.run_check()
+
+        self.assertEqual(result.returncode, 1, result.stderr)
+        self.assertIn("pinned phrase missing", result.stdout)
+
+    def test_reports_a_pinned_file_that_is_gone(self):
+        (self.root / "skills" / "rules.md").rename(self.root / "skills" / "renamed.md")
+
+        result = self.run_check()
+
+        self.assertEqual(result.returncode, 1, result.stderr)
+        lines = result.stdout.splitlines()
+        self.assertEqual(len(lines), 1, result.stdout)
+        for fragment in ("rules.md", "pinned file missing", STUCK_REASON):
+            self.assertIn(fragment, lines[0])
+
+    def test_fails_loudly_when_the_table_does_not_exist(self):
+        result = self.run_check(table=self.tmp / "no-such-table.json")
+
+        self.assertEqual(result.returncode, 2)
+        self.assertEqual(result.stdout, "")
+        self.assertIn("no-such-table.json", result.stderr)
+
+    def test_fails_loudly_when_the_table_is_not_json(self):
+        write(self.table, "file | phrase | reason")
+
+        result = self.run_check()
+
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("pinned.json", result.stderr)
+
+    def test_fails_loudly_when_a_row_has_no_reason(self):
+        self.pin({"file": "skills/rules.md", "phrase": STUCK_CALL})
+
+        result = self.run_check()
+
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("reason", result.stderr)
+
+    def test_the_shipped_table_holds_in_this_repo(self):
+        write(self.root / "skills" / "rules.md", "nothing to pin here\n")
+        repo = SCRIPT.resolve().parent.parent
+
+        result = subprocess.run(
+            [sys.executable, "-B", str(SCRIPT), "--plugin-root", str(self.plugin),
+             "--pinned", str(PINNED_TABLE), "--pinned-root", str(repo), str(self.root / "skills")],
+            capture_output=True, text=True)
+
+        self.assertEqual(result.stdout, "")
+        self.assertEqual(result.returncode, 0)
+
+    def test_the_shipped_table_pins_a_phrase_in_every_troubleshooting_entry(self):
+        rows = json.loads(PINNED_TABLE.read_text(encoding="utf-8"))
+        pinned = [row["phrase"] for row in rows if row["file"].endswith("TROUBLESHOOTING.md")]
+        entries, current = [], None
+        for line in TROUBLESHOOTING.read_text(encoding="utf-8").splitlines():
+            if line.startswith("**"):
+                current = [line]
+                entries.append(current)
+            elif line.startswith("## "):
+                current = None
+            elif current is not None:
+                current.append(line)
+
+        self.assertGreater(len(entries), 10)
+        unpinned = [entry[0][:70] for entry in entries
+                    if not any(phrase in "\n".join(entry) for phrase in pinned)]
+        self.assertEqual(unpinned, [])
+
+
 if __name__ == "__main__":
     unittest.main()
