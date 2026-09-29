@@ -47,8 +47,8 @@ What you know about a stream comes from these four signals and nothing else:
 |---|---|
 | Ticket status on the stream's tracker | the target repository's tracker configuration (its `## Agent skills` section), read in the stream's worktree |
 | The stream agent's end-of-turn message | `get_agent_activity` on the stream agent |
-| Paseo agent status and activity | `get_agent_status`, `get_agent_activity`, `paseo ls -g --label stream=<slug> --json` |
-| Git diff | `git -C <worktree> diff`, `git -C <worktree> log` on the integration branch |
+| Paseo agent status and activity | `get_agent_status`, `get_agent_activity`, `list_pending_permissions` (step 5), `paseo ls -g --label stream=<slug> --json`, and `paseo ls -g --json` unfiltered for a wave run outside any stream (step 0) |
+| Git diff | `git -C <worktree> diff`, `git -C <worktree> log` on the integration branch; `git -C <cwd> worktree list` for where an agent's checkout sits (steps 0 and 5) |
 
 You never read wave files (`wave*-common-rules.md` or anything else the wave skill writes to record a wave): their format belongs to the wave skill and may change. To learn where a stream stands, prompt its stream agent ("where does the stream stand?") and let the wave skill's step 0 answer.
 
@@ -73,12 +73,12 @@ You talk to stream agents only. You never prompt, cancel, kill or archive a tick
 
 ## The index
 
-The index is `streams.md` at the root of the control folder: one line for the cap, then one table row per stream. It records where each stream's tickets live and never holds ticket content; the tracker stays the one source of truth for tickets.
+The index is `streams.md` at the root of the control folder: one line for the cap, the Last tick line, then one table row per stream. It records where each stream's tickets live and never holds ticket content; the tracker stays the one source of truth for tickets.
 
 | Field | Holds |
 |---|---|
 | Agent cap | Above the table: the most agents running at once across every stream (the stream agents and all their ticket agents). The wave skill's step 7 review agent and cross-ticket fix agent need no slot of their own: they start only after every ticket of their wave is merged, so they run inside the quota slots its ticket agents freed |
-| Last tick | Under the cap line: `Last tick: <date> <time>, heartbeat streams-reconcile <id> every <interval>, expires <date> <time>`, when step 5's last tick ran and the reconcile heartbeat it left. Every tick rewrites it as its last action; no line means no tick has run yet |
+| Last tick | Under the cap line: `Last tick: <date> <time>, heartbeat streams-reconcile <id> every <interval>, expires <date> <time>`, when step 5's last tick ran and the reconcile heartbeat it left, by id, since `delete_heartbeat` takes an id and never a name. Every tick rewrites it as its last action; no line means no tick has run yet |
 | Slug | The stream's name, lowercase letters, digits and `-`; unique in the index. The wave skill derives its label and branch prefix from it |
 | Repository | Absolute path to a local checkout of the target repository |
 | Owner | The requester the stream works for; the rest of this skill calls them the owner |
@@ -95,6 +95,7 @@ Example:
 # Streams
 
 Agent cap: 6
+Last tick: 2026-09-27 14:15, heartbeat streams-reconcile 7f3e2a19 every 15 min, expires 2026-09-27 22:00
 
 | Slug | Repository | Owner | Tickets | Base branch | PR target | Forge | Priority | Status |
 |---|---|---|---|---|---|---|---|---|
@@ -163,7 +164,7 @@ Archiving a parent agent archives and interrupts its running children (probe C1)
 
 A replacement at a wave boundary never counts against the restart budget of step 5; only a restart does, once per failure, whether it ends as a resume, a hold, or a replacement.
 
-**Done when**: the stream agent was archived only after the check passed, and the status line holds the new agent id or "waits on the cap", or it records the resume sent or the restart held.
+**Done when**: the stream agent was archived only after the check passed, a hung one killed first, and the status line holds the new agent id or "waits on the cap", or it records the resume sent or the restart held.
 
 ## 0. Pick the stream
 
@@ -337,7 +338,7 @@ The loop's own heartbeat is reconciled in the same tick:
 | Session | Old heartbeat |
 |---|---|
 | Reopened: the session that created that heartbeat, resumed | `delete_heartbeat` on its id, then create a new one as the heartbeat table says; it may have stopped firing while the session was closed |
-| New: any other session | Try `delete_heartbeat` on its id (Paseo deletes a heartbeat by id, never by name). If that fails, the heartbeat belongs to the dead session and only its expiry, in the Last tick line, ends it. Either way, create this session's heartbeat, and ask the user to close the old session if it still lives, since two sessions ticking at once could both spawn for the same gap |
+| New: any other session | Try `delete_heartbeat` on its id. If that fails, the heartbeat belongs to the dead session and only its expiry, in the Last tick line, ends it. Either way, create this session's heartbeat, and ask the user to close the old session if it still lives, since two sessions ticking at once could both spawn for the same gap |
 
 In a new session, stream agents the dead session spawned send it their finish notifications, not this one, until this session prompts them with `notifyOnFinish: true`; the heartbeat covers them meanwhile.
 
@@ -447,7 +448,7 @@ Ask again only when the user brings it up or the integration branch's head moves
 
 Then write the link into the stream's status line: date, shipped, the pull request's URL, and that the stream waits on the repository's reviewers. The pull request stays open for them; you never merge it, on either forge.
 
-**Done when**: the stream is at its last stage by both signals, the forge was chosen from the stream's repository, the ship branch was cut from the integration branch's head with its left-out paths derived from the repository and its merge into the PR target checked clean, the user said yes to the ship question in a question round before anything was pushed (or a conflict was reported and no ship question asked), one pull request (a merge request on GitLab) goes from `stream/<slug>-ship` to the stream's PR target with a description written with `/mattpocock-skills:pr`, its link is posted on the stream's spec or tickets and written in the status line, and nothing was merged.
+**Done when**: the stream is at its last stage by both signals, the forge is the row's Forge cell (step 1), the ship branch was cut from the integration branch's head with its left-out paths derived from the repository and its merge into the PR target checked clean, the user said yes to the ship question in a question round before anything was pushed (or a conflict was reported and no ship question asked), one pull request (a merge request on GitLab) goes from `stream/<slug>-ship` to the stream's PR target with a description written with `/mattpocock-skills:pr`, its link is posted on the stream's spec or tickets and written in the status line, and nothing was merged.
 
 ## 7. Warn when streams change the same file or need each other's work
 
