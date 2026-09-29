@@ -131,3 +131,20 @@ Session reopened (heartbeat tick): #64's agent dc22621c is gone ("not found"). I
 #63 merged as a295dc5. #65, the last ticket, started on a295dc5.
 
 Wave 3 cleaned: 11 tickets merged, every row stopped, clean and merged, and archived with its workspace (agent dc22621c was already gone). Temp directories removed, heartbeat `00bcf805` deleted. Per the user's rules there was no step 7 review for this wave; the whole stream is reviewed next.
+
+## Stream review
+
+User's rule: one review of the whole stream after the last wave. Fixed point `ec29c8e`, head `cdb0f2d` (143 commits, 176 files). It ran in the orchestrator's session with two read-only sub-agents. **Standards: 8 findings; Spec: 6 findings**, one known item no longer holding (the **Ship branch** definition agrees everywhere). Deduplicated below, every row goes to one fix pass.
+
+| # | Where | Finding | Fix | Axis |
+|---|---|---|---|---|
+| S1 | Stream skill, "Replace a stream agent" | Opens "the one procedure that archives a stream agent", but step 5's merged-stream row (#50) also archives one | Say it is the one procedure that replaces a stream agent; name step 5's close-out as the other archive | Std 1, Spec 1 |
+| S2 | Stream skill, Pause and resume / "Supervise one-for-one" | After a real restart the agents are gone, so each paused stream spends a restart ("Gone from `paseo ls` → spends one"), and a step-7 `held until <other> ships` may be lost on replacement | An agent gone while its stream is `paused` spends no restart; its replacement is spawned with the holds the status line records | Std 2, Spec 5 |
+| S3 | Stream skill, Intake agents; step 5 tick table; "Split the cap into quotas" | Two notes say "out of this ticket's zone … not added here": no tick row re-checks "wait until quiet" for `held for <skill> intake`, and the cap walk does not take the intake agent's slot | Add the tick row and the cap line; delete the two notes | Std 3, Spec 4 |
+| S4 | Stream skill steps 1, 3, and "Replace a stream agent"; wave skill step 6 | The `wave merge message` pattern is "told to this run by the stream skill", but step 3's fixed spawn command carries no ship rules, so #59 story 26 goes unmet | Step 3 and the replacement spawn send the resolved `wave merge message` pattern after the command (an initial-prompt line or a `send_agent_prompt`), and the step's Done when checks it | Std 4, Spec 2 |
+| S5 | `evals/wave-64-merge-message-pattern` | It states the pattern as given, so it cannot catch S4's missing handoff | Extend an existing stream case (for example `streams-61-ship-rules`) with a grader on the spawn or relay carrying the pattern, not a new case | Std 5 |
+| S6 | Stream skill step 5, the machine-choking row | Restates the diagnosis instead of pointing to TROUBLESHOOTING's two Environment entries (#55) | Point to them | Std 6, Spec 3 |
+| S7 | Stream skill, the index's Quota field | "Empty while the stream has no stream agent … or shipped", but no step blanks it, and a shipped stream keeps an idle agent | Rewrite the clause to what the steps write | Std 7 |
+| S8 | `evals/streams-61-ship-rules` | Graders `no-setup-stop` and `overdue-tick-covers-invoice-close` also pass on the base skill (#61's own note) | Replace them with ship-rules-specific checks, or drop them | Spec 6 |
+
+Skipped: Standards 8, `docs/agents/domain.md`'s generic GLOSSARY walkthrough. It predates the stream (written by `setup-matt-pocock-skills`, before `ec29c8e`), so trimming it would be out of the stream's scope. It is left for a separate ticket.
