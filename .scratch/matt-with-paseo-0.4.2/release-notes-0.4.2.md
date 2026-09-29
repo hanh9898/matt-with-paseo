@@ -39,3 +39,21 @@ The overlap warning skips files whose content is identical on both branches and 
 ## Version
 
 The plugin manifest moves from `0.4.1` to `0.4.2`.
+
+## Known issues: behaviour evals
+
+The suite has 29 cases (7 before 0.4.2, 22 added). It ran once on sonnet at medium effort, with one run per case and no without-plugin comparison. It was run again once for the cases whose `case.yaml` did not load, the cases that failed on every vote, and one base case. **20 cases score 1.00. These 9 do not**, and are left as known issues:
+
+| Case | Score | Failing graders |
+|---|---|---|
+| `streams-39-question-round` | 0.80 | relays-verbatim |
+| `streams-40-silent-supervision` | 0.40 | nudges-idle-stream-agent, overdue-tick-replaces-heartbeat, writes-last-tick |
+| `streams-41-hung-agents` | 0.67 | kills-and-replaces |
+| `streams-44-pause` | 0.50 | records-pausing-not-paused |
+| `streams-49-ship-branch` | 0.67 | honours-kept-path, pushes-only-ship-branch, reports-upload-failure |
+| `streams-51-overlap-and-need` | 0.50 | need-yields-merge-or-hold |
+| `streams-52-answer-and-machine` | 0.50 | status-line-drops-answer |
+| `streams-61-ship-rules` | 0.60 | reads-target-not-stream-branch, relays-merge-message-pattern |
+| `wave-64-merge-message-pattern` | 0.67 | no-default-message |
+
+With one run per case, a single score is not stable: `streams-40` scored 0.80 on the first run and 0.40 on the second. Whether each miss comes from the skill text or from its grader is not settled. The stream skill's supervision, pause and ship steps carry most of them.

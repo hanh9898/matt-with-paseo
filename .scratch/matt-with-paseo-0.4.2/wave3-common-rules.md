@@ -157,7 +157,7 @@ Skipped: Standards 8, `docs/agents/domain.md`'s generic GLOSSARY walkthrough. It
 Integration head `c1f955c`, run once from `plugins/matt-with-paseo`: `CLAUDE_CODE_EFFORT_LEVEL=medium claude plugin eval --model sonnet -j 2 --runs 1 --ablation none --scaffold --trust-plugin --no-publish .`
 - **Model** sonnet (every case), **effort** medium, **runs per case** 1, **no comparison arm** (`--ablation none`), judge model left at its default. Duration 402 s, cost $4.40, **exit 1**.
 - **29 cases**: 7 at `ec29c8e`, 22 added by this stream. **25 ran; 4 did not load**: `streams-39-question-round` ("case.yaml must be a YAML object"), and `streams-44-pause`, `streams-49-ship-branch`, `streams-61-ship-rules` (YAML parse error on line 3, an unquoted value).
-- **16 of 25 scored 1.00.** Below 1.00:
+- **17 of 25 scored 1.00** (first reported as 16, a miscount). Below 1.00:
 
 | Case | Score | Failing grader |
 |---|---|---|
@@ -173,3 +173,19 @@ Integration head `c1f955c`, run once from `plugins/matt-with-paseo`: `CLAUDE_COD
 With one run per case, a split judge vote (PASS FAIL FAIL) may be noise, but a unanimous FAIL or a missing regex pattern is a real miss. Report: `plugins/matt-with-paseo/evals/results/2026-09-29T04-48-01-009Z/report.html`.
 
 **Eval fix pass** (operator choice (a), 2026-09-29): one Sonnet agent 20bb6850 on `matt-with-paseo-0-4-2/wave3/eval-fixes` (workspace `wks_54d43134e0686e76`, base 2c8c1b6). It fixes the 4 unloadable `case.yaml` files and the 4 cases that failed on every vote, with no review. Then one re-run of exactly 9 cases (those 8 plus `wave-not-configured`), each with its own `--case` call. Whatever still fails goes into the release notes and #58 as known issues, and there is no further round.
+
+**Re-run** (operator's D16), on `69b3c0d`, each case in its own call with D11 plus `--case <name>`. It was cut off when a session ended, and the remaining cases were run in the foreground:
+
+| Case | Before | Re-run |
+|---|---|---|
+| streams-39-question-round | did not load | 0.80 |
+| streams-44-pause | did not load | 0.50 |
+| streams-49-ship-branch | did not load | 0.67 |
+| streams-61-ship-rules | did not load | 0.60 (its first re-run call exited 1 after the scaffold, with no score; run again) |
+| streams-63-pull-request-shape | 0.33 | **1.00** |
+| wave-54-repro-and-no-code-flow | 0.50 | **1.00** |
+| wave-64-merge-message-pattern | 0.33 | 0.67 |
+| streams-40-silent-supervision | 0.80 | 0.40 |
+| wave-not-configured | 0.67 | **1.00** (no regression) |
+
+**Final: 20 of 29 cases at 1.00.** The 9 below are recorded as known issues in `release-notes-0.4.2.md` and on #58, per D16; there is no further round.
