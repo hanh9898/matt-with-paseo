@@ -59,6 +59,16 @@ Copy in only what an agent cannot look up: an unwritten convention, the reason b
 - If the criteria themselves look wrong, stop that part, write the evidence in your ticket's comments,
   and move the ticket to `<ready for human label from the triage label file>`. Never rewrite the criteria.
 
+## What must hold, what was chosen, what is not known yet
+
+| Part | What it holds | What you do when your evidence goes against it |
+|---|---|---|
+| Must hold | Your ticket's acceptance criteria, and the section above. | Follow the section above; never rewrite the criteria. |
+| Chosen for you | `<choice>`: `<the reason it was made>`. | Challenge it with evidence, in your ticket's comments and your report. A challenge alone does not move the ticket to `<ready for human label from the triage label file>`. |
+| Not known yet | `<the open question>`. | `<who resolves it, or how to proceed while it stays open>`. |
+
+Whoever answers a challenge to a chosen default writes why the plan changes or stands; an answer with no reason is not a resolution.
+
 ## Resources
 - Your private resources are listed in your prompt (database, port when no service is declared, volume,
   temp directory). Use exactly that set. Create each one when you first need it, and leave it in place
