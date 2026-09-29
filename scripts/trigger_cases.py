@@ -99,7 +99,10 @@ def opened_skills(output):
     answers = ANSWER.findall(output)
     if not answers:
         return None
-    names = json.loads(answers[-1])["skills"]
+    try:
+        names = json.loads(answers[-1])["skills"]
+    except ValueError:
+        return None
     return names if all(isinstance(name, str) for name in names) else None
 
 
