@@ -110,7 +110,9 @@ The status line is the reconcile loop's only memory (step 5): every step writes 
 | Paths the user kept in the ship branch | step 6 | `keeps docs/agents/issue-tracker.md` |
 | Ship blocked by a conflict with the PR target, for the integration branch's head | step 6 | `ship blocked at 1a2b3c4: conflicts with test` |
 | Shipped, with the pull request's or merge request's link | step 6 | `shipped https://…/pull/12, waits on the reviewers` |
-| Paused over an overlap | step 7 | `waits on the user (paused, overlaps login-bug)` |
+| Deferred over an overlap | step 7 | `waits on the user (deferred, overlaps login-bug)` |
+| Held until another stream ships | step 7 | `held until login-bug ships` |
+| Merge with another stream agreed | step 7 | `merge with login-bug agreed` |
 
 ### Split the cap into quotas
 
@@ -395,9 +397,9 @@ Then write the link into the stream's status line: date, shipped, the pull reque
 
 **Done when**: the stream is at its last stage by both signals, the forge was chosen from the stream's repository, the ship branch was cut from the integration branch's head with its left-out paths derived from the repository and its merge into the PR target checked clean, the user said yes to the ship question in a question round before anything was pushed (or a conflict was reported and no ship question asked), one pull request (a merge request on GitLab) goes from `stream/<slug>-ship` to the stream's PR target with a description written with `/mattpocock-skills:pr`, its link is posted on the stream's spec or tickets and written in the status line, and nothing was merged.
 
-## 7. Warn when streams change the same file
+## 7. Warn when streams change the same file or need each other's work
 
-Two streams in one repository may edit the same file on their integration branches; each pull request then merges cleanly alone and conflicts with the other. You look for that after each wave and tell the user, who decides. The warning never blocks.
+Two streams in one repository may edit the same file on their integration branches; each pull request then merges cleanly alone and conflicts with the other. A stream may also need work another stream has not shipped, a dependency across the stream boundary that ADR 0001 rules out. You look for both and tell the user, who decides. Neither item blocks on its own.
 
 **When.** On a step 4 notification whose end-of-turn message reports a wave merged into the stream's integration branch; `git -C <worktree> log stream/<slug>` shows the merge. A message that reports no merged wave triggers no check.
 
@@ -408,33 +410,50 @@ Two streams in one repository may edit the same file on their integration branch
 | Open | the other stream has a row in the index and a worktree on `stream/<other>` (step 2), and its status line does not record it as shipped |
 | Same repository | `git -C <repository> remote get-url origin` prints the same URL for both rows; this also matches two checkouts of one remote |
 
-**The files.** In each of the two worktrees, list what its integration branch changed relative to its base:
+**The files.** In each of the two worktrees, list what its pull request would change in its PR target:
 
 ```
 git -C <worktree> fetch origin
-git -C <worktree> diff --name-only --no-renames <base ref>...stream/<slug>
+git -C <worktree> diff --name-only --no-renames origin/<PR target>...stream/<slug>
 ```
 
-`<base ref>` is the row's base branch as step 2 used it: `origin/<base>` when it exists on the remote, else `<base>`. The three dots diff from the merge base, so work that reached the base branch after the cut does not count; `--no-renames` lists both paths of a renamed file. The shared files are the lines both lists hold. None shared: no warning for that pair.
+`<PR target>` is the row's PR target, which step 1 checked exists on origin; the conflict this warning is about happens where the pull requests merge, so the target counts, not the base branch. The three dots diff from the merge base, so work that reached the PR target after the cut does not count; `--no-renames` lists both paths of a renamed file. The shared files are the lines both lists hold, less every file both branches hold with identical content: `git -C <worktree> rev-parse stream/<slug>:<path>` prints the same blob id in both worktrees, or fails in both because both branches delete it. Identical content merges without a conflict, as when two streams copy the same tracker configuration. None left: no warning for that pair.
 
 **The warning.** Put one item per pair in the next question round, beside the stream agents' questions, headed with both stream slugs:
 
 ```
-[<slug-a> × <slug-b>] Both integration branches change these shared files:
+[<slug-a> × <slug-b>] Both integration branches change these shared files, with different content:
 - <path>
 - <path>
-Continue both, or pause one? If pausing, which one?
+<slug-a> goes into <PR target a>, <slug-b> into <PR target b>.
+Continue both, or defer one's next wave? If deferring, which one?
 ```
+
+When the two PR targets differ, add under the targets' line that the conflict appears once one target merges into the other, not when either pull request merges.
 
 The next question round is the next time you present questions to the user (step 4). The message that reported the merge usually asks the user to approve the stream's next wave, so the warning joins that round; when no question is pending at all, the warning makes a round of its own, shown right away. This item is your own, not a stream agent's question: relaying the other questions of the round and sending their answers back never waits for it. When both streams merged a wave in the same round, the pair gets one item. Until the user answers, both streams keep running.
 
-**The user's answer.** A pause uses the gate the wave skill already has: it starts no wave before the user approves it (its step 2), and a running wave is never cut.
+**The user's answer.** A deferral uses the gate the wave skill already has: it starts no wave before the user approves it (its step 2), and a running wave is never cut.
 
 | Answer | Action |
 |---|---|
 | Continue both | nothing; the next merged wave of either stream warns again with the list as it then stands |
-| Pause one | no prompt to any agent; the stream's running wave finishes. When its agent next asks to approve a wave, relay that question verbatim as step 4 says, noting under it that the user paused the stream over the overlap with `<other>`; the stream waits there until the user approves. Its status line reads: date, stage, waits on the user (paused, overlaps `<other>`) |
+| Defer one | no prompt to any agent; the stream's running wave finishes. When its agent next asks to approve a wave, relay that question verbatim as step 4 says, noting under it that the user deferred the stream over the overlap with `<other>`; the stream waits there until the user approves. Its status line reads: date, stage, waits on the user (deferred, overlaps `<other>`) |
 
-You never pause, block or delay a stream without the user's answer, and never pick an answer for them.
+**A need on another stream.** A stream agent's end-of-turn message (step 4) may say that the stream needs work of another open stream (the tests of "Which streams") whose status line does not record it as shipped: a ticket that cannot start without a change only the other integration branch holds. The user may say so too. Only such a declared need counts; you never derive one from tickets or diffs, since the stream layer holds no dependency graph (ADR 0001). Put one item in the next question round, headed with both slugs, the waiting stream first:
 
-**Done when**: after every merged wave, each other open stream in the same repository has been compared, every pair with shared files has one item in the next question round naming both streams and the files, and a stream is paused only on the user's answer.
+```
+[<waiting> needs <other>] <the need, as the message states it>. <other> has not shipped it.
+Merge the two streams into one, or hold <waiting> until <other> ships?
+```
+
+The message's own question, such as a wave approval, is still relayed verbatim beside this item. Both ways out keep ADR 0001: a merge brings the dependency inside one stream, where the wave skill runs it; a hold waits until the work leaves the stream that holds it. Until the user answers, both streams keep running.
+
+| Answer | Action |
+|---|---|
+| Merge the two | no prompt to any agent; write `merge with <other> agreed` into both status lines. Which stream stays, and how the other's tickets and integration branch move into it, is the user's to do or to tell you step by step; you never move or write a ticket |
+| Hold `<waiting>` until `<other>` ships | `send_agent_prompt` to `<waiting>`'s stream agent with `hold`, `background: true`, `notifyOnFinish: true`: it spawns nothing new while its running agents carry on (the wave skill's **Hold**). Write `held until <other> ships` into its status line. On each step 4 notification and each tick of step 5, read `<other>`'s status line; once it records `<other>` shipped, send `release` the same way, drop the item from the status line, and tell the user in the next round that `<waiting>` was released and that the work reaches `<waiting>`'s base branch only once `<other>`'s pull request merges there |
+
+You never defer, hold, block or delay a stream without the user's answer, and never pick an answer for them.
+
+**Done when**: after every merged wave, each other open stream in the same repository has been compared, every pair with shared files of different content has one item in the next question round naming both streams, the files and their PR targets; every declared need on an unshipped stream has one item naming both streams with the merge-or-hold proposal; and a stream is deferred, held or released only on the user's answer.
