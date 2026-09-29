@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: wave-64-merge-message-pattern
+description: A stream agent runs the wave skill under `stream receipts quota 2`, told the target repository's ship rules give this run a `wave merge message` pattern with `<ticket>` and `<name>` placeholders. Two tickets both pass step 5 in the same turn; each planned merge commit (step 6) must fill the given pattern per ticket, not the skill's own default `Merge ticket NN (<name>) into <integration branch>`.
+tags: [merge, ship-rules, stream, wave]
+context:
+  scaffold_script: fixture.sh
