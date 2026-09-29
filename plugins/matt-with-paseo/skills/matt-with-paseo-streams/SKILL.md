@@ -106,6 +106,7 @@ The status line is the reconcile loop's only memory (step 5): every step writes 
 | Respawned for context | step 4 at a wave boundary | `respawned for context` |
 | Stopped, with the owner | step 5 | `stopped: restart budget spent (2/2 in wave 3), owner Lan` |
 | A finding reported to the user | step 5 | `reported: open pull request not recorded` |
+| A nudge sent to an idle stream agent, for the message the status line records | step 5 | `nudged 11:40` |
 | Nothing to ship, for the integration branch's head | step 6 | `nothing to ship at 1a2b3c4` |
 | Ship question asked, for the integration branch's head, and the user's answer | step 6 | `ship question asked at 1a2b3c4, user said wait` |
 | Paths the user kept in the ship branch | step 6 | `keeps docs/agents/issue-tracker.md` |
@@ -275,7 +276,7 @@ Every prompt you send a stream agent, in any step, goes with `send_agent_prompt`
 | Stream agent idle, and its last end-of-turn message is newer than the one the status line records | Step 4 on that message. This is how a turn that ended without a finish notification (probe A2) is caught: the next tick finds it |
 | Stream agent, running or idle, has a question-type permission in `list_pending_permissions` not yet shown to the user | Step 4: the permission joins the next question round. An agent that waits on a permission may be reported `running`; the running row above leaves such an agent to this row |
 | Stream agent idle on the message the status line records, the status line waiting on the user | None; the question is already shown, and a tick never shows it twice |
-| Stream agent idle on the message the status line records, the status line waiting on the stream agent | `send_agent_prompt` "where does the stream stand?" to it, `background: true`, `notifyOnFinish: true`: the stream waits on an agent that waits for nothing, as when a notification it expected never came. Its answer comes back through step 4; while it runs, the running row holds |
+| Stream agent idle on the message the status line records, the status line waiting on the stream agent and recording no nudge for that message, and no agent with a `wave` label running for the stream | `send_agent_prompt` "where does the stream stand?" to it, `background: true`, `notifyOnFinish: true`, and write `nudged <time>` into the status line: the stream waits on an agent that waits for nothing, as when a ticket agent's finish notification never reached it. A stream agent idle while its ticket agents run is waiting for them and is not nudged. Its answer comes back through step 4 as a newer message, and the item lapses with it |
 | Stream agent failed | A restart, per "Supervise one-for-one" below |
 | Stream agent idle on the message the status line records, and its context past the respawn threshold | None; the respawn waits for the stream's next wave boundary (step 4), so a running wave is never cut |
 | Every ticket of the stream resolved or in the ready for human role, the stream agent idle, and the status line records neither shipped nor, for the integration branch's current head, nothing to ship or the ship question asked | Step 6 |
