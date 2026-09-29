@@ -71,6 +71,10 @@ Copy in only what an agent cannot look up: an unwritten convention, the reason b
 
 ## Repo and user rules
 - <commit and comment language>, <accepted way to verify>, <lint command>, <test accounts>.
+- Credentials: never read, print or pass on a token or credential (no `gh auth token`, no reading a CLI's
+  hosts or config file or a token's environment variable, no token in a URL or a command). A `gh`, `glab`,
+  push or upload failure goes into your report with the command and its error as printed; never work
+  around it with another tool, the forge's API or another account.
 - Evidence standards: read `<path to the evidence standards file, or "none declared">`; it is not copied here.
   Name it in your `mattpocock-skills:code-review` call.
 

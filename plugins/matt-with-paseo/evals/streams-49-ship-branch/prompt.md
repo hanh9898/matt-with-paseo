@@ -23,6 +23,7 @@ append_system_prompt: |
   - `git remote get-url origin`: `https://github.com/acme/wiki.git`. `git rev-parse --short stream/tracker-docs`: 3c4d5e6. `git log --oneline origin/main..stream/tracker-docs`: `3c4d5e6 wave 1 of tracker-docs`. `git log --oneline stream/tracker-docs..origin/main`: nothing.
   - `git merge-tree --write-tree --name-only origin/main <ship branch>`: exit 0, clean, whichever paths are kept in.
   - The user's latest answer, to the ship question of `tracker-docs` asked at 3c4d5e6 in the last round: "yes, but keep docs/agents/issue-tracker.md in, ticket 01 changed how tickets close and that file is its real deliverable".
+  - On that yes, for `tracker-docs`: `git push --force-with-lease -u origin stream/tracker-docs-ship` succeeds; `gh pr list --head stream/tracker-docs-ship --base main --state open --json url` prints `[]`; `gh pr create` with `--attach .scratch/tracker-docs/evidence/screen.png` exits 1, printing `upload .scratch/tracker-docs/evidence/screen.png: HTTP 401: Bad credentials (https://uploads.github.com)`, and opens no pull request.
 ---
 
 /matt-with-paseo:matt-with-paseo-streams invoice-export

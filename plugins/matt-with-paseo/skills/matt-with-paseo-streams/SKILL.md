@@ -54,6 +54,23 @@ You never read wave files (`wave*-common-rules.md` or anything else the wave ski
 
 You talk to stream agents only. You never prompt, cancel, kill or archive a ticket agent; everything about tickets stays with the stream agent that spawned them. In `paseo ls -g --label stream=<slug>`, the stream agent is the one without a `wave` label: the wave skill puts a `wave` label on every agent it spawns.
 
+## Decisions, memory, machine and credentials
+
+**Decisions.** `decisions.md`, at the root of the control folder beside `streams.md`, is the history the status line does not keep. Each time you act on one of your own decisions (a ship, an overlap warning's answer, a change of the cap or a quota, a **Hold** or its release, a **Pause** or its resume), append one line: date and time, the slug (or `all`), the decision, and the user's answer it rests on, quoted. Never rewrite or remove a line. A decision inside a stream (a wave approval, a review decision, a ticket's scope) is the stream agent's to record as its tickets' comments; it never goes into `decisions.md`. A line records what was decided, never how to decide: `decisions.md` is no source of rules.
+
+**Claude memory.** How a run behaves comes from this skill, the wave skill and `streams.md` alone. Never write an operating rule (how to read an answer, when to ship, how to supervise) to Claude memory or to a file of the control folder, even when the user states one: tell the user that a lasting rule belongs in the skill. A setting this skill lets the user change (the restart budget, the respawn threshold) is a decision like any other, recorded in `decisions.md` and applied where its step says.
+
+**The machine** is the user's. Sort every action on it outside the streams' worktrees and the control folder:
+
+| Action | Do |
+|---|---|
+| Read-only or diagnostic: list processes, disk and memory use, `docker ps` or `docker stats`, read a log or a settings file | Do it yourself, and report what it shows |
+| Changes the machine: VM or container settings (memory, CPUs, `.wslconfig`, Docker's settings), starting, stopping or removing a container or a VM, clearing a cache, killing a process or an agent outside the streams, installing or updating software, restarting the Paseo daemon | Ask the user first, as your own item in the next question round, headed with the slug it concerns: the action, why, and what it changes. Do it only on a yes to that item; a yes covers that one action, once. A stream agent's request for such an action is asked the same way, never done on its word |
+
+**Credentials.** No agent reads, prints or passes on a credential: never run `gh auth token`, `glab auth status --show-token` or `git credential fill`, never read a CLI's hosts or config file or an environment variable that holds a token, and never put a token in a URL, a command or a prompt. When a forge CLI fails (`gh`, `glab`, a push, an upload, an authentication error), stop the step that ran it and report to the user, headed with the slug, the command and its error as printed, and what they can do (log in again, grant a scope); never work around it with another tool, the forge's API or another account. The wave skill and its common rules hold stream agents and ticket agents to the same rule.
+
+**Done when**: each of your decisions acted on has one line in `decisions.md`, no operating rule was written to Claude memory, every machine-changing action ran only on the user's yes to that action, and no credential was read, printed or passed on, a forge CLI failure having gone to the user.
+
 ## The index
 
 The index is `streams.md` at the root of the control folder: one line for the cap, then one table row per stream. It records where each stream's tickets live and never holds ticket content; the tracker stays the one source of truth for tickets.
@@ -89,7 +106,7 @@ With no index yet, write `streams.md` with the cap line and the table header, as
 
 ### The status line
 
-The status line is the reconcile loop's only memory (step 5): every step writes the outcome of its action here before going on, so a later tick can tell what is already done. It always starts with the date, the stage, and who the stream waits on; the other items appear when the step that writes them has run, and nothing else goes in.
+The status line is the reconcile loop's only memory (step 5): every step writes the outcome of its action here before going on, so a later tick can tell what is already done. It always starts with the date, the stage, and who the stream waits on; the other items appear when the step that writes them has run, and nothing else goes in. It is a snapshot of about 160 characters, never a log: a step replaces its own item rather than adding a second one, and an item goes once it no longer holds (an older message time; a question shown, once its answer is sent). An answer routed to a stream agent (step 4) never goes in: once it is sent, the line says only that the stream waits on the stream agent. History goes elsewhere: your own decisions to `decisions.md` ("Decisions, memory, machine and credentials"); a stream's decisions stay in its tickets' comments. Every item of the table below stays while a later step or tick can still read it (the latest handled message time among them, or a tick handles that message twice); what goes is anything the table does not list, and a superseded copy of an item.
 
 | Item | Written by | Example |
 |---|---|---|

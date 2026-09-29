@@ -17,6 +17,8 @@ Without `stream`, every label, branch name and file name is the one the "Without
 
 **Precondition:** this skill runs in a checkout of its integration branch. It reads that branch from the checkout it stands in (step 1), so whoever calls it, human or agent, opens it there first.
 
+**Credentials:** no agent of a wave, you included, reads, prints or passes on a credential: never run `gh auth token`, `glab auth status --show-token` or `git credential fill`, never read a CLI's hosts or config file or an environment variable that holds a token, and never put a token in a URL, a command or a prompt. A forge CLI failure (`gh`, `glab`, a push, an upload, an authentication error) is reported to the user with the command and its error as printed, and the step that ran it stops there; never work around it with another tool, the forge's API or another account. Step 3 puts the same rule into the common rules for every ticket agent.
+
 Words used throughout:
 
 - **Wave**: a set of tickets run in parallel. A ticket joins a wave once every ticket it depends on is `resolved` and merged.
