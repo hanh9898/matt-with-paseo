@@ -218,6 +218,8 @@ A repository declares how its streams ship — its **ship rules** — as a markd
 
 Patterns may use `<slug>` (the stream's slug), `<owner>` (its Owner cell) and `<key>` (its optional Key cell in the index); a `<key>` pattern on a stream whose Key cell is empty is named at setup, not guessed at. A missing key falls back to the skill's own default for that key alone: ship branch `stream/<slug>-ship`, a one-line title naming the stream's work, a description from `/mattpocock-skills:pr`, no draft, no labels, reviewers or assignees, squash and delete-source-branch not set (the forge's own setting stands), and the skill's own ship and wave merge commit messages. A repository with no ship rules ships entirely on these defaults, named at setup. An unknown key is reported, never guessed at or applied. A change to the ship rules between setup and ship is named in the ship question, never applied silently.
 
+Ship rules are the target repository's own. This plugin's own rules for its skills, agent documents and scripts are [`CODING_STANDARDS.md`](CODING_STANDARDS.md) (see [Contributing](#contributing)); they are never applied to a target repository, which declares its ship rules instead.
+
 ### The two wave-skill arguments
 
 The stream agent runs the wave skill with two optional arguments, which you can also type yourself:
