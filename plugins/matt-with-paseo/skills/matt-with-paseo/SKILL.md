@@ -94,7 +94,7 @@ A note for stage B: `/mattpocock-skills:to-tickets` synthesizes from the current
 
 When the next step you will present is a step of this skill, call `list_profiles` before presenting it: with no profile that fits (step 1's table, last row), this checkpoint also asks for the agents' model and permission mode.
 
-Present three things to the user: the current stage (or the case of the list above), the signals you saw with their paths, and **one** concrete next step (a command to type, or a step number of this skill). Wait for the user to agree.
+Present three things to the user: the current stage (or the case of the list above), the signals you saw with their paths, and **one** concrete next step (a command to type, or a step number of this skill). Wait for the user to agree. The agreement covers only the move to that next step (for stage C, only the move to step 1), even when you showed a plan with it: it approves no wave. A wave starts only after step 2's approval.
 
 **Done when**: the user has confirmed the stage and the next step. If the next step lies outside this skill, stop here.
 
