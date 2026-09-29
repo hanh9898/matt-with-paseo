@@ -158,6 +158,8 @@ Present the graph, the upcoming wave, and the lost-width list to the user, and w
 
 Pin the base commit: `git rev-parse <integration branch>`. Write `wave<N>-common-rules.md` next to the ticket folder, following [`COMMON-RULES-TEMPLATE.md`](COMMON-RULES-TEMPLATE.md); its first section is the graph from step 2, with each ticket's wave and status, so the dependency tree lives on disk. You run each verification command the repo has on the base commit yourself, before the first spawn, and write what fails into its "Failing on base" section.
 
+Settle what the spec and the tickets leave open. A choice that several tickets must make alike (a format, a name, a threshold) and that you can make goes in the template's "Chosen for you" row: pick it yourself, and write it with its reason. Never write it into a ticket's acceptance criteria, which an agent can challenge only by stopping. "Not known yet" holds only what nobody can settle yet, with how to proceed meanwhile. When you name the rules to the user, state for "Chosen for you" the row's challenge route (a ticket agent challenges with evidence, in its ticket's comments and its report, and keeps working) and the sentence on answering a challenge (the answer says why the plan changes or stands).
+
 Once the first agent is spawned, the rules part of the file is **frozen**: agents read it at any moment, so an edit mid-wave reaches some of them and not others. A rule that must change mid-wave goes to each running agent with `send_agent_prompt` and into the next wave's rules; only the log sections below the rules keep growing.
 
 The common rules are the single place holding what every agent in the wave needs to know, so each agent's own prompt carries only three things: which ticket, which private resources, and which flow (step 4). The file is also the wave's log: steps 3, 4 and 7 append to it, so step 0 of a later session can read where an unfinished wave stands. Step 3 starts its `## Checkpoints` section right after the rules, holding the marks of the Checkpoints since the previous wave file (step 0's and step 2's; step 7's marks paragraph).
@@ -166,7 +168,7 @@ Filter each trap from earlier waves before copying it and check it against the a
 
 A trap's "how to check you avoided it" column tells its kind: a command with a clear result makes it mechanical, prose makes it a judgement call (the split `mattpocock-skills:retro` draws). A mechanical trap stays in the list together with its command. Wiring that command into the target repo's own checks is a separate ticket for that repo, proposed to the user; this skill never edits the target repo's checks itself.
 
-**Done when**: every section of the template has content or reads "not applicable", `## Checkpoints` holds the mark of each Checkpoint since the previous wave file, every trap from earlier waves has been filtered and checked against the acceptance criteria as above before it was copied, and no trap marked **wrong** in an earlier wave's log is copied as written.
+**Done when**: every section of the template has content or reads "not applicable", every choice the tickets leave open that several tickets must make alike is in "Chosen for you" with its reason or in "Not known yet" with how to proceed, `## Checkpoints` holds the mark of each Checkpoint since the previous wave file, every trap from earlier waves has been filtered and checked against the acceptance criteria as above before it was copied, and no trap marked **wrong** in an earlier wave's log is copied as written.
 
 ## 4. Spawn
 
