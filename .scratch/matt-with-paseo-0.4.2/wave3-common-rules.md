@@ -171,3 +171,5 @@ Integration head `c1f955c`, run once from `plugins/matt-with-paseo`: `CLAUDE_COD
 | wave-not-configured (a base case) | 0.67 | stops-at-setup (FAIL PASS FAIL) |
 
 With one run per case, a split judge vote (PASS FAIL FAIL) may be noise, but a unanimous FAIL or a missing regex pattern is a real miss. Report: `plugins/matt-with-paseo/evals/results/2026-09-29T04-48-01-009Z/report.html`.
+
+**Eval fix pass** (operator choice (a), 2026-09-29): one Sonnet agent 20bb6850 on `matt-with-paseo-0-4-2/wave3/eval-fixes` (workspace `wks_54d43134e0686e76`, base 2c8c1b6). It fixes the 4 unloadable `case.yaml` files and the 4 cases that failed on every vote, with no review. Then one re-run of exactly 9 cases (those 8 plus `wave-not-configured`), each with its own `--case` call. Whatever still fails goes into the release notes and #58 as known issues, and there is no further round.
