@@ -90,7 +90,13 @@ Then take each unfinished ticket of the wave. Find its agent in the `## Wave age
 
 A `## Wave agents` row whose ticket is `review` is step 7's review agent; it carries no `ticket` label, so its row is the only way to find it. Still running: wait, with a heartbeat per step 5 if this session did not spawn it (its ticks check only `get_agent_status`, since it has no ticket branch), then continue step 7 with its findings. Stopped with no `## Review` yet: continue step 7 with its findings. It has no ticket branch to merge.
 
-Once every ticket of the wave is done: a ticket branch of this wave still unmerged (`git branch --no-merged <integration branch>`, keeping only the ticket branch shape of "Names this run writes") goes to step 5, which reads its report, then step 6; no `## Review` yet, or a finding in it that reads **waiting on the user's decision**, goes to step 7; an uncleaned row goes to step 8 only after that.
+Once every ticket of the wave is done, the first row that matches is the step to resume:
+
+| The wave shows | Resume at |
+|---|---|
+| A ticket branch of this wave still unmerged (`git branch --no-merged <integration branch>`, keeping only the ticket branch shape of "Names this run writes") | Step 5, which reads its report, then step 6 |
+| No `## Review` yet, or a finding in it that reads **waiting on the user's decision** | Step 7 |
+| An uncleaned row | Step 8 |
 
 A note for stage B: `/mattpocock-skills:to-tickets` synthesizes from the current conversation, as `/mattpocock-skills:to-spec` does, so it must run in the session that still holds the context that wrote the spec. If that session is gone, tell the user. Every command this step suggests outside this skill (stages A and B, `/mattpocock-skills:ask-matt`) is typed by the user only; this skill only suggests it.
 
@@ -182,7 +188,7 @@ Before writing the private resources into the prompt, read the target repo's `pa
 
 The prompt only names the private resources; the agent creates each one when it first needs it, and keeps it until its ticket is merged, since step 7 may send a finding back to it. Step 8 removes them. What agents share (a server they all call, a render lock, anything else only one agent may hold at a time) is not a private resource: it goes into the common rules' Resources section in step 3, with how to take and release each lock.
 
-Take the shape of each `create_agent` call (required fields, optional fields, how the chosen profile maps onto it) from the `paseo` skill (loaded in step 1); do not guess parameters.
+Take the shape of each `create_agent` call (required fields, optional fields, how the chosen profile, or the model and permission mode the user gave, maps onto it) from the `paseo` skill (loaded in step 1); do not guess parameters.
 
 The **flow** is the chain of skills the agent runs for that ticket. Read the ticket, then pick one row:
 
@@ -226,7 +232,7 @@ A finished report whose artifacts are not there yet (no commits on the ticket's 
 
 | Last activity entry | Do |
 |---|---|
-| A shell command (`[Shell]`, `[Powershell]`) or no tool call (text, a `[Task notification]`) | Hung: a foreground shell command cannot legitimately run that long. `kill_agent` it, never cancel and prompt it (a prompt only queues behind the stuck call), and hand its remainder to a new agent in the same workspace, as [`TROUBLESHOOTING.md`](TROUBLESHOOTING.md) "A ticket goes wrong while its agent is running" gives for `kill_agent` |
+| A shell command (`[Shell]`, `[Powershell]`) or no tool call (text, a `[Task notification]`) | Hung: a foreground shell command cannot legitimately run that long. `kill_agent` it, never cancel and prompt it (a prompt only queues behind the stuck call), and hand its remainder to a new agent in the same workspace, as [`TROUBLESHOOTING.md`](TROUBLESHOOTING.md) "A ticket goes wrong while its agent is running" gives for `kill_agent`. Each ticket gets 2 such restarts per wave (ADR 0004's budget); a hang past them records the ticket as failed, hung past its budget: leave its agent as it is, restart nothing, and name the ticket in your end-of-turn message |
 | A subagent (`[Agent]`, such as the `mattpocock-skills:code-review` reviewers) or another tool that can run long | Not hung: tell the user once, with the ticket and that entry, and let it run |
 
 `delete_heartbeat` once the agent has really stopped and its artifacts pass the checks above, and at the latest in step 8.
@@ -257,9 +263,9 @@ Each ticket was already reviewed by its agent in step 4. This pass targets only 
 
 - A one-ticket wave has no seam: write `## Review` as "not applicable: one-ticket wave, reviewed by its agent", then go to step 8.
 - A wave of two or more tickets: run `mattpocock-skills:code-review` with the wave's first base commit (step 3) as the fixed point, so tickets started by rolling start are covered too, stating in the call that each ticket was already reviewed on its own and only seam findings should be reported, and naming the evidence standards file when the repo declares one. Present the Standards and Spec axes separately.
-- When a profile read in step 1 has `notes` saying it is for review, run that review in an agent launched with that profile, on a fresh workspace from the integration branch, taking the `create_agent` shape from the `paseo` skill as in step 4, with the review agent labels of "Names this run writes" and its own row in `## Wave agents` (ticket column `review`) so step 8 cleans it up; otherwise run it in this session.
+- When a profile read in step 1 has `notes` saying it is for review, run that review in an agent launched with that profile, on a fresh workspace from the integration branch, created and launched as step 4's items 1 and 2 say (`projectId`, `workspaceId`), with the review agent labels of "Names this run writes" and its own row in `## Wave agents` (ticket column `review`) so step 8 cleans it up; otherwise run it in this session.
 
-Fix each finding. Before sending new work into an existing worktree, fast-forward its branch to the integration branch (`git -C <worktree> merge --ff-only <integration branch>`), so the agent reads the latest ticket comments and its merge comes back without conflicts; every fix merges back through step 6's three moves, the conflict-marker search included. The coordinator writes into a ticket file only while no agent holds that ticket; decisions for a held ticket go to its agent with `send_agent_prompt`. A finding contained in one ticket's zone goes back to that same agent via `send_agent_prompt`. A finding cutting across several tickets goes to one agent on a fresh workspace from the integration branch; the coordinator edits files itself only when the user assigns that fix to it in the decision round, and says so in `## Review`. Gather every question that needs a human decision into one round, present it, then record the decisions in the comments of the tickets involved, so the next wave can read them.
+Fix each finding. Before sending new work into an existing worktree, fast-forward its branch to the integration branch (`git -C <worktree> merge --ff-only <integration branch>`), so the agent reads the latest ticket comments and its merge comes back without conflicts; every fix merges back through step 6's three moves, the conflict-marker search included. The coordinator writes into a ticket file only while no agent holds that ticket; decisions for a held ticket go to its agent with `send_agent_prompt`. A finding contained in one ticket's zone goes back to that same agent via `send_agent_prompt`. A finding cutting across several tickets goes to one agent on a fresh workspace from the integration branch, created and launched as step 4's items 1 and 2 say; the coordinator edits files itself only when the user assigns that fix to it in the decision round, and says so in `## Review`. Gather every question that needs a human decision into one round, present it, then record the decisions in the comments of the tickets involved, so the next wave can read them.
 
 Append a `## Review` section to the end of the common rules file: the fixed point, the number of findings per axis, and the outcome of each finding. A finding whose question is asked and not yet answered reads **waiting on the user's decision**; update it once the answer comes. While any finding reads so, the wave stays open: step 8 does not start, and the question comes back in the next round. An answer that puts the question off names the ticket that will carry it, and that is the finding's outcome.
 
