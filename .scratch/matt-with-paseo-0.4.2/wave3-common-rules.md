@@ -151,3 +151,23 @@ User's rule: one review of the whole stream after the last wave. Fixed point `ec
 Skipped: Standards 8, `docs/agents/domain.md`'s generic GLOSSARY walkthrough. It predates the stream (written by `setup-matt-pocock-skills`, before `ec29c8e`), so trimming it would be out of the stream's scope. It is left for a separate ticket.
 
 **Outcomes of the stream fix pass** (agent 5f1c1a4c, branch `matt-with-paseo-0-4-2/wave3/stream-review-fixes`, merged as `2bf35cd`; 13 unit tests OK, drift check exit 0, no markers; workspace archived). All fixed, none skipped: S1 S2 `caf0344` · S3 S6 `763f3b6` · S4 S7 `4ca0653` · S5 S8 `22ff3e5`. S5 extends `streams-61-ship-rules` with the grader `relays-merge-message-pattern`. S8 drops two graders that also passed on base.
+
+## Final eval run
+
+Integration head `c1f955c`, run once from `plugins/matt-with-paseo`: `CLAUDE_CODE_EFFORT_LEVEL=medium claude plugin eval --model sonnet -j 2 --runs 1 --ablation none --scaffold --trust-plugin --no-publish .`
+- **Model** sonnet (every case), **effort** medium, **runs per case** 1, **no comparison arm** (`--ablation none`), judge model left at its default. Duration 402 s, cost $4.40, **exit 1**.
+- **29 cases**: 7 at `ec29c8e`, 22 added by this stream. **25 ran; 4 did not load**: `streams-39-question-round` ("case.yaml must be a YAML object"), and `streams-44-pause`, `streams-49-ship-branch`, `streams-61-ship-rules` (YAML parse error on line 3, an unquoted value).
+- **16 of 25 scored 1.00.** Below 1.00:
+
+| Case | Score | Failing grader |
+|---|---|---|
+| streams-40-silent-supervision | 0.80 | writes-last-tick (pattern not found) |
+| streams-41-hung-agents | 0.67 | kills-and-replaces (judge PASS FAIL FAIL) |
+| streams-51-overlap-and-need | 0.50 | need-yields-merge-or-hold (PASS FAIL FAIL) |
+| streams-52-answer-and-machine | 0.50 | status-line-drops-answer (FAIL PASS FAIL) |
+| streams-63-pull-request-shape | 0.33 | names-missing-mandatory-section (FAIL FAIL FAIL) |
+| wave-54-repro-and-no-code-flow | 0.50 | docs-ticket-no-code-flow (FAIL FAIL FAIL) |
+| wave-64-merge-message-pattern | 0.33 | ticket-01-pattern (pattern not found) |
+| wave-not-configured (a base case) | 0.67 | stops-at-setup (FAIL PASS FAIL) |
+
+With one run per case, a split judge vote (PASS FAIL FAIL) may be noise, but a unanimous FAIL or a missing regex pattern is a real miss. Report: `plugins/matt-with-paseo/evals/results/2026-09-29T04-48-01-009Z/report.html`.
