@@ -441,7 +441,7 @@ Either signal alone is not the last stage. When they disagree, prompt the stream
 | GitHub | `gh`, as below |
 | GitLab | `glab`, merge requests. Take the command shapes from the tracker configuration when it declares GitLab; the shapes below are the defaults |
 
-**The ship branch.** Cut it for every ship question, so it never drifts from what the question describes. Read the target repository's ship rules from `origin/<PR target>` first, the way step 1's check 5 does — the same read "**Ship rules**" below compares against setup, done here once and reused there — since the cut's own commit needs the `ship commit message` key.
+**The ship branch.** Cut it for every ship question, so it never drifts from what the question describes.
 
 1. **The left-out paths**, derived from the repository, never from a list kept by hand. Take the paths the stream changed, `git -C <worktree> diff --name-only --no-renames origin/<PR target>...stream/<slug>`, and sort each into the first row that matches:
 
@@ -455,7 +455,7 @@ Either signal alone is not the last stage. When they disagree, prompt the stream
    | Ships | every other path |
 
    Every path of the rows from binary evidence to tracker configuration is left out; the ship question names each with its row.
-2. **Cut it** in a throwaway worktree outside the stream's worktree and the control folder, so the stream's worktree stays on `stream/<slug>`: `git -C <repository> worktree add -B stream/<slug>-ship <temp>/<slug>-ship stream/<slug>`. In it, `git restore --source=origin/<PR target> --staged --worktree -- <left-out paths>` (a path the PR target lacks is deleted), then one commit, its message the ship rules' `ship commit message` key just read, filled with `<slug>`, `<owner>` and `<key>` as the ship rules define them; with none declared, `chore(ship): leave agent-only paths out`. Then `git -C <repository> worktree remove <temp>/<slug>-ship`. With no path left out, the ship branch is the integration branch's head and carries no extra commit.
+2. **Cut it** in a throwaway worktree outside the stream's worktree and the control folder, so the stream's worktree stays on `stream/<slug>`: `git -C <repository> worktree add -B stream/<slug>-ship <temp>/<slug>-ship stream/<slug>`. In it, `git restore --source=origin/<PR target> --staged --worktree -- <left-out paths>` (a path the PR target lacks is deleted), then one commit, its message the target repository's ship rules' `ship commit message` key, read from `origin/<PR target>` the way step 1's check 5 does, filled with `<slug>`, `<owner>` and `<key>` as the ship rules define them; with none declared, `chore(ship): leave agent-only paths out`. Then `git -C <repository> worktree remove <temp>/<slug>-ship`. With no path left out, the ship branch is the integration branch's head and carries no extra commit.
 3. **Check the merge**: `git -C <worktree> merge-tree --write-tree --name-only origin/<PR target> stream/<slug>-ship`.
 
    | Result | Do |
@@ -465,7 +465,7 @@ Either signal alone is not the last stage. When they disagree, prompt the stream
    | Exit 1, conflicts | Ask no ship question. Report to the user, headed with the slug, the conflicted paths the command lists and that the stream ships once its integration branch merges the PR target cleanly (how, for example a ticket that merges the PR target in, is the user's call); write `ship blocked at <head>: conflicts with <PR target>` into the status line. A new integration head asks again |
    | Any other exit | Tell the user the command's error and stop |
 
-**Ship rules**, compared for the ship question below (never on a conflict, which asks none) with what was already read above, before the ship branch was cut — never read a second time here.
+**Ship rules**, read before the ship question below is asked (never on a conflict, which asks none). Read the target repository's ship rules again, from `origin/<PR target>`, the way step 1's check 5 does.
 
 | Status line | The ship-rules line says |
 |---|---|
