@@ -36,6 +36,19 @@ def changed_paths(root, ref, paths):
     return sorted(set(changed))
 
 
+def skip_reason(root, base):
+    """Why the gate cannot compare, or None. It compares only inside the root of a git checkout that has `base`."""
+    try:
+        top = git(root, "rev-parse", "--show-toplevel")
+        if top.returncode != 0 or not Path(top.stdout.strip()).samefile(root):
+            return f"{root} is not the root of a git checkout"
+        if git(root, "rev-parse", "--verify", "--quiet", f"{base}^{{commit}}").returncode != 0:
+            return f"no branch or ref {base} to compare with"
+    except FileNotFoundError:
+        return "git is not installed"
+    return None
+
+
 def findings(root, paths, base):
     base_version = version_at(root, base)
     version = json.loads((root / PLUGIN_JSON).read_text(encoding="utf-8"))["version"]
@@ -52,6 +65,10 @@ def main():
     parser.add_argument("--base", default="main", help="the branch whose version a change must move past")
     args = parser.parse_args()
 
+    reason = skip_reason(args.root, args.base)
+    if reason:
+        print(f"version gate skipped: {reason}", file=sys.stderr)
+        return 0
     lines = findings(args.root, seat_facing_paths(args.paths), args.base)
     for line in lines:
         print(line)
