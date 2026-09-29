@@ -41,11 +41,28 @@ def frontmatter(skill_md):
     return fields
 
 
+def read_json(path, what):
+    """The parsed file, or exit 2 with one line when it is missing or not JSON."""
+    if not path.is_file():
+        fail(f"No {what} at {path}.")
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except ValueError as error:
+        fail(f"{path}: not valid JSON ({error}).")
+
+
 def installed_skills(plugin_root):
-    manifest = json.loads((plugin_root / ".claude-plugin" / "plugin.json").read_text(encoding="utf-8"))
+    manifest_path = plugin_root / ".claude-plugin" / "plugin.json"
+    manifest = read_json(manifest_path, "plugin manifest")
+    entries = manifest.get("skills") if isinstance(manifest, dict) else None
+    if not isinstance(entries, list) or not all(isinstance(entry, str) for entry in entries):
+        fail(f"{manifest_path}: needs a \"skills\" list of skill folders.")
     skills = {}
-    for entry in manifest["skills"]:
-        fields = frontmatter(plugin_root / entry / "SKILL.md")
+    for entry in entries:
+        skill_md = plugin_root / entry / "SKILL.md"
+        if not skill_md.is_file():
+            fail(f"{manifest_path}: skill {entry} has no SKILL.md at {skill_md}.")
+        fields = frontmatter(skill_md)
         skills[fields.get("name", Path(entry).name)] = fields
     return skills
 
@@ -54,7 +71,10 @@ def find_installed_plugin():
     record = Path.home() / ".claude" / "plugins" / "installed_plugins.json"
     if not record.is_file():
         fail(f"No {record}: pass --plugin-root <the mattpocock-skills plugin directory>.")
-    plugins = json.loads(record.read_text(encoding="utf-8"))["plugins"]
+    installed = read_json(record, "install record")
+    plugins = installed.get("plugins") if isinstance(installed, dict) else None
+    if not isinstance(plugins, dict):
+        fail(f"{record}: needs a \"plugins\" object.")
     installs = [entry for key, entries in plugins.items() if key.startswith("mattpocock-skills@")
                 for entry in entries]
     for entry in installs:
@@ -67,6 +87,8 @@ def find_installed_plugin():
 
 def tolerated_entries(path):
     """{skill name: line number} from the tolerated list: one name per line, `#` starts a comment."""
+    if not path.is_file():
+        fail(f"No tolerated references list at {path}.")
     entries = {}
     for number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
         name = line.partition("#")[0].strip()
@@ -103,12 +125,9 @@ def agent_flow_lines(path, lines):
 
 
 def load_pinned(table):
-    if not table.is_file():
-        fail(f"No pinned lines table at {table}.")
-    try:
-        rows = json.loads(table.read_text(encoding="utf-8"))
-    except ValueError as error:
-        fail(f"{table}: not valid JSON ({error}).")
+    rows = read_json(table, "pinned lines table")
+    if not isinstance(rows, list):
+        fail(f"{table}: needs a list of rows, each with a file, phrase and reason.")
     for number, row in enumerate(rows, 1):
         if not isinstance(row, dict) or not all(isinstance(row.get(key), str) and row[key] for key in PINNED_KEYS):
             fail(f"{table}: row {number} needs a non-empty file, phrase and reason.")
