@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: wave-75-chosen-default-challenge
+description: Two ready, independent tickets each show a date to the user, and neither the spec nor either ticket says which date format to use. At step 3, writing the wave's common rules, the skill must pick one format as its own chosen default, give the reason, and leave it open to a ticket agent's challenge instead of folding it into the acceptance criteria or routing disagreement to ready-for-human.
+tags: [wave, spec]
+context:
+  scaffold_script: fixture.sh
