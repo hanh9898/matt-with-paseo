@@ -190,6 +190,8 @@ The prompt only names the private resources; the agent creates each one when it 
 
 Take the shape of each `create_agent` call (required fields, optional fields, how the chosen profile, or the model and permission mode the user gave, maps onto it) from the `paseo` skill (loaded in step 1); do not guess parameters.
 
+Read [`PASEO-FACTS.md`](PASEO-FACTS.md) (verified Paseo behaviour, each row with its version): its workspaces and worktrees table before the first `create_workspace`, and its configuration and commands table when the target repo commits a `paseo.json`.
+
 The **flow** is the chain of skills the agent runs for that ticket. Read the ticket, then pick one row:
 
 | The ticket describes | Flow |
@@ -239,6 +241,8 @@ A finished report whose artifacts are not there yet (no commits on the ticket's 
 
 Agent stopped midway or report incomplete: see [`TROUBLESHOOTING.md`](TROUBLESHOOTING.md).
 
+Read [`PASEO-FACTS.md`](PASEO-FACTS.md) (verified Paseo behaviour, each row with its version): its turns and notifications table when a finish notification is missing, and its status calls and heartbeats table when a heartbeat stops ticking.
+
 **Done when**: every ticket in the wave has a checked report, or is recorded as failed with a reason.
 
 ## 6. Merge into the integration branch
@@ -280,6 +284,8 @@ Append a `## Review` section to the end of the common rules file: the fixed poin
 - the ticket's branch appears in `git branch --merged <integration branch>`.
 
 The clean-worktree check is mandatory, never skipped: Paseo archives a worktree with uncommitted or untracked files without warning and deletes them with it.
+
+Read [`PASEO-FACTS.md`](PASEO-FACTS.md) (verified Paseo behaviour, each row with its version): its workspaces and worktrees table when an archive returns what these checks did not predict (a `removedDirectory` value, a child agent archived along with its parent).
 
 With all three, `archive_agent`, `archive_workspace`, clean up the non-Paseo resources listed in the private resources column, then check the "cleaned" column. If any is missing, leave the row as is and see [`TROUBLESHOOTING.md`](TROUBLESHOOTING.md). Delete every heartbeat created for the wave. Then `paseo ls -g --label wave=<N>`, with the label filter of "Names this run writes", must list nothing; an agent still listed has no row in the table, so check and clean it the same way, unless it carries a `stream` label this run does not have (see [`TROUBLESHOOTING.md`](TROUBLESHOOTING.md)).
 
