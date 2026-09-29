@@ -14,7 +14,7 @@ Words: every word of the wave skill's words block ([`matt-with-paseo`](../matt-w
 
 - **Stream**: one ticket set that ships through one integration branch and one pull request (a merge request on GitLab; this skill says pull request for both). Its owner is an attribute of it. No dependency crosses a stream boundary; dependencies between tickets stay inside the stream, where the wave skill runs them.
 - **Intake agent**: a Paseo agent you spawn only when the user names a Matt intake skill (triage, grilling, wayfinder, and the spec and ticket steps that follow); its initial prompt starts with that skill's slash command, and it counts against the agent cap. It is the only way a spec or ticket gets written from the control folder (ADR 0005).
-- **Pause**: every stream held (the wave skill's **Hold**) until no agent runs, recorded as `paused` in each status line, so the machine can restart; resuming is one tick (ADR 0006).
+- **Pause**: every stream held (the wave skill's **Hold**) until no agent runs, recorded as `paused` in each status line, so the machine can restart; resuming is one tick, which releases every stream except those step 7 holds until another stream ships (ADR 0006).
 - **Ship branch**: `stream/<slug>-ship`, cut afresh from the integration branch's head at each ship, plus one commit that restores the agent-only paths (the ticket folder, wave files, tracker configuration, binary evidence), except those the user keeps in, to the PR target's version; the stream's pull request comes from it, and the integration branch keeps everything (ADR 0007).
 
 ## Entry guards
@@ -47,8 +47,8 @@ What you know about a stream comes from these four signals and nothing else:
 |---|---|
 | Ticket status on the stream's tracker | the target repository's tracker configuration (its `## Agent skills` section), read in the stream's worktree |
 | The stream agent's end-of-turn message | `get_agent_activity` on the stream agent |
-| Paseo agent status and activity | `get_agent_status`, `get_agent_activity`, `paseo ls -g --label stream=<slug> --json` |
-| Git diff | `git -C <worktree> diff`, `git -C <worktree> log` on the integration branch |
+| Paseo agent status and activity | `get_agent_status`, `get_agent_activity`, `list_pending_permissions` (step 5), `paseo ls -g --label stream=<slug> --json`, and `paseo ls -g --json` unfiltered for a wave run outside any stream (step 0) |
+| Git diff | `git -C <worktree> diff`, `git -C <worktree> log` on the integration branch; `git -C <repository> worktree list` (step 5) and `git -C <cwd> worktree list` (step 0) for where a checkout sits |
 
 You never read wave files (`wave*-common-rules.md` or anything else the wave skill writes to record a wave): their format belongs to the wave skill and may change. To learn where a stream stands, prompt its stream agent ("where does the stream stand?") and let the wave skill's step 0 answer.
 
@@ -56,7 +56,7 @@ You talk to stream agents only. You never prompt, cancel, kill or archive a tick
 
 ## Decisions, memory, machine and credentials
 
-**Decisions.** `decisions.md`, at the root of the control folder beside `streams.md`, is the history the status line does not keep. Each time you act on one of your own decisions (a ship, an overlap warning's answer, a change of the cap or a quota, a **Hold** or its release, a **Pause** or its resume), append one line: date and time, the slug (or `all`), the decision, and the user's answer it rests on, quoted. Never rewrite or remove a line. A decision inside a stream (a wave approval, a review decision, a ticket's scope) is the stream agent's to record as its tickets' comments; it never goes into `decisions.md`. A line records what was decided, never how to decide: `decisions.md` is no source of rules.
+**Decisions.** `decisions.md`, at the root of the control folder beside `streams.md`, is the history the status line does not keep. Each time you act on one of your own decisions (a ship, an overlap warning's answer, a change of the cap or a quota, a **Hold** or its release, a **Pause** or its resume), append one line: date and time, the slug (or `all`), the decision, and the user's answer it rests on, quoted (for a quota a split changed, the cap and priorities it read). Never rewrite or remove a line. A decision inside a stream (a wave approval, a review decision, a ticket's scope) is the stream agent's to record as its tickets' comments; it never goes into `decisions.md`. A line records what was decided, never how to decide: `decisions.md` is no source of rules.
 
 **Claude memory.** How a run behaves comes from this skill, the wave skill and `streams.md` alone. Never write an operating rule (how to read an answer, when to ship, how to supervise) to Claude memory or to a file of the control folder, even when the user states one: tell the user that a lasting rule belongs in the skill. A setting this skill lets the user change (the restart budget, the respawn threshold) is a decision like any other, recorded in `decisions.md` and applied where its step says.
 
@@ -73,12 +73,12 @@ You talk to stream agents only. You never prompt, cancel, kill or archive a tick
 
 ## The index
 
-The index is `streams.md` at the root of the control folder: one line for the cap, then one table row per stream. It records where each stream's tickets live and never holds ticket content; the tracker stays the one source of truth for tickets.
+The index is `streams.md` at the root of the control folder: one line for the cap, the Last tick line, then one table row per stream. It records where each stream's tickets live and never holds ticket content; the tracker stays the one source of truth for tickets.
 
 | Field | Holds |
 |---|---|
 | Agent cap | Above the table: the most agents running at once across every stream (the stream agents and all their ticket agents). The wave skill's step 7 review agent and cross-ticket fix agent need no slot of their own: they start only after every ticket of their wave is merged, so they run inside the quota slots its ticket agents freed |
-| Last tick | Under the cap line: `Last tick: <date> <time>, heartbeat streams-reconcile <id> every <interval>, expires <date> <time>`, when step 5's last tick ran and the reconcile heartbeat it left. Every tick rewrites it as its last action; no line means no tick has run yet |
+| Last tick | Under the cap line: `Last tick: <date> <time>, heartbeat streams-reconcile <id> every <interval>, expires <date> <time>`, when step 5's last tick ran and the reconcile heartbeat it left, by id, since `delete_heartbeat` takes an id and never a name. Every tick rewrites it as its last action; no line means no tick has run yet |
 | Slug | The stream's name, lowercase letters, digits and `-`; unique in the index. The wave skill derives its label and branch prefix from it |
 | Repository | Absolute path to a local checkout of the target repository |
 | Owner | The requester the stream works for; the rest of this skill calls them the owner |
@@ -95,6 +95,7 @@ Example:
 # Streams
 
 Agent cap: 6
+Last tick: 2026-09-27 14:15, heartbeat streams-reconcile 7f3e2a19 every 15 min, expires 2026-09-27 22:00
 
 | Slug | Repository | Owner | Tickets | Base branch | PR target | Forge | Priority | Status |
 |---|---|---|---|---|---|---|---|---|
@@ -126,7 +127,7 @@ The status line is the reconcile loop's only memory (step 5): every step writes 
 | A finding reported to the user | step 5 | `reported: open pull request not recorded` |
 | A nudge sent to an idle stream agent, for the message the status line records | step 5 | `nudged 11:40` |
 | Nothing to ship, for the integration branch's head | step 6 | `nothing to ship at 1a2b3c4` |
-| Ship question asked, for the integration branch's head, and the user's answer | step 6 | `ship question asked at 1a2b3c4, user said wait` |
+| Ship question asked, for the integration branch's head | step 6 | `ship question asked at 1a2b3c4` |
 | Paths the user kept in the ship branch | step 6 | `keeps docs/agents/issue-tracker.md` |
 | Ship blocked by a conflict with the PR target, for the integration branch's head | step 6 | `ship blocked at 1a2b3c4: conflicts with test` |
 | Shipped, with the pull request's or merge request's link | step 6 | `shipped https://…/pull/12, waits on the reviewers` |
@@ -146,7 +147,7 @@ A running stream with no ticket left for agents (every ticket resolved or waitin
 
 With the example above, billing-export having 3 ready tickets and login-bug 4, and neither started: billing-export takes 1 + quota 3, leaving 2; login-bug takes 1 + quota 1, leaving 0.
 
-Changing the cap or a priority in the index takes effect at the next wave boundary: it changes the next split, never a quota a stream is running a wave with. A cap lowered below the slots in use is reached as each stream comes to its boundary.
+Changing the cap or a priority in the index takes effect at the next wave boundary: it changes the next split, never a quota a stream is running a wave with. A cap lowered below the slots in use is reached as each stream comes to its boundary. Append each quota a split changes, and each change of the cap or a priority, to `decisions.md`.
 
 ## Replace a stream agent
 
@@ -163,7 +164,7 @@ Archiving a parent agent archives and interrupts its running children (probe C1)
 
 A replacement at a wave boundary never counts against the restart budget of step 5; only a restart does, once per failure, whether it ends as a resume, a hold, or a replacement.
 
-**Done when**: the stream agent was archived only after the check passed, and the status line holds the new agent id or "waits on the cap", or it records the resume sent or the restart held.
+**Done when**: the stream agent was archived only after the check passed, a hung one killed first, and the status line holds the new agent id or "waits on the cap", or it records the resume sent or the restart held.
 
 ## 0. Pick the stream
 
@@ -290,9 +291,9 @@ Capacity and context change only here: you never prompt, cancel or archive a str
 - **Confirmations quote the answer.** When you tell the user what you sent, quote their answer as they wrote it, under its slug.
 - **The stage confirmation stays.** Each stream agent's wave skill asks its own stage confirmation (its step 0); relay it like any other question, and never answer it or ask the agent to skip it.
 
-Gather every question pending across all streams: each stream whose status line says it waits on the user, plus every stream agent that `list_pending_permissions` lists with a question-type permission, plus your own two kinds of item: the ship question (step 6) of each stream at its last stage, and each overlap warning (step 7), plus each answer to ask back. Present them to the user in one round, one message, each stream agent's question **verbatim** under a heading `[<slug>]` with its stream's slug, the ship question under its stream's slug too, and each overlap warning under both slugs as step 7 shows, and wait. A question the user leaves unanswered, or one that arrives while a round waits on the user, stays pending for the next round; it is never presented alone.
+Gather every question pending across all streams: each stream whose status line says it waits on the user, plus every stream agent that `list_pending_permissions` lists with a question-type permission, plus your own items: the ship question (step 6) of each stream at its last stage, each overlap warning and each need item (step 7), and each machine-changing action ("Decisions, memory, machine and credentials"), plus each answer to ask back. Present them to the user in one round, one message, each stream agent's question **verbatim** under a heading `[<slug>]` with its stream's slug, the ship question and each machine-changing action under its stream's slug too, and each overlap warning and need item under both slugs as step 7 shows, and wait. A question the user leaves unanswered, or one that arrives while a round waits on the user, stays pending for the next round; it is never presented alone.
 
-The user's answer comes as a message in this session; route it when it arrives. Route each answer by the heading it answers, only to the stream agent that asked, whose id is in that stream's status line, with `send_agent_prompt`, `background: true`, `notifyOnFinish: true`, so its next end-of-turn message reaches you again. Send the answer as the user wrote it. A terse answer goes out quoted and bound: name each question it answers with the suggestion it takes, and each question it leaves open as still with the user, so the stream agent never stretches it itself. After a partial answer the status line keeps the stream waiting on the user, naming what is still open, so the next round gathers it. An answer to one of your own items goes to no agent: the ship question's answer to step 6, an overlap warning's answer to step 7. A question-type permission is answered with the user's choice as the wave skill's [`TROUBLESHOOTING.md`](../matt-with-paseo/TROUBLESHOOTING.md) entry "Agent waits on a question-type permission" describes.
+The user's answer comes as a message in this session; route it when it arrives. Route each answer by the heading it answers, only to the stream agent that asked, whose id is in that stream's status line, with `send_agent_prompt`, `background: true`, `notifyOnFinish: true`, so its next end-of-turn message reaches you again. Send the answer as the user wrote it. A terse answer goes out quoted and bound: name each question it answers with the suggestion it takes, and each question it leaves open as still with the user, so the stream agent never stretches it itself. After a partial answer the status line keeps the stream waiting on the user, naming what is still open, so the next round gathers it. An answer to one of your own items goes to its step, and to no agent unless that step sends a prompt: the ship question's answer to step 6, an overlap warning's or a need item's answer to step 7 (whose hold sends `hold`, and later `release`, to the waiting stream agent), a machine-changing action's answer to "Decisions, memory, machine and credentials". A question-type permission is answered with the user's choice as the wave skill's [`TROUBLESHOOTING.md`](../matt-with-paseo/TROUBLESHOOTING.md) entry "Agent waits on a question-type permission" describes.
 
 A message that asks nothing (a progress report) only updates the status line.
 
@@ -309,18 +310,21 @@ The stream's status line ("The status line", The index) is the loop's only memor
 
 Every prompt you send a stream agent, in any step, goes with `send_agent_prompt`, `background: true` and `notifyOnFinish: true`: the agent's answer reaches you only as a finish notification, and a prompt without one leaves the stream waiting on a message no one reads.
 
+One stream may match several rows of the table below; each row it matches acts, in table order, and a stream gets at most one restart per tick.
+
 | Observed, for one stream | Action |
 |---|---|
 | Should run, and no worktree on `stream/<slug>` | Step 2, which opens the existing branch instead of cutting a new one |
 | Should run, and no stream agent | A restart, per "Supervise one-for-one" below |
-| Stream agent running, with no question-type permission pending | None; its finish notification, or a later tick, brings its message |
+| Stream agent running, with no question-type permission pending | None beyond the activity check of "Supervise one-for-one" below; its finish notification, or a later tick, brings its message |
 | Stream agent idle, and its last end-of-turn message is newer than the one the status line records | Step 4 on that message. This is how a turn that ended without a finish notification (probe A2) is caught: the next tick finds it |
 | Stream agent, running or idle, has a question-type permission in `list_pending_permissions` not yet shown to the user | Step 4: the permission joins the next question round. An agent that waits on a permission may be reported `running`; the running row above leaves such an agent to this row |
-| Stream agent idle on the message the status line records, the status line waiting on the user | None; the question is already shown, and a tick never shows it twice |
-| Stream agent idle on the message the status line records, the status line waiting on the stream agent and recording no nudge for that message, and no agent with a `wave` label running for the stream | `send_agent_prompt` "where does the stream stand?" to it, `background: true`, `notifyOnFinish: true`, and write `nudged <time>` into the status line: the stream waits on an agent that waits for nothing, as when a ticket agent's finish notification never reached it. A stream agent idle while its ticket agents run is waiting for them and is not nudged. Its answer comes back through step 4 as a newer message, and the item lapses with it |
+| Stream agent idle on the message the status line records, the status line waiting on the user | None; the question is already shown, and a tick never shows it twice. What a partial answer left open, or an answer asked back, stays pending and joins the next round (step 4) |
+| Stream agent idle on the message the status line records, the status line waiting on the stream agent and recording no nudge for that message, and no agent with a `wave` label running for the stream, and the step 6 row below does not match | `send_agent_prompt` "where does the stream stand?" to it, `background: true`, `notifyOnFinish: true`, and write `nudged <time>` into the status line: the stream waits on an agent that waits for nothing, as when a ticket agent's finish notification never reached it. A stream agent idle while its ticket agents run is waiting for them and is not nudged. Its answer comes back through step 4 as a newer message, and the item lapses with it |
 | Stream agent failed | A restart, per "Supervise one-for-one" below |
 | Stream agent idle on the message the status line records, and its context past the respawn threshold | None; the respawn waits for the stream's next wave boundary (step 4), so a running wave is never cut |
-| Every ticket of the stream resolved or in the ready for human role, the stream agent idle, and the status line records neither shipped nor, for the integration branch's current head, nothing to ship or the ship question asked | Step 6 |
+| Every ticket of the stream resolved or in the ready for human or needs info role, the stream agent idle, and the status line records neither shipped nor, for the integration branch's current head, nothing to ship or the ship question asked | Step 6 |
+| The status line records `held until <other> ships`, and `<other>`'s status line records it shipped | Step 7's `release` ("A need on another stream") |
 | A `stream=<slug>` agent without a `wave` label for a row that should not run (other than a shipped stream's own idle stream agent) or a slug not in the index, two such agents for one slug, or an open pull request the status line does not record, and the status line does not yet record this finding as reported | Report it to the user and take no other action; the status line records that it was reported, so a later tick does not report it again |
 
 The loop's own heartbeat is reconciled in the same tick:
@@ -337,7 +341,7 @@ The loop's own heartbeat is reconciled in the same tick:
 | Session | Old heartbeat |
 |---|---|
 | Reopened: the session that created that heartbeat, resumed | `delete_heartbeat` on its id, then create a new one as the heartbeat table says; it may have stopped firing while the session was closed |
-| New: any other session | Try `delete_heartbeat` on its id (Paseo deletes a heartbeat by id, never by name). If that fails, the heartbeat belongs to the dead session and only its expiry, in the Last tick line, ends it. Either way, create this session's heartbeat, and ask the user to close the old session if it still lives, since two sessions ticking at once could both spawn for the same gap |
+| New: any other session | Try `delete_heartbeat` on its id. If that fails, the heartbeat belongs to the dead session and only its expiry, in the Last tick line, ends it. Either way, create this session's heartbeat, and ask the user to close the old session if it still lives, since two sessions ticking at once could both spawn for the same gap |
 
 In a new session, stream agents the dead session spawned send it their finish notifications, not this one, until this session prompts them with `notifyOnFinish: true`; the heartbeat covers them meanwhile.
 
@@ -371,7 +375,7 @@ A stream ships through one pull request from its **Ship branch** to its PR targe
 | Signal | Shows the last stage when |
 |---|---|
 | The stream agent's end-of-turn message | it reports stage F of the wave skill's step 0 table |
-| Ticket status on the tracker, read through the tracker configuration in the stream's worktree | every ticket of the stream's Tickets is `resolved` or in the ready for human role |
+| Ticket status on the tracker, read through the tracker configuration in the stream's worktree | every ticket of the stream's Tickets is `resolved` or in the ready for human or needs info role |
 
 Either signal alone is not the last stage. When they disagree, prompt the stream agent "where does the stream stand?" and read both again on its answer. Check this on each end-of-turn message of step 4 and on each tick of step 5; nothing below runs before the last stage. A status line that records `ship blocked at <head>` for the integration branch's current short head stops here: the conflict is already reported. A stream at its last stage whose integration branch holds no commit beyond the PR target (`git -C <worktree> log --oneline origin/<PR target>..stream/<slug>` prints nothing) has nothing to ship: write `nothing to ship at <head>`, with the integration branch's short head, into the status line and stop here.
 
@@ -424,7 +428,9 @@ Answer yes, no, or yes keeping <path> in.
 |---|---|
 | Yes | "Push and open" below |
 | Yes keeping `<path>` in | Write `keeps <path>` into the status line; cut the ship branch again with that path in the kept row, check its merge again, then "Push and open" |
-| Anything else | The stream stays unshipped; write what the user said beside the ship question in the status line |
+| Anything else | The stream stays unshipped |
+
+Append each answer to `decisions.md` ("Decisions, memory, machine and credentials"); no answer text goes into the status line.
 
 Ask again only when the user brings it up or the integration branch's head moves (a later wave merged), since the status line then records no ship question for the current head.
 
@@ -447,7 +453,7 @@ Ask again only when the user brings it up or the integration branch's head moves
 
 Then write the link into the stream's status line: date, shipped, the pull request's URL, and that the stream waits on the repository's reviewers. The pull request stays open for them; you never merge it, on either forge.
 
-**Done when**: the stream is at its last stage by both signals, the forge was chosen from the stream's repository, the ship branch was cut from the integration branch's head with its left-out paths derived from the repository and its merge into the PR target checked clean, the user said yes to the ship question in a question round before anything was pushed (or a conflict was reported and no ship question asked), one pull request (a merge request on GitLab) goes from `stream/<slug>-ship` to the stream's PR target with a description written with `/mattpocock-skills:pr`, its link is posted on the stream's spec or tickets and written in the status line, and nothing was merged.
+**Done when**: the stream is at its last stage by both signals, the forge is the row's Forge cell (step 1), the ship branch was cut from the integration branch's head with its left-out paths derived from the repository and its merge into the PR target checked clean, the user said yes to the ship question in a question round before anything was pushed (or a conflict was reported and no ship question asked), one pull request (a merge request on GitLab) goes from `stream/<slug>-ship` to the stream's PR target with a description written with `/mattpocock-skills:pr`, its link is posted on the stream's spec or tickets and written in the status line, and nothing was merged.
 
 ## 7. Warn when streams change the same file or need each other's work
 
@@ -492,6 +498,8 @@ The next question round is the next time you present questions to the user (step
 | Continue both | nothing; the next merged wave of either stream warns again with the list as it then stands |
 | Defer one | no prompt to any agent; the stream's running wave finishes. When its agent next asks to approve a wave, relay that question verbatim as step 4 says, noting under it that the user deferred the stream over the overlap with `<other>`; the stream waits there until the user approves. Its status line reads: date, stage, waits on the user (deferred, overlaps `<other>`) |
 
+Append each answer to `decisions.md` ("Decisions, memory, machine and credentials").
+
 **A need on another stream.** A stream agent's end-of-turn message (step 4) may say that the stream needs work of another open stream (the tests of "Which streams") whose status line does not record it as shipped: a ticket that cannot start without a change only the other integration branch holds. The user may say so too. Only such a declared need counts; you never derive one from tickets or diffs, since the stream layer holds no dependency graph (ADR 0001). Put one item in the next question round, headed with both slugs, the waiting stream first:
 
 ```
@@ -505,6 +513,8 @@ The message's own question, such as a wave approval, is still relayed verbatim b
 |---|---|
 | Merge the two | no prompt to any agent; write `merge with <other> agreed` into both status lines. Which stream stays, and how the other's tickets and integration branch move into it, is the user's to do or to tell you step by step; you never move or write a ticket |
 | Hold `<waiting>` until `<other>` ships | `send_agent_prompt` to `<waiting>`'s stream agent with `hold`, `background: true`, `notifyOnFinish: true`: it spawns nothing new while its running agents carry on (the wave skill's **Hold**). Write `held until <other> ships` into its status line. On each step 4 notification and each tick of step 5, read `<other>`'s status line; once it records `<other>` shipped, send `release` the same way, drop the item from the status line, and tell the user in the next round that `<waiting>` was released and that the work reaches `<waiting>`'s base branch only once `<other>`'s pull request merges there |
+
+Append each answer, and each `release` you send, to `decisions.md`.
 
 You never defer, hold, block or delay a stream without the user's answer, and never pick an answer for them.
 

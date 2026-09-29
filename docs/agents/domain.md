@@ -2,7 +2,7 @@
 
 How the engineering skills should consume this repo's domain documentation when exploring the codebase.
 
-**This repo:** the vocabulary lives in the words block at the top of `plugins/matt-with-paseo/skills/matt-with-paseo/SKILL.md`, the file agents running a wave read. The stream skill's words block, at the top of `plugins/matt-with-paseo/skills/matt-with-paseo-streams/SKILL.md`, points to it and adds three terms: **Stream**, **Intake agent** and **Pause**. **Hold** is in the wave skill's block, since the wave skill is what holds. Do not create `GLOSSARY.md` here; add or change terms in those blocks, and define each term in one of them only. Where Matt's skills already have a word, reuse it. Design decisions are ADRs in `docs/adr/`.
+**This repo:** the vocabulary lives in the words block at the top of `plugins/matt-with-paseo/skills/matt-with-paseo/SKILL.md`, the file agents running a wave read. The stream skill's words block, at the top of `plugins/matt-with-paseo/skills/matt-with-paseo-streams/SKILL.md`, points to it and adds four terms: **Stream**, **Intake agent**, **Pause** and **Ship branch**. **Hold** is in the wave skill's block, since the wave skill is what holds. Do not create `GLOSSARY.md` here; add or change terms in those blocks, and define each term in one of them only. Where Matt's skills already have a word, reuse it. Design decisions are ADRs in `docs/adr/`.
 
 ## Before exploring, read these
 
