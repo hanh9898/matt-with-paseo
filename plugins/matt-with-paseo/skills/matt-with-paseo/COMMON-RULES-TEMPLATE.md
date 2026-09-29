@@ -2,7 +2,7 @@
 
 Copy the frame below into `wave<N>-common-rules.md` and fill in each section. Each section answers a question every agent in the wave would otherwise ask itself; answered here once, no agent has to guess.
 
-Steps 4 and 7 of the skill append two sections, `## Wave agents` and `## Review`, to the end of the file; leave both out when writing the rules.
+Steps 3, 4 and 7 of the skill append three sections, `## Checkpoints`, `## Wave agents` and `## Review`, to the end of the file; leave all three out when writing the rules.
 
 Copy in only what an agent cannot look up: an unwritten convention, the reason behind a choice, a trap already hit. Anything one command or one file answers (scripts in `package.json`, the directory layout, `CLAUDE.md`) gets a pointer, not a copy.
 
@@ -50,6 +50,10 @@ Copy in only what an agent cannot look up: an unwritten convention, the reason b
   fails in <each failing test or check, with its first error line>, or "none: every command passes".
 - A failure listed here is not yours: leave it as it is unless your ticket's acceptance criteria name it, and
   name it in your report as failing on base. A failure not listed here is yours to explain.
+- In a repository with a version gate (this plugin's: `scripts/check-version-gate.py`, which compares the files
+  agents read with the latest release tag), its self-test `test_this_repository_passes_its_own_gate` fails on the
+  base of every ticket started after the stream's first change to such a file, until the stream bumps the version
+  once. List it here for those tickets; it is not theirs.
 
 ## Acceptance criteria are the contract
 - A trap above, or an instruction an earlier ticket left in its comments, is guidance; your ticket's
@@ -58,6 +62,16 @@ Copy in only what an agent cannot look up: an unwritten convention, the reason b
   do not stop to ask.
 - If the criteria themselves look wrong, stop that part, write the evidence in your ticket's comments,
   and move the ticket to `<ready for human label from the triage label file>`. Never rewrite the criteria.
+
+## What must hold, what was chosen, what is not known yet
+
+| Part | What it holds | What you do when your evidence goes against it |
+|---|---|---|
+| Must hold | Your ticket's acceptance criteria, and the section above. | Follow the section above; never rewrite the criteria. |
+| Chosen for you | `<choice>`: `<the reason it was made>`. | Challenge it with evidence, in your ticket's comments and your report. A challenge alone does not move the ticket to `<ready for human label from the triage label file>`. |
+| Not known yet | `<the open question>`. | `<who resolves it, or how to proceed while it stays open>`. |
+
+Whoever answers a challenge to a chosen default writes why the plan changes or stands; an answer with no reason is not a resolution.
 
 ## Resources
 - Your private resources are listed in your prompt (database, port when no service is declared, volume,
@@ -93,5 +107,6 @@ Copy in only what an agent cannot look up: an unwritten convention, the reason b
 - Report back: a design summary, files touched, how you verified with evidence, work not done or still
   in doubt, every change outside your file zone or outside git (a file in another checkout, a machine
   setting, an uncommitted file) with where it is, each private resource you created, and decisions the
-  user must make.
+  user must make. Tag each decision `decided: X because Y` or `assumed: X, unchecked`, and each finding
+  `reproduced` or `traced`, so a reader scans the report instead of parsing its prose.
 ```

@@ -1,0 +1,4 @@
+# Matt skills that references may name although the installed mattpocock-skills plugin does not ship them.
+# One skill name per line (for example `retro`); `#` starts a comment, so give each entry its reason.
+# drift-check.py fails on an entry that no reference needs any more (the skill is now installed, or
+# nothing names it): remove that entry.

@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: wave-95-user-language-one-door
+description: The user writes to the orchestrator in Vietnamese and, with the wave approval, asks for the agents' prompts in Vietnamese too. At step 4, with the stage confirmed, step 1 done and the wave approved, the orchestrator must send the user its text in Vietnamese and give each ticket agent an English prompt anyway.
+tags: [spawn, wave, language]
+context:
+  scaffold_script: fixture.sh

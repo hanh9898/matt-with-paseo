@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
-"""Check every mattpocock-skills:<name> reference against the installed Matt plugin, and flag any
-line naming the beta loop lens that CODING_STANDARDS.md carries unnamed."""
+"""Check every mattpocock-skills:<name> reference against the installed Matt plugin, flag any
+line naming the beta loop lens that CODING_STANDARDS.md carries unnamed, and flag any pinned
+load-bearing phrase (scripts/pinned-lines.json) that a file no longer holds."""
 
 import argparse
 import json
@@ -15,8 +16,11 @@ DEFAULT_TARGETS = [PLUGIN / "skills" / "matt-with-paseo", PLUGIN / "skills" / "m
                    REPO / "AGENTS.md", REPO / "CLAUDE.md", REPO / "docs" / "agents", PLUGIN / "evals",
                    REPO / "CODING_STANDARDS.md", PLUGIN / "README.md", REPO / "README.md"]
 REFERENCE = re.compile(r"mattpocock-skills:([a-z0-9][a-z0-9-]*)")
+TOLERATED = REPO / "scripts" / "tolerated-references.txt"
 BETA_LENS = "loop-me"
 BETA_LENS_NAMED = re.compile(rf"(?<![a-z0-9-]){BETA_LENS}(?![a-z0-9-])")
+PINNED_TABLE = Path(__file__).resolve().with_name("pinned-lines.json")
+PINNED_KEYS = ("file", "phrase", "reason")
 
 
 def fail(message):
@@ -37,11 +41,28 @@ def frontmatter(skill_md):
     return fields
 
 
+def read_json(path, what):
+    """The parsed file, or exit 2 with one line when it is missing or not JSON."""
+    if not path.is_file():
+        fail(f"No {what} at {path}.")
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except ValueError as error:
+        fail(f"{path}: not valid JSON ({error}).")
+
+
 def installed_skills(plugin_root):
-    manifest = json.loads((plugin_root / ".claude-plugin" / "plugin.json").read_text(encoding="utf-8"))
+    manifest_path = plugin_root / ".claude-plugin" / "plugin.json"
+    manifest = read_json(manifest_path, "plugin manifest")
+    entries = manifest.get("skills") if isinstance(manifest, dict) else None
+    if not isinstance(entries, list) or not all(isinstance(entry, str) for entry in entries):
+        fail(f"{manifest_path}: needs a \"skills\" list of skill folders.")
     skills = {}
-    for entry in manifest["skills"]:
-        fields = frontmatter(plugin_root / entry / "SKILL.md")
+    for entry in entries:
+        skill_md = plugin_root / entry / "SKILL.md"
+        if not skill_md.is_file():
+            fail(f"{manifest_path}: skill {entry} has no SKILL.md at {skill_md}.")
+        fields = frontmatter(skill_md)
         skills[fields.get("name", Path(entry).name)] = fields
     return skills
 
@@ -50,7 +71,10 @@ def find_installed_plugin():
     record = Path.home() / ".claude" / "plugins" / "installed_plugins.json"
     if not record.is_file():
         fail(f"No {record}: pass --plugin-root <the mattpocock-skills plugin directory>.")
-    plugins = json.loads(record.read_text(encoding="utf-8"))["plugins"]
+    installed = read_json(record, "install record")
+    plugins = installed.get("plugins") if isinstance(installed, dict) else None
+    if not isinstance(plugins, dict):
+        fail(f"{record}: needs a \"plugins\" object.")
     installs = [entry for key, entries in plugins.items() if key.startswith("mattpocock-skills@")
                 for entry in entries]
     for entry in installs:
@@ -59,6 +83,18 @@ def find_installed_plugin():
     found = ", ".join(entry["installPath"] for entry in installs) or "none"
     fail(f"No user-scope mattpocock-skills plugin in {record} (project installs: {found}). "
              "Pass --plugin-root <the mattpocock-skills plugin directory>.")
+
+
+def tolerated_entries(path):
+    """{skill name: line number} from the tolerated list: one name per line, `#` starts a comment."""
+    if not path.is_file():
+        fail(f"No tolerated references list at {path}.")
+    entries = {}
+    for number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+        name = line.partition("#")[0].strip()
+        if name:
+            entries[name] = number
+    return entries
 
 
 def markdown_files(targets):
@@ -88,14 +124,41 @@ def agent_flow_lines(path, lines):
     return flow
 
 
+def load_pinned(table):
+    rows = read_json(table, "pinned lines table")
+    if not isinstance(rows, list):
+        fail(f"{table}: needs a list of rows, each with a file, phrase and reason.")
+    for number, row in enumerate(rows, 1):
+        if not isinstance(row, dict) or not all(isinstance(row.get(key), str) and row[key] for key in PINNED_KEYS):
+            fail(f"{table}: row {number} needs a non-empty file, phrase and reason.")
+    return rows
+
+
+def pinned_findings(rows, root):
+    """One line per pinned phrase that no single line of its file holds."""
+    for row in rows:
+        path = root / row["file"]
+        if not path.is_file():
+            yield f"{path}: pinned file missing ({row['reason']})"
+        elif not any(row["phrase"] in line for line in path.read_text(encoding="utf-8").splitlines()):
+            yield f"{path}: pinned phrase missing: \"{row['phrase']}\" ({row['reason']})"
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("targets", nargs="*", type=Path)
     parser.add_argument("--plugin-root", type=Path)
+    parser.add_argument("--tolerated", type=Path, default=TOLERATED,
+                        help="the list of Matt skills not yet released that references may name")
+    parser.add_argument("--pinned", type=Path, default=PINNED_TABLE)
+    parser.add_argument("--pinned-root", type=Path, default=REPO)
     args = parser.parse_args()
 
     plugin_root = args.plugin_root or find_installed_plugin()
     skills = installed_skills(plugin_root)
+    tolerated = tolerated_entries(args.tolerated)
+    needed = set()
+    pinned = load_pinned(args.pinned)
     findings = 0
     for path in markdown_files(args.targets or DEFAULT_TARGETS):
         lines = path.read_text(encoding="utf-8").splitlines()
@@ -109,6 +172,9 @@ def main():
                 if name == BETA_LENS:
                     continue
                 if name not in skills:
+                    if name in tolerated:
+                        needed.add(name)
+                        continue
                     reason = "not in the installed plugin"
                 elif number in flow and skills[name].get("disable-model-invocation") == "true":
                     reason = "in an agent flow, but the skill sets disable-model-invocation"
@@ -116,6 +182,16 @@ def main():
                     continue
                 print(f"{path}:{number}: mattpocock-skills:{name}: {reason} (compared against {plugin_root})")
                 findings += 1
+    for name, number in tolerated.items():
+        if name in needed:
+            continue
+        reason = ("the installed plugin now ships it" if name in skills
+                  else "no reference names it any more")
+        print(f"{args.tolerated}:{number}: {name}: tolerated, but {reason}; remove this entry")
+        findings += 1
+    for finding in pinned_findings(pinned, args.pinned_root):
+        print(finding)
+        findings += 1
     return 1 if findings else 0
 
 
