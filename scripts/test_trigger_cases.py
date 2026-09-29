@@ -208,5 +208,45 @@ class ShippedTriggerCases(unittest.TestCase):
         self.assertEqual(len(briefs), len(set(briefs)))
 
 
+class ModelRunParts(unittest.TestCase):
+    def test_the_prompt_shows_one_card_per_skill_and_then_the_brief(self):
+        prompt = trigger_cases.trigger_prompt(CARDS, "Run the wave.")
+
+        self.assertRegex(prompt, r"(?m)^- alpha: Does alpha things\.$")
+        self.assertRegex(prompt, r"(?m)^- beta: Does beta things\.$")
+        self.assertTrue(prompt.endswith("Your brief:\nRun the wave."))
+
+    def test_the_prompt_asks_for_a_json_answer_and_leaks_no_expected_skill(self):
+        prompt = trigger_cases.trigger_prompt(CARDS, "Run the wave.")
+
+        self.assertIn('{"skills": ["<skill name>"]}', prompt)
+        self.assertNotIn("expect", prompt)
+
+    def test_the_answer_is_the_last_json_the_agent_printed(self):
+        output = 'Thinking {"skills": ["alpha"]} ... final: {"skills": ["beta"]}'
+
+        self.assertEqual(trigger_cases.opened_skills(output), ["beta"])
+
+    def test_an_empty_answer_is_an_answer_and_prose_is_none(self):
+        self.assertEqual(trigger_cases.opened_skills('{"skills": []}'), [])
+        self.assertIsNone(trigger_cases.opened_skills("I would open alpha."))
+
+    def test_a_run_is_right_only_when_it_opened_exactly_the_expected_skills(self):
+        near_miss = case("b", ["alpha"], near="beta")
+
+        self.assertTrue(trigger_cases.right_run(near_miss, ["alpha"]))
+        self.assertFalse(trigger_cases.right_run(near_miss, ["alpha", "beta"]))
+        self.assertFalse(trigger_cases.right_run(near_miss, ["beta"]))
+        self.assertTrue(trigger_cases.right_run(case("b", []), []))
+        self.assertFalse(trigger_cases.right_run(case("b", []), ["alpha"]))
+        self.assertFalse(trigger_cases.right_run(case("b", ["alpha"]), None))
+
+    def test_a_case_passes_on_a_strict_majority_of_its_runs(self):
+        self.assertTrue(trigger_cases.majority(2, 3))
+        self.assertFalse(trigger_cases.majority(1, 3))
+        self.assertFalse(trigger_cases.majority(2, 4))
+        self.assertTrue(trigger_cases.majority(3, 4))
+
+
 if __name__ == "__main__":
     unittest.main()
