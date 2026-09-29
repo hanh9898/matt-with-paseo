@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: streams-48-timeout-adopts-in-project
-description: A create_workspace that timed out but left the stream's worktree must be adopted with local isolation and the repository's Paseo project id, not cut again, and the planned create_agent must name that workspace's id.
+description: A create_workspace that timed out but left the stream's worktree must be adopted with local isolation and the repository's Paseo project id, not cut again, and the planned create_agent must name that workspace's id. The case fails on the base skill through adopts-with-project-id; agent-carries-workspace-id does not tell the base skill apart, since it often names workspaceId too.
 tags: [spawn, streams]
 context:
   scaffold_script: fixture.sh
