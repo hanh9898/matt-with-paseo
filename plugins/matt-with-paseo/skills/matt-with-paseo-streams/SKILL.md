@@ -441,7 +441,7 @@ Either signal alone is not the last stage. When they disagree, prompt the stream
 | GitHub | `gh`, as below |
 | GitLab | `glab`, merge requests. Take the command shapes from the tracker configuration when it declares GitLab; the shapes below are the defaults |
 
-**The ship branch.** Cut it for every ship question, so it never drifts from what the question describes.
+**The ship branch.** Cut it for every ship question, so it never drifts from what the question describes. Read the target repository's ship rules from `origin/<PR target>` first, the way step 1's check 5 does — the same read "**Ship rules**" below compares against setup, done here once and reused there — since the cut's own commit needs the `ship commit message` key.
 
 1. **The left-out paths**, derived from the repository, never from a list kept by hand. Take the paths the stream changed, `git -C <worktree> diff --name-only --no-renames origin/<PR target>...stream/<slug>`, and sort each into the first row that matches:
 
@@ -455,7 +455,7 @@ Either signal alone is not the last stage. When they disagree, prompt the stream
    | Ships | every other path |
 
    Every path of the rows from binary evidence to tracker configuration is left out; the ship question names each with its row.
-2. **Cut it** in a throwaway worktree outside the stream's worktree and the control folder, so the stream's worktree stays on `stream/<slug>`: `git -C <repository> worktree add -B stream/<slug>-ship <temp>/<slug>-ship stream/<slug>`. In it, `git restore --source=origin/<PR target> --staged --worktree -- <left-out paths>` (a path the PR target lacks is deleted), then one commit, `chore(ship): leave agent-only paths out`, then `git -C <repository> worktree remove <temp>/<slug>-ship`. With no path left out, the ship branch is the integration branch's head and carries no extra commit.
+2. **Cut it** in a throwaway worktree outside the stream's worktree and the control folder, so the stream's worktree stays on `stream/<slug>`: `git -C <repository> worktree add -B stream/<slug>-ship <temp>/<slug>-ship stream/<slug>`. In it, `git restore --source=origin/<PR target> --staged --worktree -- <left-out paths>` (a path the PR target lacks is deleted), then one commit, its message the ship rules' `ship commit message` key just read, filled with `<slug>`, `<owner>` and `<key>` as the ship rules define them; with none declared, `chore(ship): leave agent-only paths out`. Then `git -C <repository> worktree remove <temp>/<slug>-ship`. With no path left out, the ship branch is the integration branch's head and carries no extra commit.
 3. **Check the merge**: `git -C <worktree> merge-tree --write-tree --name-only origin/<PR target> stream/<slug>-ship`.
 
    | Result | Do |
@@ -465,7 +465,7 @@ Either signal alone is not the last stage. When they disagree, prompt the stream
    | Exit 1, conflicts | Ask no ship question. Report to the user, headed with the slug, the conflicted paths the command lists and that the stream ships once its integration branch merges the PR target cleanly (how, for example a ticket that merges the PR target in, is the user's call); write `ship blocked at <head>: conflicts with <PR target>` into the status line. A new integration head asks again |
    | Any other exit | Tell the user the command's error and stop |
 
-**Ship rules**, read before the ship question below is asked (never on a conflict, which asks none). Read the target repository's ship rules again, from `origin/<PR target>`, the way step 1's check 5 does.
+**Ship rules**, compared for the ship question below (never on a conflict, which asks none) with what was already read above, before the ship branch was cut — never read a second time here.
 
 | Status line | The ship-rules line says |
 |---|---|
@@ -474,11 +474,14 @@ Either signal alone is not the last stage. When they disagree, prompt the stream
 
 The status line's `ship rules read at <hash>` is step 1's alone to write; step 6 never updates it. A pattern using `<key>` whose Key cell step 1 found empty and is still empty now is asked for in the ship question, beside the ship-rules line, before that pattern is used for the ship branch, the title, or anything else.
 
+**Commit split**, shown in the ship question below so a base branch ahead of the PR target (**Shared base branch**, step 1) never ships silently inside this pull request. Split the commits the "Commits" line above counts (`origin/<PR target>..stream/<slug>`) into two shares: `git -C <worktree> log --oneline <base ref>..stream/<slug>` counts the stream's own wave commits; `git -C <worktree> log --oneline origin/<PR target>..$(git -C <worktree> merge-base <base ref> stream/<slug>)` counts the base branch's own commits `<PR target>` lacks, `<base ref>` being step 1's own resolved base branch ref (`origin/<base>` when it exists on the remote, else `<base>`). The two counts sum to the total. When the base branch's share is more than half, the ship question's commit-split line adds a proposal: ship `<base branch>` into `<PR target>` first, or cut this stream again from `<PR target>`. The choice is the user's; nothing here recuts the stream on its own.
+
 **Ask first.** Pushing and opening a pull request are outward actions, so nothing is pushed or opened before the user says yes in a question round. Put the ship question into the next question round of step 4, headed with the stream's slug like every relayed question, and write `ship question asked at <head>`, with the integration branch's short head, into the status line. Ask it in these words every round, filling in the values, so that its meaning never drifts:
 
 ```
 [<slug>] Ship <slug>? Pull request from stream/<slug>-ship (cut at <head>) to <PR target> (from <source of step 1>), on <forge>, repository <repository>.
 Commits: <n>, <oldest short hash>..<head> (git log --oneline origin/<PR target>..stream/<slug> lists them)
+Commit split: <w> from this stream's waves, <b> from <base branch> that <PR target> lacks (<share>% of the total)<; more than half from the base: ship <base branch> into <PR target> first, or cut this stream again from <PR target>>.
 Left out, restored to <PR target>'s version: <path> (<kind>), …  (none: say none)
 Evidence to attach to the pull request, not committed: <path>, …
 Kept in at your word: <path>, …
