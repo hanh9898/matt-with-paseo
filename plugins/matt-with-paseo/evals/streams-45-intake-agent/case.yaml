@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: streams-45-intake-agent
+description: The user names /mattpocock-skills:triage for billing-export while its wave 3 ticket agents still run. The orchestrator holds billing-export at once and plans its intake agent for once the stream is quiet, labelled with the skill and the slug, its initial prompt exactly that command, never sending the user to type it in the target repository. Asked to just write the tickets for login-bug's two new issues directly, the orchestrator refuses and names the fitting Matt intake skill instead of drafting them itself.
+tags: [intake, streams]
+context:
+  scaffold_script: fixture.sh
