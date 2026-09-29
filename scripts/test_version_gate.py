@@ -1,0 +1,114 @@
+"""Tests for check-version-gate.py, run as the maintainer runs it: a subprocess against a small git
+repository built in a temp directory.
+
+    python -B -m unittest discover -s scripts
+"""
+
+import json
+import subprocess
+import sys
+import tempfile
+import unittest
+from pathlib import Path
+
+SCRIPT = Path(__file__).with_name("check-version-gate.py")
+PLUGIN_JSON = "plugins/matt-with-paseo/.claude-plugin/plugin.json"
+WAVE_SKILL = "plugins/matt-with-paseo/skills/matt-with-paseo/SKILL.md"
+LISTED = f"# seat-facing\n{WAVE_SKILL}\n"
+
+
+def write(path, text):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(text, encoding="utf-8")
+
+
+def git(root, *args):
+    result = subprocess.run(["git", "-C", str(root), *args], capture_output=True, text=True)
+    assert result.returncode == 0, result.stderr
+    return result.stdout
+
+
+def manifest(version):
+    return json.dumps({"name": "matt-with-paseo", "version": version}) + "\n"
+
+
+class VersionGate(unittest.TestCase):
+    def setUp(self):
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        self.root = Path(tmp.name)
+        git(self.root, "init", "-q", "-b", "main")
+        git(self.root, "config", "user.name", "gate-test")
+        git(self.root, "config", "user.email", "gate-test@example.invalid")
+        git(self.root, "config", "commit.gpgsign", "false")
+        write(self.root / PLUGIN_JSON, manifest("0.4.2"))
+        write(self.root / WAVE_SKILL, "step 1\n")
+        write(self.root / "plugins/matt-with-paseo/triggers/cases.json", "[]\n")
+        write(self.root / "list.txt", LISTED)
+        self.commit("release 0.4.2")
+        git(self.root, "switch", "-q", "-c", "feature")
+
+    def commit(self, message):
+        git(self.root, "add", "-A")
+        git(self.root, "commit", "-q", "-m", message)
+
+    def run_check(self, root=None):
+        return subprocess.run(
+            [sys.executable, "-B", str(SCRIPT), "--root", str(root or self.root),
+             "--paths", str(self.root / "list.txt")],
+            capture_output=True, text=True)
+
+    def test_passes_when_no_listed_file_changed_since_main(self):
+        result = self.run_check()
+
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual(result.stdout, "")
+
+    def test_a_changed_listed_file_without_a_version_bump_fails_and_names_the_file(self):
+        write(self.root / WAVE_SKILL, "step 1, reworded\n")
+        self.commit("reword step 1")
+
+        result = self.run_check()
+
+        self.assertEqual(result.returncode, 1, result.stderr)
+        lines = result.stdout.splitlines()
+        self.assertEqual(len(lines), 1, result.stdout)
+        self.assertIn(WAVE_SKILL, lines[0])
+        self.assertIn("0.4.2", lines[0])
+
+    def test_bumping_the_version_makes_the_same_change_pass(self):
+        write(self.root / WAVE_SKILL, "step 1, reworded\n")
+        write(self.root / PLUGIN_JSON, manifest("0.5.0"))
+        self.commit("reword step 1, release 0.5.0")
+
+        result = self.run_check()
+
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual(result.stdout, "")
+
+    def test_a_change_not_yet_committed_counts_and_a_local_bump_clears_it(self):
+        write(self.root / WAVE_SKILL, "step 1, reworded\n")
+
+        self.assertEqual(self.run_check().returncode, 1)
+
+        write(self.root / PLUGIN_JSON, manifest("0.5.0"))
+
+        self.assertEqual(self.run_check().returncode, 0)
+
+    def test_a_new_untracked_listed_file_counts(self):
+        write(self.root / "list.txt", LISTED + "plugins/matt-with-paseo/skills/matt-with-paseo/NEW.md\n")
+        self.commit("list the new file")
+        write(self.root / "plugins/matt-with-paseo/skills/matt-with-paseo/NEW.md", "new\n")
+
+        result = self.run_check()
+
+        self.assertEqual(result.returncode, 1, result.stderr)
+        self.assertIn("NEW.md", result.stdout)
+
+    def test_a_change_to_a_file_the_list_does_not_name_passes(self):
+        write(self.root / "plugins/matt-with-paseo/triggers/cases.json", '[{"brief": "x"}]\n')
+        self.commit("add a trigger case")
+
+        result = self.run_check()
+
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
