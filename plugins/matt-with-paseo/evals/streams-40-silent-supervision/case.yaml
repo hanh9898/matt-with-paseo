@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: streams-40-silent-supervision
+description: A turn in a session that has run for hours finds the index's last tick 50 minutes old, older than two cycles of the 15-minute heartbeat, so it runs a tick at once, replaces the heartbeat that stopped firing and writes the new tick time. The tick puts login-bug's pending question-type permission into the round verbatim, and asks billing-export's stream agent, idle while its status line says the stream waits on it, "where does the stream stand?" with a finish notification.
+tags: [supervise, streams]
+context:
+  scaffold_script: fixture.sh

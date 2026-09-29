@@ -61,6 +61,7 @@ The index is `streams.md` at the root of the control folder: one line for the ca
 | Field | Holds |
 |---|---|
 | Agent cap | Above the table: the most agents running at once across every stream (the stream agents and all their ticket agents). The wave skill's step 7 review agent and cross-ticket fix agent need no slot of their own: they start only after every ticket of their wave is merged, so they run inside the quota slots its ticket agents freed |
+| Last tick | Under the cap line: `Last tick: <date> <time>, heartbeat streams-reconcile <id> every <interval>, expires <date> <time>`, when step 5's last tick ran and the reconcile heartbeat it left. Every tick rewrites it as its last action; no line means no tick has run yet |
 | Slug | The stream's name, lowercase letters, digits and `-`; unique in the index. The wave skill derives its label and branch prefix from it |
 | Repository | Absolute path to a local checkout of the target repository |
 | Owner | The requester the stream works for; the rest of this skill calls them the owner |
@@ -106,6 +107,7 @@ The status line is the reconcile loop's only memory (step 5): every step writes 
 | Respawned for context | step 4 at a wave boundary | `respawned for context` |
 | Stopped, with the owner | step 5 | `stopped: restart budget spent (2/2 in wave 3), owner Lan` |
 | A finding reported to the user | step 5 | `reported: open pull request not recorded` |
+| A nudge sent to an idle stream agent, for the message the status line records | step 5 | `nudged 11:40` |
 | Nothing to ship, for the integration branch's head | step 6 | `nothing to ship at 1a2b3c4` |
 | Ship question asked, for the integration branch's head, and the user's answer | step 6 | `ship question asked at 1a2b3c4, user said wait` |
 | Paths the user kept in the ship branch | step 6 | `keeps docs/agents/issue-tracker.md` |
@@ -281,21 +283,24 @@ A message that asks nothing (a progress report) only updates the status line.
 
 ## 5. Reconcile and supervise
 
-Every running stream stays under one reconcile loop (ADR 0004). A **tick** compares, stream by stream, the desired state with the observed state, and closes each gap it finds with the one action the table gives. Run a tick on every heartbeat prompt, after every finish notification from a stream agent (step 4 is then the action of its gap), and first thing in any session opened in the control folder.
+Every running stream stays under one reconcile loop (ADR 0004). A **tick** compares, stream by stream, the desired state with the observed state, and closes each gap it finds with the one action the table gives. Run a tick on every heartbeat prompt, after every finish notification from a stream agent (step 4 is then the action of its gap), and first thing in any session opened in the control folder. Every other turn of yours, whatever started it (an answer from the user included), first reads the index's Last tick line: a time older than two cycles of the heartbeat it names (30 minutes for a 15-minute cron) means the heartbeat has gone silent, so run a tick at once, before anything else the turn does. Every tick ends by rewriting the Last tick line with its own time and the heartbeat this session holds after it.
 
 - **Desired state** is the index. A stream should run when its status line holds a stream agent id (step 3 or "Replace a stream agent" wrote it) and records none of shipped, stopped, or waits on the cap; any other row should not run. A stream that waits on the cap has no stream agent on purpose: only a split spawns it (The index), never a restart.
-- **Observed state** is the public signals of the Inputs section and nothing else: the stream's agents (`paseo ls -g --label stream=<slug> --json`, the stream agent being the one without a `wave` label), `get_agent_status` and `get_agent_activity` on the stream agent, ticket status on the stream's tracker, the stream's worktree on `stream/<slug>` (`git -C <repository> worktree list`), and the stream's open pull request, looked up as step 6 does it ("Push and open", its step 3).
+- **Observed state** is the public signals of the Inputs section and nothing else: the stream's agents (`paseo ls -g --label stream=<slug> --json`, the stream agent being the one without a `wave` label), `get_agent_status` and `get_agent_activity` on the stream agent, `list_pending_permissions`, called once per tick for every stream, ticket status on the stream's tracker, the stream's worktree on `stream/<slug>` (`git -C <repository> worktree list`), and the stream's open pull request, looked up as step 6 does it ("Push and open", its step 3).
 
 The stream's status line ("The status line", The index) is the loop's only memory. Every action writes its outcome into the status line before the tick goes on (the agent it spawned, the end-of-turn message it handled with that message's time, the question it showed, the restart it counted, the ship question it asked), so each action is idempotent: a second tick right after the first finds nothing left to close and changes nothing.
+
+Every prompt you send a stream agent, in any step, goes with `send_agent_prompt`, `background: true` and `notifyOnFinish: true`: the agent's answer reaches you only as a finish notification, and a prompt without one leaves the stream waiting on a message no one reads.
 
 | Observed, for one stream | Action |
 |---|---|
 | Should run, and no worktree on `stream/<slug>` | Step 2, which opens the existing branch instead of cutting a new one |
 | Should run, and no stream agent | A restart, per "Supervise one-for-one" below |
-| Stream agent running | None; its finish notification, or a later tick, brings its message |
+| Stream agent running, with no question-type permission pending | None; its finish notification, or a later tick, brings its message |
 | Stream agent idle, and its last end-of-turn message is newer than the one the status line records | Step 4 on that message. This is how a turn that ended without a finish notification (probe A2) is caught: the next tick finds it |
-| Stream agent waits on a question-type permission not yet shown to the user | Step 4 |
+| Stream agent, running or idle, has a question-type permission in `list_pending_permissions` not yet shown to the user | Step 4: the permission joins the next question round. An agent that waits on a permission may be reported `running`; the running row above leaves such an agent to this row |
 | Stream agent idle on the message the status line records, the status line waiting on the user | None; the question is already shown, and a tick never shows it twice |
+| Stream agent idle on the message the status line records, the status line waiting on the stream agent and recording no nudge for that message, and no agent with a `wave` label running for the stream | `send_agent_prompt` "where does the stream stand?" to it, `background: true`, `notifyOnFinish: true`, and write `nudged <time>` into the status line: the stream waits on an agent that waits for nothing, as when a ticket agent's finish notification never reached it. A stream agent idle while its ticket agents run is waiting for them and is not nudged. Its answer comes back through step 4 as a newer message, and the item lapses with it |
 | Stream agent failed | A restart, per "Supervise one-for-one" below |
 | Stream agent idle on the message the status line records, and its context past the respawn threshold | None; the respawn waits for the stream's next wave boundary (step 4), so a running wave is never cut |
 | Every ticket of the stream resolved or in the ready for human role, the stream agent idle, and the status line records neither shipped nor, for the integration branch's current head, nothing to ship or the ship question asked | Step 6 |
@@ -305,11 +310,19 @@ The loop's own heartbeat is reconciled in the same tick:
 
 | Observed, for this session | Action |
 |---|---|
-| A stream should run and this session holds no reconcile heartbeat | `create_heartbeat` with `expiresIn` always set (for example a `*/15 * * * *` cron that expires in `8h`), named `streams-reconcile`, prompting "Reconcile tick: run step 5 of the matt-with-paseo-streams skill on streams.md". Keep its id and expiry in this session |
+| A stream should run and this session holds no reconcile heartbeat | `create_heartbeat` with `expiresIn` always set (for example a `*/15 * * * *` cron that expires in `8h`), named `streams-reconcile`, prompting "Reconcile tick: run step 5 of the matt-with-paseo-streams skill on streams.md". Keep its id and expiry in this session and write them, with its interval, into the Last tick line |
 | A stream should run and this session's heartbeat expires before its next firing | `delete_heartbeat`, then create it again as above; heartbeats have no update tool |
+| A stream should run, this session holds a heartbeat, and this turn found the Last tick older than two cycles | `delete_heartbeat`, then create it again as above: a heartbeat that stops firing gives no other sign, and a new one costs nothing |
 | No stream runs and this session holds a heartbeat | `delete_heartbeat` |
 
-**Recovery after the top session dies is: run one tick**, in a new session in the control folder; there is no separate recovery procedure. The tick finds each stream agent by its label, handles the end-of-turn message the dead session may never have read, restarts only what has failed, and creates this session's heartbeat. The dead session's heartbeat belongs to that session and cannot be deleted from another one; its expiry is what ends it. Ask the user to close the old session if it still lives, since two sessions ticking at once could both spawn for the same gap. Stream agents the dead session spawned send it their finish notifications, not this one, until this session prompts them with `notifyOnFinish: true`; the heartbeat covers them meanwhile.
+**Recovery after the top session dies is: run one tick**, in a session in the control folder; there is no separate recovery procedure. The tick finds each stream agent by its label, handles the end-of-turn message the dead session may never have read, restarts only what has failed, and creates this session's heartbeat. The old heartbeat is the one in the Last tick line; what the tick does with it depends on the session:
+
+| Session | Old heartbeat |
+|---|---|
+| Reopened: the session that created that heartbeat, resumed | `delete_heartbeat` on its id, then create a new one as the heartbeat table says; it may have stopped firing while the session was closed |
+| New: any other session | Try `delete_heartbeat` on its id (Paseo deletes a heartbeat by id, never by name). If that fails, the heartbeat belongs to the dead session and only its expiry, in the Last tick line, ends it. Either way, create this session's heartbeat, and ask the user to close the old session if it still lives, since two sessions ticking at once could both spawn for the same gap |
+
+In a new session, stream agents the dead session spawned send it their finish notifications, not this one, until this session prompts them with `notifyOnFinish: true`; the heartbeat covers them meanwhile.
 
 Everything a tick does stays at the stream agent's level: a tick never prompts, cancels, kills or archives a ticket agent, which the stream agent's wave skill supervises.
 
@@ -330,7 +343,7 @@ The **restart budget** is two restarts per wave, unless the user sets another nu
 
 A **respawn** replaces a stream agent whose context has grown large before it hits the ceiling. It happens only at the stream's wave boundary, where step 4 reads the context use and runs "Replace a stream agent"; in the middle of a wave the agent keeps supervising its running ticket agents. The status line records it as `respawned for context`.
 
-**Done when**: a tick has closed or reported every gap it found and a second tick right after it finds none, every stopped stream has been reported to the user, and this session holds a reconcile heartbeat with an expiry exactly while a stream runs.
+**Done when**: a tick has closed or reported every gap it found and a second tick right after it finds none, every stopped stream has been reported to the user, this session holds a reconcile heartbeat with an expiry exactly while a stream runs, and the index's Last tick line holds the last tick's time and that heartbeat.
 
 ## 6. Ship the stream
 
