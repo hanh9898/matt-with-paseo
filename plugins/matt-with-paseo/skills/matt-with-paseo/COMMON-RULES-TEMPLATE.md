@@ -2,7 +2,7 @@
 
 Copy the frame below into `wave<N>-common-rules.md` and fill in each section. Each section answers a question every agent in the wave would otherwise ask itself; answered here once, no agent has to guess.
 
-Steps 4 and 7 of the skill append two sections, `## Wave agents` and `## Review`, to the end of the file; leave both out when writing the rules.
+Steps 3, 4 and 7 of the skill append three sections, `## Checkpoints`, `## Wave agents` and `## Review`, to the end of the file; leave all three out when writing the rules.
 
 Copy in only what an agent cannot look up: an unwritten convention, the reason behind a choice, a trap already hit. Anything one command or one file answers (scripts in `package.json`, the directory layout, `CLAUDE.md`) gets a pointer, not a copy.
 
