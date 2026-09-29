@@ -235,6 +235,10 @@ User's rule: one review of the whole stream after the last wave. Fixed point `78
 ### Follow-ups for the ship pull request
 - `scripts/` smells (S8, S9, S10, S12, S13): one `scripts/common.py` (`frontmatter`, list parsing, one exit-2 error), one shared phrase-in-file check for `pinned-lines.json` and the troubleshooting ratings, cases as a small type, inline `majority()`, a glob instead of `seat-facing-paths.txt`.
 - #75: an eval case where a ticket agent challenges a chosen default with evidence (the current case grades only the orchestrator's step 3).
+- `test_version_gate.py`: `test_the_list_names_every_file…` still repeats the six seat-facing paths (P6, left out of the user's decision).
+- Re-run `wave-75` and `wave-95` with `--judge-model sonnet --runs 3` to tell a `haiku` judge error from a skill gap (user's decision, 2026-09-30). The judge default stays as it is; any change to it goes through triage.
+- `wave-75`'s `challenge-not-ready-for-human`: the skill may need to say that a ticket agent challenging a chosen default keeps working (the re-run's reply never said so).
+- Stream skill, ship branch step 1: the "Tracker configuration" row counts "each file that section points to". This repo's `## Agent skills` section points to both `SKILL.md` words blocks and to `docs/adr/`, so a literal reading leaves the product out of its own ship. The row should count only the tracker's own files.
 
 ### Fix pass
 
@@ -286,3 +290,11 @@ Orchestrator's reading of the two final replies, against the grader text:
 - The LLM grader defaults to `haiku` (`claude plugin eval --help`: `--judge-model`), and a vote gives no reason. So from this run alone a judge error cannot be told apart from a skill gap.
 
 **User's instruction (2026-09-30):** every new agent of this stream (ticket or fix) launches with the Paseo profile `ticket-agent` (`claude/claude-sonnet-5-5`, thinking `medium`, mode `bypassPermissions`), as step 1 says. It came after the eval fix agent had already finished and been archived, so no running agent is affected.
+
+### Merge Danger for the ship pull request
+
+User's decisions (2026-09-30): 1 A, 2 A. Nothing more is run before the ship.
+
+- **Eval, full run on `8f7ede8` (1 run per case, no baseline to compare):** 22 of 32 pass. The eval gate's slice passes (3 of 3). Partial scores: `streams-61-ship-rules` 0.40, `streams-41-hung-agents` 0.50, `streams-48-timeout-adopts-in-project` 0.50, `streams-52-answer-and-machine` 0.50, `wave-tickets-with-width` 0.67, `streams-49-ship-branch` 0.78, `streams-40-silent-supervision` 0.80. None was fixed; with no baseline, they cannot be split into regressions and failures already there.
+- **The two new cases after the bounded eval fix pass (re-run on `c843bf7`):** `wave-75-chosen-default-challenge` 0.33, `wave-95-user-language-one-door` 0.00. On the orchestrator's reading of the replies, `wave-95` and `wave-75`'s `answer-names-reason` meet their grader text and the `haiku` judge failed them. `wave-75`'s `challenge-not-ready-for-human` may be a real gap. Neither was fixed further (follow-ups).
+- **Tests not run after the stream review's fix pass:** the one test run was on `fb38f6a` (78 tests OK, drift check exit 0). After it, the fix pass (`74fee79`) added 5 tests to `test_version_gate.py` and 6 to `test_drift_check.py`, rewrote the version gate's tests around the release tag, renamed `brief` to `request` in the trigger scripts and their tests, and changed `drift-check.py` and `check-version-gate.py`. None of those tests has run. The eval fix pass (`c843bf7`) changed only the wave skill's `SKILL.md`; the unit tests were not re-run on it either.
