@@ -4,6 +4,7 @@
 """
 
 import json
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -77,6 +78,76 @@ class CoverageFindings(unittest.TestCase):
         findings = trigger_cases.coverage_findings(CARDS, cases)
 
         self.assertEqual(findings, ["alpha: 2 briefs that should open it; write at least 3"])
+
+
+class LoadCases(unittest.TestCase):
+    def setUp(self):
+        self.tmp = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, self.tmp, ignore_errors=True)
+        self.path = self.tmp / "cases.json"
+
+    def load_error(self, text):
+        write(self.path, text)
+        with self.assertRaises(trigger_cases.TriggerError) as raised:
+            trigger_cases.load_cases(self.path)
+        return str(raised.exception)
+
+    def test_reads_the_list_of_cases(self):
+        cases = [case("Run the wave.", ["alpha"]), case("Ship it.", [], near="beta")]
+        write(self.path, json.dumps(cases))
+
+        self.assertEqual(trigger_cases.load_cases(self.path), cases)
+
+    def test_a_missing_file_is_named(self):
+        with self.assertRaises(trigger_cases.TriggerError) as raised:
+            trigger_cases.load_cases(self.tmp / "no-such-cases.json")
+
+        self.assertIn("no-such-cases.json", str(raised.exception))
+
+    def test_text_that_is_not_json_is_named(self):
+        self.assertIn("cases.json: not valid JSON", self.load_error("brief | expect"))
+
+    def test_a_top_level_that_is_not_a_list_is_named(self):
+        self.assertIn("cases.json: expected a list of cases", self.load_error('{"brief": "x"}'))
+
+    def test_a_case_without_a_brief_is_named_by_its_number(self):
+        text = json.dumps([case("Fine.", ["alpha"]), {"expect": ["alpha"]}])
+
+        self.assertIn("case 2: needs a non-empty brief", self.load_error(text))
+
+    def test_a_case_whose_expect_is_not_a_list_of_names_is_named_by_its_number(self):
+        text = json.dumps([{"brief": "Fine.", "expect": "alpha"}])
+
+        self.assertIn("case 1: expect must be a list of skill names", self.load_error(text))
+
+    def test_a_case_whose_near_is_not_a_name_is_named_by_its_number(self):
+        text = json.dumps([{"brief": "Fine.", "expect": [], "near": ["alpha"]}])
+
+        self.assertIn("case 1: near must be one skill name", self.load_error(text))
+
+
+class SkillCards(unittest.TestCase):
+    def test_a_card_is_the_skills_name_and_its_description_with_quotes_stripped(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            plugin = Path(tmp)
+            write(plugin / "skills" / "one-folder" / "SKILL.md",
+                  "---\nname: alpha\ndescription: \"Run `alpha`: does alpha.\"\n---\n\n# Alpha\n")
+            write(plugin / "skills" / "other-folder" / "SKILL.md",
+                  "---\nname: beta\ndescription: Does beta.\ndisable-model-invocation: true\n---\n\n# Beta\n")
+
+            cards = trigger_cases.skill_cards(plugin)
+
+        self.assertEqual(cards, {"alpha": "Run `alpha`: does alpha.", "beta": "Does beta."})
+
+    def test_a_skill_without_a_description_stops_the_check_naming_its_file(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            plugin = Path(tmp)
+            write(plugin / "skills" / "bare" / "SKILL.md", "---\nname: bare\n---\n")
+
+            with self.assertRaises(trigger_cases.TriggerError) as raised:
+                trigger_cases.skill_cards(plugin)
+
+        self.assertIn(str(Path("bare") / "SKILL.md"), str(raised.exception))
 
 
 if __name__ == "__main__":
