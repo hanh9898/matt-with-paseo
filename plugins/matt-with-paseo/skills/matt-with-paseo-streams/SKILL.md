@@ -77,7 +77,7 @@ The index is `streams.md` at the root of the control folder: one line for the ca
 
 | Field | Holds |
 |---|---|
-| Agent cap | Above the table: the most agents running at once across every stream (the stream agents and all their ticket agents). The wave skill's step 7 review agent and cross-ticket fix agent need no slot of their own: they start only after every ticket of their wave is merged, so they run inside the quota slots its ticket agents freed |
+| Agent cap | Above the table: the most agents running at once across every stream, counting every agent the orchestrator causes to run, directly or through a stream agent: stream agents, ticket agents, intake agents (ADR 0005) and diagnosis agents. The wave skill's step 7 review agent and cross-ticket fix agent need no slot of their own: they start only after every ticket of their wave is merged, so they run inside the quota slots its ticket agents freed |
 | Last tick | Under the cap line: `Last tick: <date> <time>, heartbeat streams-reconcile <id> every <interval>, expires <date> <time>`, when step 5's last tick ran and the reconcile heartbeat it left, by id, since `delete_heartbeat` takes an id and never a name. Every tick rewrites it as its last action; no line means no tick has run yet |
 | Slug | The stream's name, lowercase letters, digits and `-`; unique in the index. The wave skill derives its label and branch prefix from it |
 | Repository | Absolute path to a local checkout of the target repository |
@@ -87,6 +87,7 @@ The index is `streams.md` at the root of the control folder: one line for the ca
 | PR target | The branch the stream's pull request goes to; empty means resolve per step 1 |
 | Forge | `GitHub` or `GitLab`: the forge that hosts the repository, where step 6 opens the pull request; empty means resolve per step 1, which writes it. An index without this column reads as empty; add the column when you write the row |
 | Priority | A number, 1 first; empty means the order of rows (first come first served) |
+| Quota | The quota last given to the stream's stream agent: its spawn command's `quota <N>` (step 3) or a later `quota <N>` prompt ("Split the cap into quotas"; step 4's "At a wave boundary"). Empty while the stream has no stream agent: not yet started, waiting on the cap, or shipped |
 | Status | The stream's status line: one line you keep current, holding only the items of "The status line" below |
 
 Example:
@@ -97,10 +98,10 @@ Example:
 Agent cap: 6
 Last tick: 2026-09-27 14:15, heartbeat streams-reconcile 7f3e2a19 every 15 min, expires 2026-09-27 22:00
 
-| Slug | Repository | Owner | Tickets | Base branch | PR target | Forge | Priority | Status |
-|---|---|---|---|---|---|---|---|---|
-| billing-export | D:\src\opms | Lan | label `stream:billing-export` | | | GitLab | 1 | 2026-09-27 wave 1 running, waits on the stream agent |
-| login-bug | D:\src\opms | Minh | `.scratch/login-bug/issues/` | test | test | | 2 | 2026-09-27 not started |
+| Slug | Repository | Owner | Tickets | Base branch | PR target | Forge | Priority | Quota | Status |
+|---|---|---|---|---|---|---|---|---|---|
+| billing-export | D:\src\opms | Lan | label `stream:billing-export` | | | GitLab | 1 | 3 | 2026-09-27 wave 1 running, waits on the stream agent |
+| login-bug | D:\src\opms | Minh | `.scratch/login-bug/issues/` | test | test | | 2 | | 2026-09-27 not started |
 ```
 
 With no index yet, write `streams.md` with the cap line and the table header, ask the user for the cap and each stream's fields, and write them in. Each Repository is the absolute path of a local checkout that the user gives; ask for it rather than searching the disks. Ask for each field by its name alone: the example's values above belong to no user and appear in no question, as a default or a suggestion. The Forge cell may stay empty; step 1 fills it.
@@ -137,32 +138,39 @@ The status line is the reconcile loop's only memory (step 5): every step writes 
 
 ### Split the cap into quotas
 
-A stream's quota is the wave skill's `quota <N>` argument in its stream agent's command. A running stream takes one slot of the cap for its stream agent and its quota for its ticket agents. Split the cap again at every wave boundary (step 4) and whenever a stream starts or stops running, reading the cap and the priorities from `streams.md` afresh each time:
+A stream's quota is the wave skill's `quota <N>` argument in its stream agent's command, or a later value set by the `quota <N>` prompt ("At a wave boundary", step 4); the Quota cell of its row (The index) always holds the current one. A running stream takes one slot of the cap for its stream agent and its quota for its ticket agents. Split the cap again at every wave boundary (step 4) and whenever a stream starts or stops running, reading the cap and the priorities from `streams.md` afresh each time:
 
-1. Streams in a wave keep the slots they hold, their stream agent plus their current quota, until their own next wave boundary. Take those slots off the cap.
+1. Streams in a wave keep the slots they hold, their stream agent plus the quota in their Quota cell, until their own next wave boundary. Take those slots off the cap.
 2. Walk every other stream to run (not yet started, waiting on the cap, or at its wave boundary now) in priority order: the lowest Priority number first, then the rows without a number; ties and empty cells go in the order of rows, so first come first served is the default.
-3. While at least two slots are left, a stream takes one for its stream agent and a quota of its open tickets in the ready for agent role on its tracker (at least 1), but no more than the slots left minus one. A stream left with fewer than two slots waits on the cap, with no stream agent; it waits at its next wave boundary, never in the middle of a wave.
+3. While at least two slots are left, a stream takes one for its stream agent and a quota of its **next wave's width**, at least 1, but no more than the slots left minus one:
+
+   | The stream | Its next wave's width |
+   |---|---|
+   | At its wave boundary now, or already running | The tickets its stream agent's last wave approval names as starting, plus every ticket that message lists as waiting on the quota (the wave skill's step 2 states both; together they are every ticket that can run now, regardless of quota) |
+   | Not yet started: no wave approval exists yet | 1, since the graph is the wave skill's to build (ADR 0002); the next split corrects it once the stream's first wave approval states the true width |
+
+   A stream left with fewer than two slots waits on the cap, with no stream agent; it waits at its next wave boundary, never in the middle of a wave. The total of ready tickets on the tracker plays no part: a ticket blocked by another is not part of the width, however many sit in the ready for agent role.
 
 A running stream with no ticket left for agents (every ticket resolved or waiting on a human) counts only its stream agent's slot and is left out of the walk: its wave skill plans no more waves, so its command is never changed. A shipped stream (step 6) counts no slot and is left out of the walk: its stream agent stays idle and starts no wave.
 
-With the example above, billing-export having 3 ready tickets and login-bug 4, and neither started: billing-export takes 1 + quota 3, leaving 2; login-bug takes 1 + quota 1, leaving 0.
+With billing-export and login-bug of the example above, and a cap of 6: billing-export reaches its wave boundary with 16 tickets in the ready for agent role, but its last wave approval names a next wave of width 5 (most of the 16 are still blocked) — it takes 1 + quota 5 (the width already stops at 5; the 5 slots left after its own agent never come into it), leaving 0; login-bug has not started, so it waits on the cap, with no stream agent, until a later split frees room.
 
 Changing the cap or a priority in the index takes effect at the next wave boundary: it changes the next split, never a quota a stream is running a wave with. A cap lowered below the slots in use is reached as each stream comes to its boundary. Append each quota a split changes, and each change of the cap or a priority, to `decisions.md`.
 
 ## Replace a stream agent
 
-This is the one procedure that archives a stream agent; no step does it any other way. Step 4 runs it at a wave boundary (a new quota, no room, a respawn for context) and step 5 runs it to restart a failed stream agent.
+This is the one procedure that archives a stream agent; no step does it any other way. Step 4 runs it at a wave boundary (no room, or a respawn for context; a quota change alone sends a `quota <N>` prompt instead, per its table) and step 5 runs it to restart a failed stream agent.
 
 Archiving a parent agent archives and interrupts its running children (probe C1), and ticket agents are children of the stream agent that spawned them, so archiving a stream agent in the middle of a wave would kill its wave. Detaching the ticket agents first is not a way out: it acts on ticket agents, which this skill never does.
 
 1. **Check.** `paseo ls -g --label stream=<slug> --json` lists no running agent with a `wave` label. An idle ticket agent does not block: archiving takes it along, but its work is committed on its branch and the wave file's `## Wave agents` row still leads the new stream agent's recovery sweep to it and its report.
-2. **Replace**, only when the check passes. `archive_agent` the stream agent when it still exists; a hung one (step 5) is `kill_agent`ed first and then archived, since its stuck turn does not yield to an interrupt. Never archive its workspace, which holds the integration branch and the stream's wave files. Then spawn a new stream agent in the same workspace per step 3, with the quota step 3 gives, or spawn nothing and write "waits on the cap" in place of the agent id when the split leaves the stream no room; write the new agent id and the reason into the status line. The new agent's wave skill resumes at its step 0, which first asks its own stage confirmation, then, between waves, plans the next wave within the new quota and asks the wave approval again; each question joins a round like any other, and the old agent's pending question is never shown.
-3. **Hold**, when the check fails (a ticket agent runs). Archive nothing:
+2. **Replace**, only when the check passes. `archive_agent` the stream agent when it still exists; a hung one (step 5) is `kill_agent`ed first and then archived, since its stuck turn does not yield to an interrupt. Never archive its workspace, which holds the integration branch and the stream's wave files. Then spawn a new stream agent in the same workspace per step 3's shape, with the quota in the row's Quota cell (step 4's new split for a wave boundary or a respawn; unchanged for a step 5 restart), or spawn nothing and write "waits on the cap" in place of the agent id when the split leaves the stream no room; write the new agent id and the reason into the status line, and the quota into the Quota cell when it changed. The new agent's wave skill resumes at its step 0, which first asks its own stage confirmation, then, between waves, plans the next wave within the new quota and asks the wave approval again; each question joins a round like any other, and the old agent's pending question is never shown.
+3. **Wait**, when the check fails (a ticket agent runs). Archive nothing:
    - At a wave boundary (step 4), the stream keeps its agent and the quota it has for one more wave; the wave approval joins the round, and the next boundary tries again.
    - For a failed stream agent that still exists and is not hung (step 5), send it `send_agent_prompt` "where does the stream stand?", `background: true`, `notifyOnFinish: true`, and write `resume sent` with the time into the status line. A turn that gets past the error means the agent supervises its wave again, and nothing more is done.
    - When the resume gets nowhere (the prompt is refused, or the turn ends on the same error), the stream agent is gone, or it is hung, write `restart held: wave <N> ticket agents running` into the status line and, unless the status line already records it, report it to the user, headed with the slug. The ticket agents finish their turns on their own; their reports wait unread and nothing merges. Every tick runs the check again, and the first one that passes does step 2.
 
-A replacement at a wave boundary never counts against the restart budget of step 5; only a restart does, once per failure, whether it ends as a resume, a hold, or a replacement.
+A replacement at a wave boundary never counts against the restart budget of step 5; only a restart does, once per failure, whether it ends as a resume, a wait, or a replacement.
 
 **Done when**: the stream agent was archived only after the check passed, a hung one killed first, and the status line holds the new agent id or "waits on the cap", or it records the resume sent or the restart held.
 
@@ -253,11 +261,11 @@ Call `list_profiles` and read each profile's `notes`, as the wave skill's step 1
 /matt-with-paseo <tickets> stream <slug> quota <N>
 ```
 
-`<tickets>` is the row's Tickets cell as written, `<slug>` the row's slug, and `<N>` the stream's quota from "Split the cap into quotas" (The index). When the split leaves the stream no room, spawn nothing: write "waits on the cap" in its status line and stop here for this stream; step 4 spawns it at a later wave boundary. The worktree is a checkout of the integration branch, which is the wave skill's precondition. A child agent runs a user-only skill when its initial prompt starts with that command (probe L2), so nothing may come before it.
+`<tickets>` is the row's Tickets cell as written, `<slug>` the row's slug, and `<N>` the stream's quota from "Split the cap into quotas" (The index): 1, since no wave approval exists yet for a stream spawned here. When the split leaves the stream no room, spawn nothing: write "waits on the cap" in its status line and stop here for this stream; step 4 spawns it at a later wave boundary. The worktree is a checkout of the integration branch, which is the wave skill's precondition. A child agent runs a user-only skill when its initial prompt starts with that command (probe L2), so nothing may come before it.
 
-Write the agent id into the stream's status line.
+Write the agent id into the stream's status line and `<N>` into its Quota cell.
 
-**Done when**: the stream has exactly one stream agent, running in its worktree, whose initial prompt is the wave skill's command with `stream <slug>` and `quota <N>`, or it has none and its status line says it waits on the cap.
+**Done when**: the stream has exactly one stream agent, running in its worktree, whose initial prompt is the wave skill's command with `stream <slug>` and `quota <N>`, that same `N` written into the row's Quota cell, or it has none and its status line says it waits on the cap.
 
 ## 4. Relay questions and keep the status line
 
@@ -270,16 +278,16 @@ On each notification:
 3. When the message is the wave skill's wave approval (its step 2 presenting the graph and the upcoming wave), the stream is at its wave boundary: handle it as below before it joins a round.
 4. Run a question round.
 
-**At a wave boundary.** The wave approval is the one signal of a wave boundary: the last wave is cleaned up and the next has not started. Split the cap again ("Split the cap into quotas", The index), compare the stream's new quota with the one in its stream agent's command, and read the stream agent's context use (`get_agent_status` reports `lastUsage.contextWindowUsedTokens` against `contextWindowMaxTokens`) against the respawn threshold (for example 60% of the window, or what the user sets):
+**At a wave boundary.** The wave approval is the one signal of a wave boundary: the last wave is cleaned up and the next has not started. Split the cap again ("Split the cap into quotas", The index), compare the stream's new quota with the one in its row's Quota cell, and read the stream agent's context use (`get_agent_status` reports `lastUsage.contextWindowUsedTokens` against `contextWindowMaxTokens`) against the respawn threshold (for example 60% of the window, or what the user sets):
 
 | New quota and context | Do |
 |---|---|
 | Same quota, context below the threshold | Nothing; the wave approval joins the round. |
-| Different quota, at least 1 | "Replace a stream agent" with the new quota. |
-| Same quota, context past the threshold | "Replace a stream agent" with the same quota; write `respawned for context` in the status line. |
+| Different quota, at least 1, context below the threshold | `send_agent_prompt` `quota <N>` to the stream agent, `background: true`, `notifyOnFinish: true`; write `<N>` into the row's Quota cell and append the change to `decisions.md`. No agent is archived, killed or replaced: the wave skill's own run takes the new quota, a raise starting waiting tickets by rolling start at once, a cut stopping none (ADR 0006). |
+| Context past the threshold, whatever the new quota | "Replace a stream agent" with the new quota (the same one when it did not change); write `respawned for context` in the status line. Its spawn command already carries the new quota, so no separate `quota <N>` prompt follows. |
 | No room (the split leaves the stream waiting on the cap) | "Replace a stream agent", which spawns nothing and writes "waits on the cap" in the status line. A later split that gives the stream room spawns it per step 3. |
 
-Capacity and context change only here: you never prompt, cancel or archive a stream agent for capacity or context anywhere else, so a running wave is never cut. A split that frees slots (a stream archived here, or a stream with no ticket left for agents) gives them to the streams that wait on the cap, in priority order, each spawned per step 3.
+Capacity and context change a stream's quota or agent only here and at the choking response of step 5's tick table: you never prompt, cancel or archive a stream agent for capacity or context anywhere else, and neither ever cuts a running wave without the user's yes. A split that frees slots (a stream archived here, or a stream with no ticket left for agents) gives them to the streams that wait on the cap, in priority order, each spawned per step 3.
 
 **A question round.** Every approval gate of the wave skill keeps its meaning only if the user is the one who passes it. These rules come first; nothing below overrides them:
 
@@ -326,6 +334,7 @@ One stream may match several rows of the table below; each row it matches acts, 
 | Every ticket of the stream resolved or in the ready for human or needs info role, the stream agent idle, and the status line records neither shipped nor, for the integration branch's current head, nothing to ship or the ship question asked | Step 6 |
 | The status line records `held until <other> ships`, and `<other>`'s status line records it shipped | Step 7's `release` ("A need on another stream") |
 | A `stream=<slug>` agent without a `wave` label for a row that should not run (other than a shipped stream's own idle stream agent) or a slug not in the index, two such agents for one slug, or an open pull request the status line does not record, and the status line does not yet record this finding as reported | Report it to the user and take no other action; the status line records that it was reported, so a later tick does not report it again |
+| This tick's own commands (`git`, `paseo ls -g`, `get_agent_status`) ran far slower than on earlier ticks, or a `create_workspace` timed out, and the status line of the stream this happened for does not yet record the finding as reported | The machine may be choking. Report it to the user as an item in the next question round: what ran slow or timed out and how long, with a proposal to hold the streams it names or lower the Agent cap; write into that stream's status line that it was reported, so a later tick does not report it again. Take no other action until the user answers: a yes to holding sends `hold` to each named stream agent, `background: true`, `notifyOnFinish: true`, the same way step 7 sends it; a yes to a lower cap is written into the Agent cap line, taking effect as each stream reaches its next split ("Split the cap into quotas"). Nothing is measured automatically: this is only what the tick itself saw while it ran |
 
 The loop's own heartbeat is reconciled in the same tick:
 
