@@ -413,6 +413,14 @@ claude plugin eval . --scaffold
 
 `--scaffold` runs each case's `fixture.sh` as you, to build its repository; read them first. The first run in a directory asks you to trust the plugin, so start it from an interactive terminal; from a script, CI or an agent session, add `--trust-plugin` once you have read the suite. A full run is 26 cases (7 from the 0.4.1 baseline, 19 added for 0.4.2), 3 runs each, in two arms (with and without the plugin); the report scores each arm case by case. Each fixture strips carriage returns before it runs, so a CRLF checkout on Windows works too.
 
+**Eval gate.** A change under `plugins/matt-with-paseo/skills/` merges only after the gate slice passes. The slice is three cases, one per entry point the skills guard, each with a one-line prompt, read-only tools and no observed-state block: `wave-not-configured` (the wave skill sends an unconfigured repository to setup and stops), `streams-no-paseo-tools` (the stream skill stops when Paseo's tools are missing) and `streams-free-text-argument` (the stream skill stops on an argument that is not a slug). At 3 runs in two arms that is 18 agent runs. Cost: measured in the stream's final eval run. Run it from `plugins/matt-with-paseo`, one command per case, and merge only when all three exit 0 (the default threshold is 1.0, so any case below a perfect score fails); from a script, add `--trust-plugin` as above:
+
+```
+for c in wave-not-configured streams-no-paseo-tools streams-free-text-argument; do claude plugin eval . --scaffold --case "$c" || exit 1; done
+```
+
+The full suite runs for a release, not for each change.
+
 **Trigger cases.** The wave and stream skills have close descriptions, so `plugins/matt-with-paseo/triggers/cases.json` keeps user requests as data: each has the skills it should open (`expect`) and, for a near miss, the skill it must not open (`near`). Two commands read it. `python -B scripts/check-triggers.py` asks no model: it requires, for every skill of the plugin, at least three requests that should open it and two near misses, and only known skill names; the unit tests run it on the shipped cases, so the gate carries it. `python -B scripts/run-triggers.py` is the model run, separate and never part of the gate: it shows the agent (default `claude -p`; another command goes after `--`) each skill's name and description with a request, three runs per case, and passes a case when more than half of its runs open exactly the expected skills. It costs model runs, so run it when a description changes.
 
 ## Acknowledgements
