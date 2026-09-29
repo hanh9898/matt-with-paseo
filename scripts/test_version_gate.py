@@ -137,7 +137,7 @@ class VersionGate(unittest.TestCase):
         self.assertIn("skipped", result.stderr)
 
     def test_a_change_to_a_file_the_list_does_not_name_passes(self):
-        write(self.root / "plugins/matt-with-paseo/triggers/cases.json", '[{"brief": "x"}]\n')
+        write(self.root / "plugins/matt-with-paseo/triggers/cases.json", '[{"request": "x"}]\n')
         self.commit("add a trigger case")
 
         result = self.run_check()

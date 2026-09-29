@@ -57,7 +57,7 @@ def main():
         return 2
 
     with tempfile.TemporaryDirectory() as workdir, ThreadPoolExecutor(max_workers=args.jobs) as pool:
-        jobs = [[pool.submit(ask, agent, trigger_cases.trigger_prompt(cards, one["brief"]), args.timeout, workdir)
+        jobs = [[pool.submit(ask, agent, trigger_cases.trigger_prompt(cards, one["request"]), args.timeout, workdir)
                  for _ in range(args.runs)] for one in cases]
         answers = [[job.result() for job in case_jobs] for case_jobs in jobs]
 
@@ -67,7 +67,7 @@ def main():
         ok = trigger_cases.majority(right, args.runs)
         passed += ok
         print(f"{'PASS' if ok else 'FAIL'} {right}/{args.runs} expected {one['expect']} "
-              f"opened {', '.join(str(run) for run in opened)} :: {one['brief'][:70]}")
+              f"opened {', '.join(str(run) for run in opened)} :: {one['request'][:70]}")
     print(f"{passed} of {len(cases)} cases passed")
     return 0 if passed == len(cases) else 1
 

@@ -20,16 +20,16 @@ PLUGIN = SCRIPTS.parent / "plugins" / "matt-with-paseo"
 CARDS = {"alpha": "Does alpha things.", "beta": "Does beta things."}
 
 
-def case(brief, expect, near=None):
-    one = {"brief": brief, "expect": expect}
+def case(request, expect, near=None):
+    one = {"request": request, "expect": expect}
     if near:
         one["near"] = near
     return one
 
 
 def covering(skill):
-    """Three briefs that should open the skill and two near misses that should open nothing."""
-    return ([case(f"{skill} brief {number}", [skill]) for number in range(3)]
+    """Three requests that should open the skill and two near misses that should open nothing."""
+    return ([case(f"{skill} request {number}", [skill]) for number in range(3)]
             + [case(f"{skill} near miss {number}", [], near=skill) for number in range(2)])
 
 
@@ -39,17 +39,17 @@ def write(path, text):
 
 
 class CoverageFindings(unittest.TestCase):
-    def test_a_skill_with_three_briefs_and_two_near_misses_has_no_finding(self):
+    def test_a_skill_with_three_requests_and_two_near_misses_has_no_finding(self):
         cases = covering("alpha") + covering("beta")
 
         self.assertEqual(trigger_cases.coverage_findings(CARDS, cases), [])
 
-    def test_a_skill_with_two_briefs_is_named_with_the_count_and_the_minimum(self):
+    def test_a_skill_with_two_requests_is_named_with_the_count_and_the_minimum(self):
         cases = covering("beta") + covering("alpha")[1:]
 
         findings = trigger_cases.coverage_findings(CARDS, cases)
 
-        self.assertEqual(findings, ["alpha: 2 briefs that should open it; write at least 3"])
+        self.assertEqual(findings, ["alpha: 2 requests that should open it; write at least 3"])
 
     def test_a_skill_with_one_near_miss_is_named_with_the_count_and_the_minimum(self):
         cases = covering("beta") + covering("alpha")[:-1]
@@ -61,7 +61,7 @@ class CoverageFindings(unittest.TestCase):
     def test_a_skill_with_no_case_at_all_gets_both_findings(self):
         findings = trigger_cases.coverage_findings(CARDS, covering("beta"))
 
-        self.assertEqual(findings, ["alpha: 0 briefs that should open it; write at least 3",
+        self.assertEqual(findings, ["alpha: 0 requests that should open it; write at least 3",
                                     "alpha: 0 near misses for it; write at least 2"])
 
     def test_a_case_that_names_a_skill_the_plugin_lacks_is_reported_with_its_number(self):
@@ -71,13 +71,13 @@ class CoverageFindings(unittest.TestCase):
 
         self.assertEqual(findings, ["case 11 (Ship it.): names gamma, which is not a skill of this plugin"])
 
-    def test_a_case_that_is_a_near_miss_for_the_skill_it_expects_does_not_count_as_a_brief_for_it(self):
+    def test_a_case_that_is_a_near_miss_for_the_skill_it_expects_does_not_count_as_a_request_for_it(self):
         cases = covering("beta") + covering("alpha")[:2] + [case("Odd.", ["alpha"], near="alpha")] \
             + covering("alpha")[3:]
 
         findings = trigger_cases.coverage_findings(CARDS, cases)
 
-        self.assertEqual(findings, ["alpha: 2 briefs that should open it; write at least 3"])
+        self.assertEqual(findings, ["alpha: 2 requests that should open it; write at least 3"])
 
 
 class LoadCases(unittest.TestCase):
@@ -105,23 +105,23 @@ class LoadCases(unittest.TestCase):
         self.assertIn("no-such-cases.json", str(raised.exception))
 
     def test_text_that_is_not_json_is_named(self):
-        self.assertIn("cases.json: not valid JSON", self.load_error("brief | expect"))
+        self.assertIn("cases.json: not valid JSON", self.load_error("request | expect"))
 
     def test_a_top_level_that_is_not_a_list_is_named(self):
-        self.assertIn("cases.json: expected a list of cases", self.load_error('{"brief": "x"}'))
+        self.assertIn("cases.json: expected a list of cases", self.load_error('{"request": "x"}'))
 
-    def test_a_case_without_a_brief_is_named_by_its_number(self):
+    def test_a_case_without_a_request_is_named_by_its_number(self):
         text = json.dumps([case("Fine.", ["alpha"]), {"expect": ["alpha"]}])
 
-        self.assertIn("case 2: needs a non-empty brief", self.load_error(text))
+        self.assertIn("case 2: needs a non-empty request", self.load_error(text))
 
     def test_a_case_whose_expect_is_not_a_list_of_names_is_named_by_its_number(self):
-        text = json.dumps([{"brief": "Fine.", "expect": "alpha"}])
+        text = json.dumps([{"request": "Fine.", "expect": "alpha"}])
 
         self.assertIn("case 1: expect must be a list of skill names", self.load_error(text))
 
     def test_a_case_whose_near_is_not_a_name_is_named_by_its_number(self):
-        text = json.dumps([{"brief": "Fine.", "expect": [], "near": ["alpha"]}])
+        text = json.dumps([{"request": "Fine.", "expect": [], "near": ["alpha"]}])
 
         self.assertIn("case 1: near must be one skill name", self.load_error(text))
 
@@ -179,7 +179,7 @@ class CheckTriggers(unittest.TestCase):
         result = self.run_check(covering("beta") + covering("alpha")[1:])
 
         self.assertEqual(result.stdout.splitlines(),
-                         ["alpha: 2 briefs that should open it; write at least 3"])
+                         ["alpha: 2 requests that should open it; write at least 3"])
         self.assertEqual(result.returncode, 1)
 
     def test_a_missing_cases_file_is_one_line_on_stderr_and_exit_two(self):
@@ -202,19 +202,19 @@ class ShippedTriggerCases(unittest.TestCase):
     def test_the_plugin_ships_exactly_the_two_skills_the_cases_are_written_for(self):
         self.assertEqual(sorted(trigger_cases.skill_cards(PLUGIN)), ["matt-with-paseo", "matt-with-paseo-streams"])
 
-    def test_no_brief_is_written_twice(self):
-        briefs = [one["brief"] for one in trigger_cases.load_cases(PLUGIN / "triggers" / "cases.json")]
+    def test_no_request_is_written_twice(self):
+        requests = [one["request"] for one in trigger_cases.load_cases(PLUGIN / "triggers" / "cases.json")]
 
-        self.assertEqual(len(briefs), len(set(briefs)))
+        self.assertEqual(len(requests), len(set(requests)))
 
 
 class ModelRunParts(unittest.TestCase):
-    def test_the_prompt_shows_one_card_per_skill_and_then_the_brief(self):
+    def test_the_prompt_shows_one_card_per_skill_and_then_the_request(self):
         prompt = trigger_cases.trigger_prompt(CARDS, "Run the wave.")
 
         self.assertRegex(prompt, r"(?m)^- alpha: Does alpha things\.$")
         self.assertRegex(prompt, r"(?m)^- beta: Does beta things\.$")
-        self.assertTrue(prompt.endswith("Your brief:\nRun the wave."))
+        self.assertTrue(prompt.endswith("Your request:\nRun the wave."))
 
     def test_the_prompt_asks_for_a_json_answer_and_leaks_no_expected_skill(self):
         prompt = trigger_cases.trigger_prompt(CARDS, "Run the wave.")
@@ -253,13 +253,13 @@ class ModelRunParts(unittest.TestCase):
 
 FAKE_AGENT = """\
 import sys
-brief = sys.stdin.read().split("Your brief:\\n")[1]
-print('{"skills": ["alpha"]}' if "alpha" in brief else '{"skills": ["beta"]}')
+request = sys.stdin.read().split("Your request:\\n")[1]
+print('{"skills": ["alpha"]}' if "alpha" in request else '{"skills": ["beta"]}')
 """
 
 
 class RunTriggers(unittest.TestCase):
-    """The model run, with a fake agent in place of the model: it answers alpha for a brief that says alpha."""
+    """The model run, with a fake agent in place of the model: it answers alpha for a request that says alpha."""
 
     def setUp(self):
         self.tmp = Path(tempfile.mkdtemp())

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Check, without a model, that every skill of the plugin has at least three briefs that should open
+"""Check, without a model, that every skill of the plugin has at least three requests that should open
 it and two near misses in the trigger cases (plugins/matt-with-paseo/triggers/cases.json), and that
 every case names only skills the plugin has. The model run is a separate command: run-triggers.py."""
 
