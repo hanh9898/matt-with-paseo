@@ -14,7 +14,7 @@ Words: every word of the wave skill's words block ([`matt-with-paseo`](../matt-w
 
 - **Stream**: one ticket set that ships through one integration branch and one pull request (a merge request on GitLab; this skill says pull request for both). Its owner is an attribute of it. No dependency crosses a stream boundary; dependencies between tickets stay inside the stream, where the wave skill runs them.
 - **Intake agent**: a Paseo agent you spawn only when the user names a Matt intake skill (triage, grilling, wayfinder, and the spec and ticket steps that follow); its initial prompt starts with that skill's slash command, and it counts against the agent cap. It is the only way a spec or ticket gets written from the control folder (ADR 0005).
-- **Pause**: every stream held (the wave skill's **Hold**) until no agent runs, recorded as `paused` in each status line, so the machine can restart; resuming is one tick (ADR 0006).
+- **Pause**: every stream held (the wave skill's **Hold**) until no agent runs, recorded as `paused` in each status line, so the machine can restart; resuming is one tick, which releases every stream except those step 7 holds until another stream ships (ADR 0006).
 - **Ship branch**: `stream/<slug>-ship`, cut afresh from the integration branch's head at each ship, plus one commit that restores the agent-only paths (the ticket folder, wave files, tracker configuration, binary evidence), except those the user keeps in, to the PR target's version; the stream's pull request comes from it, and the integration branch keeps everything (ADR 0007).
 
 ## Entry guards
@@ -310,18 +310,21 @@ The stream's status line ("The status line", The index) is the loop's only memor
 
 Every prompt you send a stream agent, in any step, goes with `send_agent_prompt`, `background: true` and `notifyOnFinish: true`: the agent's answer reaches you only as a finish notification, and a prompt without one leaves the stream waiting on a message no one reads.
 
+One stream may match several rows of the table below; each row it matches acts, in table order.
+
 | Observed, for one stream | Action |
 |---|---|
 | Should run, and no worktree on `stream/<slug>` | Step 2, which opens the existing branch instead of cutting a new one |
 | Should run, and no stream agent | A restart, per "Supervise one-for-one" below |
-| Stream agent running, with no question-type permission pending | None; its finish notification, or a later tick, brings its message |
+| Stream agent running, with no question-type permission pending | None beyond the activity check of "Supervise one-for-one" below; its finish notification, or a later tick, brings its message |
 | Stream agent idle, and its last end-of-turn message is newer than the one the status line records | Step 4 on that message. This is how a turn that ended without a finish notification (probe A2) is caught: the next tick finds it |
 | Stream agent, running or idle, has a question-type permission in `list_pending_permissions` not yet shown to the user | Step 4: the permission joins the next question round. An agent that waits on a permission may be reported `running`; the running row above leaves such an agent to this row |
-| Stream agent idle on the message the status line records, the status line waiting on the user | None; the question is already shown, and a tick never shows it twice |
-| Stream agent idle on the message the status line records, the status line waiting on the stream agent and recording no nudge for that message, and no agent with a `wave` label running for the stream | `send_agent_prompt` "where does the stream stand?" to it, `background: true`, `notifyOnFinish: true`, and write `nudged <time>` into the status line: the stream waits on an agent that waits for nothing, as when a ticket agent's finish notification never reached it. A stream agent idle while its ticket agents run is waiting for them and is not nudged. Its answer comes back through step 4 as a newer message, and the item lapses with it |
+| Stream agent idle on the message the status line records, the status line waiting on the user | None; the question is already shown, and a tick never shows it twice. What a partial answer left open, or an answer asked back, stays pending and joins the next round (step 4) |
+| Stream agent idle on the message the status line records, the status line waiting on the stream agent and recording no nudge for that message, and no agent with a `wave` label running for the stream, and the step 6 row below does not match | `send_agent_prompt` "where does the stream stand?" to it, `background: true`, `notifyOnFinish: true`, and write `nudged <time>` into the status line: the stream waits on an agent that waits for nothing, as when a ticket agent's finish notification never reached it. A stream agent idle while its ticket agents run is waiting for them and is not nudged. Its answer comes back through step 4 as a newer message, and the item lapses with it |
 | Stream agent failed | A restart, per "Supervise one-for-one" below |
 | Stream agent idle on the message the status line records, and its context past the respawn threshold | None; the respawn waits for the stream's next wave boundary (step 4), so a running wave is never cut |
 | Every ticket of the stream resolved or in the ready for human role, the stream agent idle, and the status line records neither shipped nor, for the integration branch's current head, nothing to ship or the ship question asked | Step 6 |
+| The status line records `held until <other> ships`, and `<other>`'s status line records it shipped | Step 7's `release` ("A need on another stream") |
 | A `stream=<slug>` agent without a `wave` label for a row that should not run (other than a shipped stream's own idle stream agent) or a slug not in the index, two such agents for one slug, or an open pull request the status line does not record, and the status line does not yet record this finding as reported | Report it to the user and take no other action; the status line records that it was reported, so a later tick does not report it again |
 
 The loop's own heartbeat is reconciled in the same tick:
