@@ -2,7 +2,7 @@
 
 Copy the frame below into `wave<N>-common-rules.md` and fill in each section. Each section answers a question every agent in the wave would otherwise ask itself; answered here once, no agent has to guess.
 
-Steps 4 and 7 of the skill append two sections, `## Wave agents` and `## Review`, to the end of the file; leave both out when writing the rules.
+Steps 3, 4 and 7 of the skill append three sections, `## Checkpoints`, `## Wave agents` and `## Review`, to the end of the file; leave all three out when writing the rules.
 
 Copy in only what an agent cannot look up: an unwritten convention, the reason behind a choice, a trap already hit. Anything one command or one file answers (scripts in `package.json`, the directory layout, `CLAUDE.md`) gets a pointer, not a copy.
 
@@ -50,6 +50,10 @@ Copy in only what an agent cannot look up: an unwritten convention, the reason b
   fails in <each failing test or check, with its first error line>, or "none: every command passes".
 - A failure listed here is not yours: leave it as it is unless your ticket's acceptance criteria name it, and
   name it in your report as failing on base. A failure not listed here is yours to explain.
+- In a repository with a version gate (this plugin's: `scripts/check-version-gate.py`, which compares the files
+  agents read with the latest release tag), its self-test `test_this_repository_passes_its_own_gate` fails on the
+  base of every ticket started after the stream's first change to such a file, until the stream bumps the version
+  once. List it here for those tickets; it is not theirs.
 
 ## Acceptance criteria are the contract
 - A trap above, or an instruction an earlier ticket left in its comments, is guidance; your ticket's

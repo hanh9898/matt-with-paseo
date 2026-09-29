@@ -46,19 +46,29 @@ class VersionGate(unittest.TestCase):
         write(self.root / "plugins/matt-with-paseo/triggers/cases.json", "[]\n")
         write(self.root / "list.txt", LISTED)
         self.commit("release 0.4.2")
+        git(self.root, "tag", "v0.4.2")
         git(self.root, "switch", "-q", "-c", "feature")
 
     def commit(self, message):
         git(self.root, "add", "-A")
         git(self.root, "commit", "-q", "-m", message)
 
-    def run_check(self, root=None):
+    def run_check(self, root=None, paths=None):
         return subprocess.run(
             [sys.executable, "-B", str(SCRIPT), "--root", str(root or self.root),
-             "--paths", str(self.root / "list.txt")],
+             "--paths", str(paths or self.root / "list.txt")],
             capture_output=True, text=True)
 
-    def test_passes_when_no_listed_file_changed_since_main(self):
+    def assert_could_not_run(self, result, *fragments):
+        """Exit 2, nothing on stdout, and one line on stderr that names the input: no traceback."""
+        self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+        self.assertEqual(result.stdout, "")
+        self.assertEqual(len(result.stderr.splitlines()), 1, result.stderr)
+        self.assertNotIn("Traceback", result.stderr)
+        for fragment in fragments:
+            self.assertIn(fragment, result.stderr)
+
+    def test_passes_when_no_listed_file_changed_since_the_release_tag(self):
         result = self.run_check()
 
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
@@ -126,8 +136,8 @@ class VersionGate(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn("skipped", result.stderr)
 
-    def test_without_a_main_branch_it_skips_instead_of_failing(self):
-        git(self.root, "branch", "-q", "-m", "main", "trunk")
+    def test_without_a_release_tag_it_skips_instead_of_failing(self):
+        git(self.root, "tag", "-d", "v0.4.2")
         write(self.root / WAVE_SKILL, "step 1, reworded\n")
 
         result = self.run_check()
@@ -135,9 +145,77 @@ class VersionGate(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertEqual(result.stdout, "")
         self.assertIn("skipped", result.stderr)
+        self.assertIn("no release tag", result.stderr)
+
+    def test_a_tag_that_is_not_a_release_tag_is_not_compared_with(self):
+        git(self.root, "tag", "-d", "v0.4.2")
+        git(self.root, "tag", "nightly")
+        write(self.root / WAVE_SKILL, "step 1, reworded\n")
+
+        result = self.run_check()
+
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn("no release tag", result.stderr)
+
+    def test_it_compares_with_the_release_tag_and_not_with_main(self):
+        """Main carries the stream's bump, untagged: a later change is already past the last release."""
+        git(self.root, "switch", "-q", "main")
+        write(self.root / WAVE_SKILL, "step 1, reworded\n")
+        write(self.root / PLUGIN_JSON, manifest("0.5.0"))
+        self.commit("release 0.5.0, not tagged yet")
+        git(self.root, "switch", "-q", "feature")
+        git(self.root, "merge", "-q", "--ff-only", "main")
+        write(self.root / WAVE_SKILL, "step 1, reworded again\n")
+
+        result = self.run_check()
+
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual(result.stdout, "")
+
+    def test_the_latest_release_tag_is_the_one_a_change_must_move_past(self):
+        write(self.root / WAVE_SKILL, "step 1, reworded\n")
+        write(self.root / PLUGIN_JSON, manifest("0.5.0"))
+        self.commit("release 0.5.0")
+        git(self.root, "tag", "v0.5.0")
+        write(self.root / WAVE_SKILL, "step 1, reworded again\n")
+        self.commit("reword again")
+
+        result = self.run_check()
+
+        self.assertEqual(result.returncode, 1, result.stderr)
+        lines = result.stdout.splitlines()
+        self.assertEqual(len(lines), 1, result.stdout)
+        self.assertIn("v0.5.0", lines[0])
+        self.assertIn("version 0.5.0", lines[0])
+
+    def test_a_missing_seat_facing_list_is_one_line_on_stderr_and_exit_two(self):
+        result = self.run_check(paths=self.root / "no-such-list.txt")
+
+        self.assert_could_not_run(result, "no-such-list.txt")
+
+    def test_a_missing_plugin_manifest_is_one_line_on_stderr_and_exit_two(self):
+        (self.root / PLUGIN_JSON).unlink()
+
+        result = self.run_check()
+
+        self.assert_could_not_run(result, "plugin.json")
+
+    def test_a_plugin_manifest_that_is_not_json_is_one_line_on_stderr_and_exit_two(self):
+        write(self.root / PLUGIN_JSON, "version | 0.5.0")
+
+        result = self.run_check()
+
+        self.assert_could_not_run(result, "plugin.json")
+
+    def test_a_plugin_manifest_without_a_version_is_one_line_on_stderr_and_exit_two(self):
+        write(self.root / PLUGIN_JSON, json.dumps({"name": "matt-with-paseo"}))
+
+        result = self.run_check()
+
+        self.assert_could_not_run(result, "plugin.json")
 
     def test_a_change_to_a_file_the_list_does_not_name_passes(self):
-        write(self.root / "plugins/matt-with-paseo/triggers/cases.json", '[{"brief": "x"}]\n')
+        write(self.root / "plugins/matt-with-paseo/triggers/cases.json", '[{"request": "x"}]\n')
         self.commit("add a trigger case")
 
         result = self.run_check()

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Ask a model, on demand, which skill each trigger case should open, and pass a case when more than
-half of its runs are right. It costs model runs, so no test and no gate calls it; the free check is
+half of its runs are right. It costs model runs, so no test and no eval gate calls it; the free check is
 check-triggers.py. The agent is the command after `--` (default `claude -p`): it gets the prompt on
 stdin and prints its answer on stdout."""
 
@@ -57,7 +57,7 @@ def main():
         return 2
 
     with tempfile.TemporaryDirectory() as workdir, ThreadPoolExecutor(max_workers=args.jobs) as pool:
-        jobs = [[pool.submit(ask, agent, trigger_cases.trigger_prompt(cards, one["brief"]), args.timeout, workdir)
+        jobs = [[pool.submit(ask, agent, trigger_cases.trigger_prompt(cards, one["request"]), args.timeout, workdir)
                  for _ in range(args.runs)] for one in cases]
         answers = [[job.result() for job in case_jobs] for case_jobs in jobs]
 
@@ -67,7 +67,7 @@ def main():
         ok = trigger_cases.majority(right, args.runs)
         passed += ok
         print(f"{'PASS' if ok else 'FAIL'} {right}/{args.runs} expected {one['expect']} "
-              f"opened {', '.join(str(run) for run in opened)} :: {one['brief'][:70]}")
+              f"opened {', '.join(str(run) for run in opened)} :: {one['request'][:70]}")
     print(f"{passed} of {len(cases)} cases passed")
     return 0 if passed == len(cases) else 1
 

@@ -244,6 +244,39 @@ class DriftCheck(unittest.TestCase):
         self.assertEqual(result.returncode, 2)
         self.assertIn("## 4.", result.stderr)
 
+    def assert_could_not_run(self, result, *fragments):
+        """Exit 2, nothing on stdout, and one line on stderr that names the input: no traceback."""
+        self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+        self.assertEqual(result.stdout, "")
+        self.assertEqual(len(result.stderr.splitlines()), 1, result.stderr)
+        self.assertNotIn("Traceback", result.stderr)
+        for fragment in fragments:
+            self.assertIn(fragment, result.stderr)
+
+    def test_a_plugin_without_a_manifest_is_one_line_on_stderr_and_exit_two(self):
+        (self.plugin / ".claude-plugin" / "plugin.json").unlink()
+        make_skill(self.skill)
+
+        self.assert_could_not_run(self.run_check(), "plugin.json")
+
+    def test_a_plugin_manifest_that_is_not_json_is_one_line_on_stderr_and_exit_two(self):
+        write(self.plugin / ".claude-plugin" / "plugin.json", "skills | tdd")
+        make_skill(self.skill)
+
+        self.assert_could_not_run(self.run_check(), "plugin.json")
+
+    def test_a_plugin_manifest_without_a_skills_list_is_one_line_on_stderr_and_exit_two(self):
+        write(self.plugin / ".claude-plugin" / "plugin.json", json.dumps({"name": "mattpocock-skills"}))
+        make_skill(self.skill)
+
+        self.assert_could_not_run(self.run_check(), "plugin.json", "skills")
+
+    def test_a_manifest_entry_without_a_skill_file_is_one_line_on_stderr_and_exit_two(self):
+        (self.plugin / "skills" / "engineering" / "tdd" / "SKILL.md").unlink()
+        make_skill(self.skill)
+
+        self.assert_could_not_run(self.run_check(), "plugin.json", "SKILL.md")
+
 
 class ToleratedReferences(unittest.TestCase):
     def setUp(self):
@@ -293,6 +326,17 @@ class ToleratedReferences(unittest.TestCase):
         self.assertEqual(len(lines), 1, result.stdout)
         for fragment in ("tolerated.txt:1:", "code-review", "installed", "remove"):
             self.assertIn(fragment, lines[0])
+
+    def test_a_missing_list_is_one_line_on_stderr_and_exit_two(self):
+        make_skill(self.skill)
+
+        result = self.run_check()
+
+        self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+        self.assertEqual(result.stdout, "")
+        self.assertEqual(len(result.stderr.splitlines()), 1, result.stderr)
+        self.assertNotIn("Traceback", result.stderr)
+        self.assertIn("tolerated.txt", result.stderr)
 
 
 PINNED_TABLE = SCRIPT.with_name("pinned-lines.json")
@@ -390,6 +434,19 @@ class PinnedLines(unittest.TestCase):
 
         self.assertEqual(result.returncode, 2)
         self.assertIn("pinned.json", result.stderr)
+
+    def test_a_table_that_is_not_a_list_is_one_line_on_stderr_and_exit_two(self):
+        for text in ('{"file": "skills/rules.md"}', "{}", "null", "5"):
+            with self.subTest(table=text):
+                write(self.table, text)
+
+                result = self.run_check()
+
+                self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+                self.assertEqual(result.stdout, "")
+                self.assertEqual(len(result.stderr.splitlines()), 1, result.stderr)
+                self.assertNotIn("Traceback", result.stderr)
+                self.assertIn("pinned.json", result.stderr)
 
     def test_fails_loudly_when_a_row_has_no_reason(self):
         self.pin({"file": "skills/rules.md", "phrase": STUCK_CALL})

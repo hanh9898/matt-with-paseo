@@ -265,15 +265,7 @@ The wave skill reads the file while preparing a wave, points every agent to it f
 
 ### Known Paseo behaviour
 
-What you may notice when the skills run on Paseo (daemon 0.9.2 unless a line says otherwise), and what the skills do about it:
-
-- A finish notification reaches only the session that sent the prompt, and none comes for a turn an agent starts on its own after a background command (10 of 10 in a probe). The skills check the real artifacts instead of trusting "finished", and a heartbeat watches agents this session did not spawn.
-- A heartbeat can skip a tick: one due while its session was busy was not delivered in one run (daemon version not recorded). Every tick of the skills' heartbeats re-reads the agents' real state, and every heartbeat expires.
-- `create_workspace` can time out after 120 s on a loaded machine while the worktree still gets made (daemon version not recorded). The skills read `git worktree list` before calling again.
-- `archive_workspace` deletes a worktree that holds uncommitted files without a warning, and archiving a parent agent archives its running children (the second: daemon version not recorded). The skills archive only a stopped agent with a clean, merged worktree, and replace a stream agent only when no ticket agent runs.
-- On Windows the shells and a fixed service `port` behave as the `paseo.json` notes above say.
-
-Each fact with its basis and the version it was seen on is in [`PASEO-FACTS.md`](plugins/matt-with-paseo/skills/matt-with-paseo/PASEO-FACTS.md), written for the agents that run the skills.
+The skills act on what Paseo is known to do: they check the real artifacts instead of trusting "finished", every heartbeat tick re-reads the agents' real state and every heartbeat expires, they read `git worktree list` before calling `create_workspace` again, they archive only a stopped agent with a clean, merged worktree, and they replace a stream agent only when no ticket agent runs. The why is one row per fact in [`PASEO-FACTS.md`](plugins/matt-with-paseo/skills/matt-with-paseo/PASEO-FACTS.md), written for the agents that run the skills, each with its basis and the Paseo version it was seen on (`version not recorded` where nobody wrote it down). On Windows the shells and a fixed service `port` behave as the `paseo.json` notes above say.
 
 ## Installation
 
@@ -302,7 +294,7 @@ npx skills add hanh9898/matt-with-paseo --skill '*' -g -a claude-code
 gh skill install hanh9898/matt-with-paseo --all --agent claude-code --scope user
 ```
 
-`--all` takes both skills. This resolves the latest tagged release; add `--pin v0.4.2` to fix a version. The commands are `/matt-with-paseo` and `/matt-with-paseo-streams`.
+`--all` takes both skills. This resolves the latest tagged release; add `--pin v0.5.0` to fix a version. The commands are `/matt-with-paseo` and `/matt-with-paseo-streams`.
 
 ### Option 4: Manual copy
 
@@ -370,7 +362,7 @@ Files in this repo:
 - **State lives on disk.** Ticket status and the wave file are enough for a fresh session to resume; for streams, the index and the agents' labels are.
 - **Each layer talks only to the layer below it.** The stream skill prompts, restarts and archives stream agents, never ticket agents, and reads only public signals (tracker status, end-of-turn messages, agent status, git), never a wave file ([ADR 0002](docs/adr/0002-nested-orchestration-per-stream.md)).
 - **Reconcile, do not just report.** The stream skill's heartbeat compares the index with what it observes and takes one idempotent action per gap, so a new session recovers by running one tick ([ADR 0004](docs/adr/0004-stream-heartbeat-is-a-reconcile-loop-with-supervision.md)).
-- **Never archive a parent while its children run.** Archiving a Paseo agent archives its running child agents too (measured, probe C1), so a stream agent is replaced only when no ticket agent of its stream runs.
+- **Never archive a parent while its children run.** A stream agent is replaced only when no ticket agent of its stream runs (the archive row of the workspaces and worktrees table in [`PASEO-FACTS.md`](plugins/matt-with-paseo/skills/matt-with-paseo/PASEO-FACTS.md) says why).
 
 ## Limitations
 
@@ -396,9 +388,13 @@ It lists every `mattpocock-skills:<name>` reference in the documents the standar
 |---|---|---|
 | 0 | nothing | no stale reference |
 | 1 | one line per stale reference, or per line naming that beta skill | fix each line before releasing |
-| 2 | one error line | the check could not run: no plugin found, or the wave skill's `SKILL.md` has no `## 4.` step |
+| 2 | one error line | the check could not run: no plugin found, the wave skill's `SKILL.md` has no `## 4.` step, or an input file (a plugin manifest, the tolerated list, the pinned lines table) is missing or malformed |
 
 Its tests: `python -B -m unittest discover -s scripts`.
+
+Before a release, run the version gate by hand: `python scripts/check-version-gate.py` fails when a seat-facing file differs from the latest release tag (`v*`) while the plugin version is still that tag's. The header of `scripts/seat-facing-paths.txt` says what seat-facing means. It exits 0 with a note on stderr when it cannot compare (outside a git checkout, or with no `v*` tag), and 2 on a missing or malformed input file.
+
+After you edit `TROUBLESHOOTING.md`, run `python scripts/troubleshooting-ratings.py`: it fails on an entry with no rating and on a `caught` rating whose check phrase has left its file.
 
 ### Behaviour evals
 
@@ -411,9 +407,9 @@ cd plugins/matt-with-paseo
 claude plugin eval . --scaffold
 ```
 
-`--scaffold` runs each case's `fixture.sh` as you, to build its repository; read them first. The first run in a directory asks you to trust the plugin, so start it from an interactive terminal; from a script, CI or an agent session, add `--trust-plugin` once you have read the suite. A full run is 26 cases (7 from the 0.4.1 baseline, 19 added for 0.4.2), 3 runs each, in two arms (with and without the plugin); the report scores each arm case by case. Each fixture strips carriage returns before it runs, so a CRLF checkout on Windows works too.
+`--scaffold` runs each case's `fixture.sh` as you, to build its repository; read them first. The first run in a directory asks you to trust the plugin, so start it from an interactive terminal; from a script, CI or an agent session, add `--trust-plugin` once you have read the suite. A full run is 32 cases (29 from 0.4.2, 3 added for 0.5.0), 3 runs each, in two arms (with and without the plugin); the report scores each arm case by case. Each fixture strips carriage returns before it runs, so a CRLF checkout on Windows works too.
 
-**Eval gate.** A change under `plugins/matt-with-paseo/skills/` merges only after the gate slice passes. The slice is three cases, one per entry point the skills guard, each with a one-line prompt, read-only tools and no observed-state block: `wave-not-configured` (the wave skill sends an unconfigured repository to setup and stops), `streams-no-paseo-tools` (the stream skill stops when Paseo's tools are missing) and `streams-free-text-argument` (the stream skill stops on an argument that is not a slug). At 3 runs in two arms that is 18 agent runs. Cost: measured in the stream's final eval run. Run it from `plugins/matt-with-paseo`, one command per case, and merge only when all three exit 0 (the default threshold is 1.0, so any case below a perfect score fails); from a script, add `--trust-plugin` as above:
+**Eval gate.** A change under `plugins/matt-with-paseo/skills/` merges only after the eval gate's slice passes. The slice is three cases, one per entry point the skills guard, each with a one-line prompt, read-only tools and no observed-state block: `wave-not-configured` (the wave skill sends an unconfigured repository to setup and stops), `streams-no-paseo-tools` (the stream skill stops when Paseo's tools are missing) and `streams-free-text-argument` (the stream skill stops on an argument that is not a slug). At 3 runs in two arms that is 18 agent runs. Cost: measured in the stream's final eval run. Run it from `plugins/matt-with-paseo`, one command per case, and merge only when all three exit 0 (the default threshold is 1.0, so any case below a perfect score fails); from a script, add `--trust-plugin` as above:
 
 ```
 for c in wave-not-configured streams-no-paseo-tools streams-free-text-argument; do claude plugin eval . --scaffold --case "$c" || exit 1; done
@@ -421,7 +417,9 @@ for c in wave-not-configured streams-no-paseo-tools streams-free-text-argument; 
 
 The full suite runs for a release, not for each change.
 
-**Trigger cases.** The wave and stream skills have close descriptions, so `plugins/matt-with-paseo/triggers/cases.json` keeps user requests as data: each has the skills it should open (`expect`) and, for a near miss, the skill it must not open (`near`). Two commands read it. `python -B scripts/check-triggers.py` asks no model: it requires, for every skill of the plugin, at least three requests that should open it and two near misses, and only known skill names; the unit tests run it on the shipped cases, so the gate carries it. `python -B scripts/run-triggers.py` is the model run, separate and never part of the gate: it shows the agent (default `claude -p`; another command goes after `--`) each skill's name and description with a request, three runs per case, and passes a case when more than half of its runs open exactly the expected skills. It costs model runs, so run it when a description changes.
+The eval gate is not the unit tests: `python -B -m unittest discover -s scripts` also carries the structural trigger check (below) and the version gate (`scripts/check-version-gate.py`, which compares the seat-facing files with the latest release tag).
+
+**Trigger cases.** The wave and stream skills have close descriptions, so `plugins/matt-with-paseo/triggers/cases.json` keeps user requests as data: each has the skills it should open (`expect`) and, for a near miss, the skill it must not open (`near`). Two commands read it. `python -B scripts/check-triggers.py` asks no model: it requires, for every skill of the plugin, at least three requests that should open it and two near misses, and only known skill names; the unit tests run it on the shipped cases, so `unittest discover` carries it as the structural trigger check. `python -B scripts/run-triggers.py` is the model run, separate and never part of the eval gate or the unit tests: it shows the agent (default `claude -p`; another command goes after `--`) each skill's name and description with a request, three runs per case, and passes a case when more than half of its runs open exactly the expected skills. It costs model runs, so run it when a description changes.
 
 ## Acknowledgements
 

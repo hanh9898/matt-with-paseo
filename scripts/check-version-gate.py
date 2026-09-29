@@ -1,7 +1,12 @@
 #!/usr/bin/env python3
-"""Fail when a seat-facing file (scripts/seat-facing-paths.txt) differs from the base branch while the
-plugin version is still the base branch's: agents read those files when they are created, so a change
-without a bump runs silently on stale text."""
+"""The version gate. Fail when a seat-facing file (scripts/seat-facing-paths.txt) differs from the latest
+release tag (`v*`) while the plugin version is still the tag's: agents read those files when they are
+created, so a change without a bump runs silently on stale text.
+
+Exit 0 clean, and also 0 when the gate cannot compare: outside the root of a git checkout, or with no
+release tag to compare with. That skip is deliberate (a copy of the plugin, such as an installed one, has
+no history to compare with) and says so on stderr. Exit 1 findings, one line each on stdout. Exit 2 an
+input file that is missing or malformed, one line on stderr."""
 
 import argparse
 import json
@@ -19,15 +24,34 @@ def git(root, *args):
     return subprocess.run(["git", "-C", str(root), *args], capture_output=True, text=True, encoding="utf-8")
 
 
+def fail(message):
+    """Exit 2: the gate could not run. Exit 1 is kept for findings."""
+    print(message, file=sys.stderr)
+    sys.exit(2)
+
+
 def seat_facing_paths(path):
     """The paths of the list: one per line, `#` starts a comment."""
+    if not path.is_file():
+        fail(f"No seat-facing list at {path}.")
     lines = path.read_text(encoding="utf-8").splitlines()
     return [entry for entry in (line.partition("#")[0].strip() for line in lines) if entry]
 
 
+def manifest_version(text, where):
+    """The `version` of a plugin manifest's text, or exit 2 when it holds none."""
+    try:
+        version = json.loads(text)["version"]
+    except (ValueError, KeyError, TypeError):
+        fail(f"{where}: not a plugin manifest with a version.")
+    if not isinstance(version, str) or not version:
+        fail(f"{where}: not a plugin manifest with a version.")
+    return version
+
+
 def version_at(root, ref):
     shown = git(root, "show", f"{ref}:{PLUGIN_JSON}")
-    return json.loads(shown.stdout)["version"] if shown.returncode == 0 else None
+    return manifest_version(shown.stdout, f"{ref}:{PLUGIN_JSON}") if shown.returncode == 0 else None
 
 
 def changed_paths(root, ref, paths):
@@ -37,17 +61,27 @@ def changed_paths(root, ref, paths):
     return sorted(set(changed))
 
 
-def skip_reason(root, base):
-    """Why the gate cannot compare, or None. It compares only inside the root of a git checkout that has `base`."""
+def latest_release_tag(root):
+    """The nearest `v*` tag behind HEAD, or None."""
+    described = git(root, "describe", "--tags", "--abbrev=0", "--match", "v*")
+    return described.stdout.strip() if described.returncode == 0 else None
+
+
+def compare_with(root, requested):
+    """(ref to compare with, None), or (None, why the gate cannot compare). It compares only inside the
+    root of a git checkout, with `requested` or else the latest release tag."""
     try:
         top = git(root, "rev-parse", "--show-toplevel")
         if top.returncode != 0 or not Path(top.stdout.strip()).samefile(root):
-            return f"{root} is not the root of a git checkout"
+            return None, f"{root} is not the root of a git checkout"
+        base = requested or latest_release_tag(root)
+        if base is None:
+            return None, "no release tag (v*) to compare with"
         if git(root, "rev-parse", "--verify", "--quiet", f"{base}^{{commit}}").returncode != 0:
-            return f"no branch or ref {base} to compare with"
+            return None, f"no branch or ref {base} to compare with"
     except FileNotFoundError:
-        return "git is not installed"
-    return None
+        return None, "git is not installed"
+    return base, None
 
 
 def list_findings(root, paths):
@@ -64,7 +98,10 @@ def list_findings(root, paths):
 
 def version_findings(root, paths, base):
     base_version = version_at(root, base)
-    version = json.loads((root / PLUGIN_JSON).read_text(encoding="utf-8"))["version"]
+    manifest = root / PLUGIN_JSON
+    if not manifest.is_file():
+        fail(f"No plugin manifest at {manifest}.")
+    version = manifest_version(manifest.read_text(encoding="utf-8"), str(manifest))
     if base_version is None or version != base_version:
         return []
     return [f"{path}: changed since {base}, but {PLUGIN_JSON} still says version {version}; bump it"
@@ -75,15 +112,15 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--root", type=Path, default=REPO)
     parser.add_argument("--paths", type=Path, default=SEAT_FACING)
-    parser.add_argument("--base", default="main", help="the branch whose version a change must move past")
+    parser.add_argument("--base", help="the ref whose version a change must move past (default: the latest v* tag)")
     args = parser.parse_args()
 
-    reason = skip_reason(args.root, args.base)
+    paths = seat_facing_paths(args.paths)
+    base, reason = compare_with(args.root, args.base)
     if reason:
         print(f"version gate skipped: {reason}", file=sys.stderr)
         return 0
-    paths = seat_facing_paths(args.paths)
-    lines = list(list_findings(args.root, paths)) + version_findings(args.root, paths, args.base)
+    lines = list(list_findings(args.root, paths)) + version_findings(args.root, paths, base)
     for line in lines:
         print(line)
     return 1 if lines else 0
