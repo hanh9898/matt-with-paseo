@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: streams-62-ship-branch-name
+description: A reconcile tick over five streams at their last stage, each declaring a ship-branch pattern of its own. deploy-custom's valid pattern must yield the planned ship-branch name; bad-prefix's pattern resolves to a name starting with the stream's own slug then "/", bad-ref's to an invalid git ref, and foreign-branch's to a name already on the remote under someone else's history - each must stop the ship with its reason, asking no ship question and pushing nothing. reship's pattern resolves to a name the remote already has too, but from this same stream's own earlier push, which the status line already records - it must not be rejected as foreign, and the plan must update that same branch rather than treating it as new.
+tags: [ship, ship-rules, streams]
+context:
+  scaffold_script: fixture.sh
