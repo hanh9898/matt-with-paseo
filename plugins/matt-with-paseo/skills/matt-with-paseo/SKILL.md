@@ -53,6 +53,8 @@ With `stream`, the run takes three prompts at any time, from the stream skill or
 | `release` | The hold is lifted; rolling start (step 6) runs at once |
 | `quota <N>` | `N` is the quota from now on, checked as in **Input** (otherwise say so and keep the current one). A raise: rolling start runs at once. A cut stops no agent; it takes effect as ticket agents stop counting (step 4) |
 
+Ownership: when a `stream` run must settle who decides or may do something, read the table in [`OWNERSHIP.md`](../matt-with-paseo-streams/OWNERSHIP.md) (each role's ownership, its lines of speech and its never-items).
+
 With `stream`, the run's work ends on its integration branch: shipping belongs to the stream skill (`/matt-with-paseo:matt-with-paseo-streams`). The run pushes nothing, opens no pull request, and creates no heartbeat outside step 5's heartbeat contract. Asked to ship, by anyone, answer that shipping belongs to the stream skill, and carry on with the run.
 
 ## 0. Locate the state and suggest the next step
