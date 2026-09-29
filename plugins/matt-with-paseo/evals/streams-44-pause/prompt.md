@@ -12,6 +12,7 @@ append_system_prompt: |
   - Pending permissions (`list_pending_permissions`): none.
   - Worktrees: `/srv/worktrees/billing-export` on `stream/billing-export` and `/srv/worktrees/login-bug` on `stream/login-bug`, both clean.
   - Tracker: billing-export tickets 05 and 06 open, in progress; login-bug ticket 03 open, in progress. Open pull requests from either integration branch: none.
+  - Heartbeat: this session holds `streams-reconcile`, every 15 minutes, expiring 2026-09-29 23:00.
   - The user's message in this session, typed now: "Pause every stream, I need to restart the machine."
 ---
 

@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: streams-44-pause
-description: Asked to pause every stream for a machine restart, the orchestrator sends `hold` to both stream agents (billing-export's, running, and login-bug's, idle) without killing, cancelling or archiving any agent. Since billing-export's two ticket agents and login-bug's one ticket agent still run, the pause is not done this tick: the orchestrator does not write `paused` and instead reports which agents still run.
+description: Asked to pause every stream for a machine restart, in a session invoked with only billing-export's slug, the orchestrator still sends `hold` to both stream agents (billing-export's, running, and login-bug's, idle), never only the invoked one, without killing, cancelling or archiving any agent. Since billing-export's two ticket agents and login-bug's one ticket agent still run, the pause is not done this tick: the orchestrator does not write `paused` and instead reports which agents still run.
 tags: [pause, streams]
 context:
   scaffold_script: fixture.sh

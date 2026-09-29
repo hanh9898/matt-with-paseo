@@ -134,7 +134,7 @@ The status line is the reconcile loop's only memory (step 5): every step writes 
 | Deferred over an overlap | step 7 | `waits on the user (deferred, overlaps login-bug)` |
 | Held until another stream ships | step 7 | `held until login-bug ships` |
 | Merge with another stream agreed | step 7 | `merge with login-bug agreed` |
-| Paused for a machine restart | Pause and resume | `paused` |
+| Pause in progress, or complete | Pause and resume | `pausing, hold sent 14:05` / `paused` |
 
 ### Split the cap into quotas
 
@@ -169,15 +169,14 @@ A replacement at a wave boundary never counts against the restart budget of step
 
 ## Pause and resume
 
-**Pause** holds every stream and waits for the machine to go quiet before it is safe to restart:
+**Pause**, asked for by the user, applies to every row of `streams.md`, never only the stream named in this session's own invocation, and holds each one until the machine is quiet enough to restart:
 
-1. **Hold.** `send_agent_prompt` `hold`, `background: true`, `notifyOnFinish: true`, to every stream's stream agent (`paseo ls -g --json`, keeping the agents without a `wave` label), running or idle alike, whether or not its status line already records `held until <other> ships`. A stream with no stream agent (waits on the cap, shipped, or stopped) has nothing to hold. This never touches ticket agents; each stream agent's own wave skill holds them the same way (its "Prompts under `stream`" table).
-2. **Wait.** Run a tick (step 5) and read `paseo ls -g --json`: while it lists any agent this skill spawned, a stream agent or one of its ticket agents, still running, the pause is not done. Run another tick and check again.
-3. **Record.** Once nothing runs, write `paused` into every stream's status line, alongside whatever item it already holds (a stream held per step 7 keeps its `held until <other> ships` item too), and append one line to `decisions.md` ("Decisions, memory, machine and credentials").
+1. **Hold.** For every row with a stream agent (a stream that waits on the cap, is shipped, or is stopped has none to hold), `send_agent_prompt` `hold`, `background: true`, `notifyOnFinish: true`, to that stream's stream agent (`paseo ls -g --label stream=<slug> --json`, the one without a `wave` label), running or idle alike, whether or not its status line already records `held until <other> ships`. This never touches ticket agents; each stream agent's own wave skill holds them the same way (its "Prompts under `stream`" table). Write `pausing, hold sent <time>` into every held stream's status line, alongside any item it already holds, and append one line to `decisions.md` ("Decisions, memory, machine and credentials").
+2. **Wait and record.** The tick table's new row below carries this on: while a stream's own agents still run, it stays `pausing` and its still-running agents are named to the user; once its own list is empty, it becomes `paused`.
 
-**Resume** needs no procedure of its own: it is one tick, the same way recovery is (step 5). The tick table's `paused` row drops the item and sends `release` to every stream agent Pause held, except a stream step 7 holds until another stream ships: that hold lifts only when step 7 does, never here. Append each release to `decisions.md`.
+**Resume** needs no procedure of its own: it is one tick, the same way recovery is (step 5). The same new row lifts `paused` once the user asks to resume, or once a session newly opened in the control folder after the restart runs its first tick (never a heartbeat firing in the session that recorded the pause): every such stream is released, except one step 7 holds until another stream ships, whose hold lifts only when step 7 does, never here. Append each release to `decisions.md`.
 
-**Done when**: every running stream agent has been sent `hold`, a tick found no agent this skill spawned still running, and `paused` is written into every stream's status line; and, on the tick that follows a resume, `paused` is gone from every status line that held it and `release` has reached every stream agent the pause held, except one step 7 still holds.
+**Done when**: every stream with a stream agent, running or idle, has been sent `hold`, and every held stream's status line reads `pausing, hold sent <time>` or, once its own agents are gone, `paused`; while any stream is `pausing`, its still-running agents have been named to the user; and, once resumed, `paused` is gone from every status line that held it (except one step 7 still holds) and `release` has reached its stream agent.
 
 ## 0. Pick the stream
 
@@ -338,7 +337,7 @@ One stream may match several rows of the table below; each row it matches acts, 
 | Stream agent idle on the message the status line records, and its context past the respawn threshold | None; the respawn waits for the stream's next wave boundary (step 4), so a running wave is never cut |
 | Every ticket of the stream resolved or in the ready for human or needs info role, the stream agent idle, and the status line records neither shipped nor, for the integration branch's current head, nothing to ship or the ship question asked | Step 6 |
 | The status line records `held until <other> ships`, and `<other>`'s status line records it shipped | Step 7's `release` ("A need on another stream") |
-| The status line records `paused` | "Pause and resume": drop `paused` and, unless the line also records `held until <other> ships`, send `release`, `background: true`, `notifyOnFinish: true`, to the stream agent |
+| The status line records `pausing, hold sent <time>` or `paused` | "Pause and resume": while `pausing`, `paseo ls -g --label stream=<slug> --json` still lists an agent, the stream agent or a ticket agent, report each one (slug, agent id, label) to the user and keep `pausing`; once it lists none, write `paused` in its place. Once `paused` and the user asks to resume, or this tick is the first of a session newly opened after the restart, drop `paused` and, unless the line also records `held until <other> ships`, send `release`, `background: true`, `notifyOnFinish: true`, to the stream agent |
 | A `stream=<slug>` agent without a `wave` label for a row that should not run (other than a shipped stream's own idle stream agent) or a slug not in the index, two such agents for one slug, or an open pull request the status line does not record, and the status line does not yet record this finding as reported | Report it to the user and take no other action; the status line records that it was reported, so a later tick does not report it again |
 
 The loop's own heartbeat is reconciled in the same tick:
