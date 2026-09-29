@@ -1,16 +1,18 @@
 # Troubleshooting a wave
 
-Each entry: the observable symptom, then how to handle it. When an incident exposes a trap the next wave's agents would also hit, carry that trap into the "Traps already hit" section of the next wave's common rules, filtered per step 3 of the skill.
+Each entry: the observable symptom, then how to handle it, then a `Rating:` line. When an incident exposes a trap the next wave's agents would also hit, carry that trap into the "Traps already hit" section of the next wave's common rules, filtered per step 3 of the skill.
+
+A rating says how a run notices the symptom: `caught` when a check in a skill fires on it (the entry names the file and a phrase of that check), `asked` when a skill only asks a model to judge it, `nothing yet` when nothing watches it; `scripts/troubleshooting-ratings.py` requires a rating on every entry and finds each `caught` phrase in its file.
 
 ## Agents
 
 **Agent stops midway** (session limit, API error, context exhausted). Check its branch and directory for what is really done. If the remainder is small, do it yourself. If it is large, wait for the limit to reset, then send it back to the same agent with `send_agent_prompt`: state which part is done and who did it, narrow the task to exactly the unfinished part, and restate the common rules. Send it to the same agent so it keeps the context it already read.
 
-Rating: caught — check: `plugins/matt-with-paseo/skills/matt-with-paseo/SKILL.md`, phrase "Agent stopped with the ticket unfinished".
+Rating: caught — check: `plugins/matt-with-paseo/skills/matt-with-paseo/SKILL.md`, phrase "Missing means the agent did not finish its flow".
 
 **Report is correct but incomplete.** A claim like "clean" or "passing" only covers what the agent checked. Open the real artifact (screenshot, page, command output) and check the aspects the report does not mention.
 
-Rating: asked.
+Rating: caught — check: `plugins/matt-with-paseo/skills/matt-with-paseo/SKILL.md`, phrase "check the real artifacts, not the report's words".
 
 **Branch name differs from directory name.** A Paseo worktree directory is named by a slug, not by the branch. Get the branch name with `git -C <worktree> branch --show-current`.
 
@@ -26,7 +28,7 @@ Rating: nothing yet.
 
 Rating: nothing yet.
 
-**A tool call hangs and the agent goes quiet** (it stays `running`, its activity count unchanged for three ticks). Judge and act on it exactly as the wave skill's heartbeat contract (step 5) says for a ticket agent, or the stream skill's "Supervise one-for-one" and "Replace a stream agent" say for a stream agent. Either way, never cancel and re-prompt a hung agent: a prompt only queues behind the stuck call, and a cancel gets no acknowledgement. Kill and replace a hung ticket agent within the contract's restart budget; a hung stream agent is not killed while its ticket agents still run, since `kill_agent` may take them along too, and its restart waits until none does. The run that first showed this had a Bash command the CLI auto-moved to the background when the machine was slow, whose result never came back; the common rules' rule to move any command that may take more than two minutes to the background from the start exists so an agent does not land on that same path.
+**A tool call hangs and the agent goes quiet** (it stays `running`, its activity count unchanged for three ticks). Judge and act on it exactly as the wave skill's heartbeat contract (step 5) says for a ticket agent, or the stream skill's "Supervise one-for-one" and "Replace a stream agent" say for a stream agent. Either way, never cancel and re-prompt a hung agent: a prompt only queues behind the stuck call (the `cancel_agent` row of the turns and notifications table in [`PASEO-FACTS.md`](PASEO-FACTS.md)). Kill and replace a hung ticket agent within the contract's restart budget; a hung stream agent is not killed while its ticket agents still run, since `kill_agent` may take them along too, and its restart waits until none does. The common rules' rule to start any command that may take more than two minutes in the background keeps an agent off a shell command that hangs.
 
 Rating: caught — check: `plugins/matt-with-paseo/skills/matt-with-paseo/SKILL.md`, phrase "whose count has not moved for three ticks".
 
@@ -38,11 +40,11 @@ Rating: caught — check: `plugins/matt-with-paseo/skills/matt-with-paseo/SKILL.
 
 Rating: nothing yet.
 
-**`create_workspace` times out but still creates the worktree.** The call can succeed on disk before it reports back. Check `git -C <repository> worktree list` against `list_workspaces`: a worktree on the ticket or stream branch with no matching workspace is that timeout. Do not call it again from scratch; read the adopt row of wave `SKILL.md` step 4 item 1's table (a ticket branch) or stream `SKILL.md` step 2's table (a stream branch), and follow it with the repository's `projectId`, found as step 4 item 1 says. Without the project id, Paseo files the adopted directory as a project of its own.
+**`create_workspace` times out but still creates the worktree.** The call can succeed on disk before it reports back (the `create_workspace` rows of the workspaces and worktrees table in [`PASEO-FACTS.md`](PASEO-FACTS.md)). Check `git -C <repository> worktree list` against `list_workspaces`: a worktree on the ticket or stream branch with no matching workspace is that timeout. Do not call it again from scratch; read the adopt row of wave `SKILL.md` step 4 item 1's table (a ticket branch) or stream `SKILL.md` step 2's table (a stream branch), and follow it with the repository's `projectId`, found as step 4 item 1 says. Without the project id, Paseo files the adopted directory as a project of its own.
 
 Rating: caught — check: `plugins/matt-with-paseo/skills/matt-with-paseo/SKILL.md`, phrase "may still have made the worktree, so read what git shows before calling again".
 
-**Agent waits on a question-type permission** (it asked the user a question, and `list_pending_permissions` shows the request). Answer with `respond_to_permission`, `behavior: "allow"`, and an `updatedInput` holding the request's `questions` plus an `answers` map from each question's text to the chosen option's label, for example `answers: { "Which database?": "Postgres" }`. Without `answers` (only `selectedActionId`, or only `questions`), the agent receives an ambiguous answer and guesses.
+**Agent waits on a question-type permission** (it asked the user a question, and `list_pending_permissions` shows the request). Answer with `respond_to_permission`, `behavior: "allow"`, and an `updatedInput` holding the request's `questions` plus an `answers` map from each question's text to the chosen option's label (the first row of the permissions and modes table in [`PASEO-FACTS.md`](PASEO-FACTS.md) says why). The stream skill's tick finds a stream agent's request; the wave skill's heartbeat tick (step 5) finds a ticket agent's.
 
 Rating: caught — check: `plugins/matt-with-paseo/skills/matt-with-paseo-streams/SKILL.md`, phrase "has a question-type permission in `list_pending_permissions` not yet shown to the user".
 
