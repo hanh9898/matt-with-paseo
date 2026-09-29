@@ -145,6 +145,56 @@ EOF
   git_c commit -q -m "wave 1 of supplier-sync"
 )
 
+# support-tickets: its PR target declares ship rules with two labels, one the
+# forge does not recognise. Its ship question was already asked and answered
+# yes, so this turn's push and open must apply both labels and, once the
+# pull request opens, report the one the forge refused without creating it.
+mkdir helpdesk
+(
+  cd helpdesk
+  git init -q -b main .
+  git remote add origin https://github.com/acme/helpdesk.git
+  mkdir -p docs/agents "src/support-tickets"
+  cat > AGENTS.md <<'EOF'
+## Agent skills
+
+### Issue tracker
+
+Issues and specs live as local markdown under `.scratch/`. See `docs/agents/issue-tracker.md`.
+
+### Ship rules
+
+See `docs/ship-rules.md`.
+EOF
+  cat > docs/agents/issue-tracker.md <<'EOF'
+# Issue tracker: Local Markdown
+
+- One feature per directory: `.scratch/<feature-slug>/`
+- Implementation issues are one file per ticket at `.scratch/<feature-slug>/issues/<NN>-<slug>.md`
+- Triage state is a `Status:` line near the top of each issue file
+EOF
+  cat > docs/ship-rules.md <<'EOF'
+# Ship rules
+
+| Key | Value |
+|---|---|
+| labels | needs-review, wontfix-nope |
+EOF
+  echo "export const version = 1;" > src/support-tickets/main.ts
+  git add -A
+  git_c commit -q -m base
+  git update-ref refs/remotes/origin/main main
+
+  git checkout -q -b stream/support-tickets
+  mkdir -p ".scratch/support-tickets/issues"
+  printf '# 01: First part of support-tickets\n\nStatus: resolved\n' > ".scratch/support-tickets/issues/01-first.md"
+  printf '# Wave 1: ticket 01\n' > ".scratch/support-tickets/wave1-common-rules.md"
+  echo "export const version = 2;" > src/support-tickets/main.ts
+  echo "import { version } from './main';" > src/support-tickets/main.test.ts
+  git add -A
+  git_c commit -q -m "wave 1 of support-tickets"
+)
+
 printf '%s\n' \
   '# Streams' \
   '' \
@@ -156,4 +206,5 @@ printf '%s\n' \
   "| price-sync | $root/pricing | Minh | \`.scratch/price-sync/issues/\` | main | main | 2 | 2026-09-29 wave 1 merged, waits on the stream agent, agent 4f1b8064, handled message of 2026-09-29 09:45 |" \
   "| tracker-docs | $root/wiki | Hoa | \`.scratch/tracker-docs/issues/\` | main | main | 3 | 2026-09-29 stage F, agent 5a2c9175, handled message of 2026-09-29 10:05, waits on the user (ship question asked at 3c4d5e6) |" \
   "| supplier-sync | $root/warehouse | Khoa | \`.scratch/supplier-sync/issues/\` | develop | main | 4 | 2026-09-29 wave 1 merged, waits on the stream agent, agent 6b1d3e92, handled message of 2026-09-29 10:30 |" \
+  "| support-tickets | $root/helpdesk | Duc | \`.scratch/support-tickets/issues/\` | main | main | 5 | 2026-09-29 stage F, agent 8c5f2a17, handled message of 2026-09-29 10:50, waits on the user (ship question asked at 60e15f3) |" \
   > streams.md

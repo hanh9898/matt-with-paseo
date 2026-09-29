@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: streams-63-pull-request-shape
+description: One stream, invoice-video, at its last stage, ship question not yet asked. Its PR target declares ship rules with a `<key>` title pattern and a description template named by path (`docs/pr-template.md`), whose "Video evidence" section is marked mandatory by an HTML comment. The stream's diff, commit log and tickets carry no video, image or screenshot evidence. The ship question must show the title built from the pattern with the stream's Key cell (`OPS-77`) filled in, name the template in use, and name "Video evidence" as a mandatory section with nothing to fill it, never inventing a recording or leaving it silently blank.
+tags: [ship, ship-rules, pull-request, streams]
+context:
+  scaffold_script: fixture.sh
