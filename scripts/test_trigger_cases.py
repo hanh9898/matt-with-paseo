@@ -191,7 +191,7 @@ class CheckTriggers(unittest.TestCase):
 
 
 class ShippedTriggerCases(unittest.TestCase):
-    """The gate's own run: the plugin's real cases against the plugin's real skills, no model."""
+    """The structural trigger check's own run: the plugin's real cases against the plugin's real skills, no model."""
 
     def test_the_shipped_cases_cover_the_wave_skill_and_the_stream_skill(self):
         result = subprocess.run([sys.executable, "-B", str(CHECK)], capture_output=True, text=True)

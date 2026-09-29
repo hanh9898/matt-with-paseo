@@ -25,7 +25,7 @@ This repo adds house rules of its own, not levers of that skill:
 |---|---|---|
 | H1 | **Choices as tables.** A choice between cases is a row in a table, not a new prose branch; a new agent flow is a row in the wave skill's step 4 flow table | an "if the ticket is a bug, otherwise…" paragraph beside the flow table |
 | H2 | **Cut for content.** A trim of a document in scope is judged by the behaviour evals that cover it (README, "Behaviour evals") and by the pinned-lines table (`scripts/pinned-lines.json`), never by its word delta; a trim that fails an eval or removes a pinned line is a finding | a sentence cut to shorten a skill while an eval that covers it fails, or a phrase listed in the pinned-lines table no longer stands on one line |
-| H3 | **Eval gate.** A change under `plugins/matt-with-paseo/skills/` merges only after the gate slice of the behaviour evals passes (README, "Behaviour evals", "Eval gate") | a skill change merged with no slice run recorded, or with a slice case below a perfect score |
+| H3 | **Eval gate.** A change under `plugins/matt-with-paseo/skills/` merges only after the eval gate's slice of the behaviour evals passes (README, "Behaviour evals", "Eval gate") | a skill change merged with no slice run recorded, or with a slice case below a perfect score |
 
 ## 2. Loop design
 

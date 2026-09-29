@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Ask a model, on demand, which skill each trigger case should open, and pass a case when more than
-half of its runs are right. It costs model runs, so no test and no gate calls it; the free check is
+half of its runs are right. It costs model runs, so no test and no eval gate calls it; the free check is
 check-triggers.py. The agent is the command after `--` (default `claude -p`): it gets the prompt on
 stdin and prints its answer on stdout."""
 

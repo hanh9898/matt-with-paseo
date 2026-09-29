@@ -1,6 +1,7 @@
-# The files agents read when they are created, from the repository root, one path per line.
-# check-version-gate.py fails when one differs from `main` while the plugin version is still
-# main's, and when a file of a skill folder is missing here or a path here is missing on disk.
+# Seat-facing files: the files an agent reads when it is created (its seat), from the repository
+# root, one path per line. The version gate (check-version-gate.py) fails when one differs from
+# the latest release tag (`v*`) while the plugin version is still the tag's, and when a file of a
+# skill folder is missing here or a path here is missing on disk.
 # Left off on purpose: plugins/matt-with-paseo/triggers/ (data for check-triggers.py, never loaded
 # into an agent), evals/, docs/ (docs/acceptance-run-template.md is for humans) and the READMEs.
 plugins/matt-with-paseo/skills/matt-with-paseo/SKILL.md
