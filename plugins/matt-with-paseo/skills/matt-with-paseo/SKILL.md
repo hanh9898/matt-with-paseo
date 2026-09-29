@@ -222,6 +222,7 @@ Each time an agent reports done, check the real artifacts, not the report's word
 - the commits sit on the ticket's own branch (`git log <branch>`);
 - the ticket's status has changed, and its comments carry verification evidence;
 - the report's most decisive claim is re-run once by you (call the endpoint, open the screen, look at the screenshot); for a change the user sees, the screenshots include the screen scrolled past its first view and at a narrow width;
+- a report claim tagged `decided: X because Y` is evidence once X has been re-run or read, as above; one tagged `assumed: X, unchecked`, or carrying neither tag, is not: check it yourself or send it back before this ticket counts as done;
 - the ticket's comments carry the `mattpocock-skills:code-review` result: the number of findings per axis and the outcome of each. Missing means the agent did not finish its flow;
 - symptom tickets: the report shows the loop **red before** the fix and green after, each as a run's command and output; a red read from the code is no loop. Green alone does not tell you whether the fix hit the right place or only masked the symptom;
 - a failure the report names is not the agent's when the common rules' "Failing on base" lists it; any other failure is explained in the report;

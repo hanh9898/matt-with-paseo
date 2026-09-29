@@ -93,5 +93,6 @@ Copy in only what an agent cannot look up: an unwritten convention, the reason b
 - Report back: a design summary, files touched, how you verified with evidence, work not done or still
   in doubt, every change outside your file zone or outside git (a file in another checkout, a machine
   setting, an uncommitted file) with where it is, each private resource you created, and decisions the
-  user must make.
+  user must make. Tag each decision `decided: X because Y` or `assumed: X, unchecked`, and each finding
+  `reproduced` or `traced`, so a reader scans the report instead of parsing its prose.
 ```
