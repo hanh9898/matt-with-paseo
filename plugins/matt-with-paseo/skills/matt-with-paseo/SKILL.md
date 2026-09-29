@@ -295,6 +295,13 @@ Then commit the wave file on the integration branch, alone in its commit (`git a
 
 Before returning to step 2, run step 1 again, reading its files and `list_profiles` afresh rather than from what this session read before. Compare with what step 1 stated last time (its six things, the profile's `notes` included): a change to the tracker configuration, the triage label file, a profile or the evidence standards file is named to the user in step 2's presentation, and the next wave follows the new version. For the tracked files, `git diff <this wave's base commit> HEAD -- <their paths>` shows the change. Read [`COMMON-RULES-TEMPLATE.md`](COMMON-RULES-TEMPLATE.md) again too: a section it has and this wave's rules lack, or the reverse (the log sections `## Wave agents` and `## Review` aside), is named the same way, and step 3 writes the next wave's rules from this reading.
 
+Learning across waves is Matt's `/mattpocock-skills:retro` (the user invokes it; agents cannot). Add one line naming it to the message that follows this step, step 2's presentation or the summary below, with the two rules that bind the change a retrospective proposes:
+
+| Rule | Means |
+|---|---|
+| Two dated episodes | A rule (a `TROUBLESHOOTING.md` entry, a trap, a standard) is added only when two dated episodes show what it would have prevented; one episode is a note, not a rule |
+| At most one change | Each retrospective proposes at most one change, and removing a rule whose episodes have stopped counts as that change |
+
 Return to step 2 with the new base commit. When no open ticket can join a wave, report a summary: which tickets are `resolved`, which wait on a human, and which remain open and what blocks them.
 
-**Done when**: every row in the table is checked as cleaned or has a reason for keeping it that the user has been told, no heartbeat of the wave remains, the wave file is committed, step 1 has run again, and the next wave is open or the summary is reported.
+**Done when**: every row in the table is checked as cleaned or has a reason for keeping it that the user has been told, no heartbeat of the wave remains, the wave file is committed, step 1 has run again, and the next wave is open or the summary is reported, the message that follows naming `/mattpocock-skills:retro`.
