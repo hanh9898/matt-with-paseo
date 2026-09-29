@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: streams-46-adopt-unstreamed-wave
+description: A wave-skill run started outside any stream (ticket agents with a wave label and no stream label, in a repository no index row names) must be reported when the index is listed, with a proposal to adopt it as a stream that the user answers; adoption waits until that run's wave is finished and cleaned, cuts stream/<slug> from its integration branch, and leaves its agents alone.
+tags: [locate, streams]
+context:
+  scaffold_script: fixture.sh
