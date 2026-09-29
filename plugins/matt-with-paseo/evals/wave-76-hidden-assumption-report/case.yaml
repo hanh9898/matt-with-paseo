@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: wave-76-hidden-assumption-report
+description: A finished ticket's report reproduces its one acceptance criterion with a command and its output, then adds a second, untagged claim with no run and no reason behind it; every other step-5 check is satisfied. At step 5, checking this report, the wave skill must not count the untagged claim as evidence or pass the ticket on its strength.
+tags: [check, evidence, wave]
+context:
+  scaffold_script: fixture.sh
