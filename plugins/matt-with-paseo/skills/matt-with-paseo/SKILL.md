@@ -128,7 +128,7 @@ Read the repo's evidence standards file when it declares one: an `## Evidence st
 
 **Width** is the point of this skill: every wave takes every ticket that can run now, and the orchestrator works to make that set wider. A ticket can run now when every ticket in its `Blocked by` is merged and it is in the ready for agent role.
 
-Read every ticket: status, dependency line (`Blocked by`), comments. Draw the dependency graph on one line, marking each ticket's status, for example `01✓ → {02, 03?} → {04, 05, 06} → 09`.
+Read every ticket: status, dependency line (`Blocked by`), comments. Draw the dependency graph from each ticket's declared dependencies only — its `Blocked by` line and the tracker's own dependency records where the tracker configuration names them, reconciled when they differ — and add no edge a ticket does not declare, even between tickets whose content overlaps (a shared format, a design detail) — that overlap does not cost width. Draw the graph on one line, marking each ticket's status, for example `01✓ → {02, 03?} → {04, 05, 06} → 09`.
 
 Two tickets in the same wave must be logically independent. If they touch the same registration file (manifest, package index, route table, permission file) they can still share a wave, but the common rules must assign each ticket its own file zone.
 
@@ -247,7 +247,7 @@ Merge each ticket as soon as its report passes step 5, while the rest of the wav
 
 1. `git merge --no-ff --no-commit <ticket branch>`, resolving any conflict git reports.
 2. The conflict-marker search: `git diff --cached -G'^(<<<<<<<|>>>>>>>)( |$)' --name-only HEAD` must print nothing. It lists every staged file whose changes add or drop a marker line, including markers the ticket branch committed itself, which git merges without a conflict. A file it prints keeps the merge uncommitted.
-3. `git commit -m "<message>"`. `<message>` is the `wave merge message` pattern this run was given — the target repository's ship rules, told to this run by the stream skill, since the wave skill does not read ship rules itself — filled with `<ticket>` (`NN`) and `<name>` for this key, plus `<slug>`, `<owner>` and `<key>` where the ship rules define them; with none given, including every run without `stream`, the default: `Merge ticket NN (<name>) into <integration branch>`. A commit already made is never reworded, rebased or squashed to fit a pattern that arrives later; squash stays the forge's own merge option.
+3. `git commit -m "<message>"`. `<message>` is the `wave merge message` pattern this run was given — the target repository's ship rules, told to this run by the stream skill, since the wave skill does not read ship rules itself — filled with `<ticket>` (`NN`) and `<name>` for this key, plus `<slug>`, `<owner>` and `<key>` where the ship rules define them; with none given, including every run without `stream`, the default: `Merge ticket NN (<name>) into <integration branch>`. `<name>` is the ticket's title, the text after `NN: ` in its file's heading, never `<slug>` (the branch-name form in "Names this run writes"). A commit already made is never reworded, rebased or squashed to fit a pattern that arrives later; squash stays the forge's own merge option.
 
 After each merge, run the cheapest verification the repo has (install, build, lint, test). A failure listed in the common rules' "Failing on base" section is not this merge's; any other failure is.
 
