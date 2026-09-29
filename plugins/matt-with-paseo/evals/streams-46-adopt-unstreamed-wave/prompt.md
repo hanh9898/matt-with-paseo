@@ -10,7 +10,6 @@ append_system_prompt: |
   - `paseo ls -g --json` (every agent): `a1f0c2d4` titled `[Wave 2] 14 Export CSV`, labels `{ wave: "2", ticket: "14" }`, status running, cwd `~/.paseo/worktrees/q7r2/opms-wave2-14`; `b7e9a311` titled `[Wave 2] 15 PDF footer`, labels `{ wave: "2", ticket: "15" }`, status idle, cwd `~/.paseo/worktrees/q7r2/opms-wave2-15`. No agent carries a `stream` label.
   - `git -C ~/.paseo/worktrees/q7r2/opms-wave2-14 worktree list`: `/srv/src/opms` on `feature/reports`; `~/.paseo/worktrees/q7r2/opms-wave2-14` on `wave2/14-export-csv`; `~/.paseo/worktrees/q7r2/opms-wave2-15` on `wave2/15-pdf-footer`.
   - `git -C /srv/src/opms branch --list "wave*/*"`: `wave1/11-report-model`, `wave1/12-report-api` (both merged into `feature/reports`), `wave2/14-export-csv`, `wave2/15-pdf-footer` (neither merged).
-  - `git -C /srv/src/billing branch --list "wave*/*"`: nothing.
   - Pending permissions (`list_pending_permissions`): none.
   - The stream's tracker (label `stream:billing-export`): 3 open tickets in the ready for agent role.
 ---
