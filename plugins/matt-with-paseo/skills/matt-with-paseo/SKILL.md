@@ -128,7 +128,7 @@ Read the repo's evidence standards file when it declares one: an `## Evidence st
 
 **Width** is the point of this skill: every wave takes every ticket that can run now, and the orchestrator works to make that set wider. A ticket can run now when every ticket in its `Blocked by` is merged and it is in the ready for agent role.
 
-Read every ticket: status, dependency line (`Blocked by`), comments. Draw the dependency graph from each ticket's own `Blocked by` line only; add no edge a ticket does not declare, even between tickets whose content overlaps (a shared format, a design detail) — that overlap does not cost width. Draw the graph on one line, marking each ticket's status, for example `01✓ → {02, 03?} → {04, 05, 06} → 09`.
+Read every ticket: status, dependency line (`Blocked by`), comments. Draw the dependency graph from each ticket's declared dependencies only — its `Blocked by` line and the tracker's own dependency records where the tracker configuration names them, reconciled when they differ — and add no edge a ticket does not declare, even between tickets whose content overlaps (a shared format, a design detail) — that overlap does not cost width. Draw the graph on one line, marking each ticket's status, for example `01✓ → {02, 03?} → {04, 05, 06} → 09`.
 
 Two tickets in the same wave must be logically independent. If they touch the same registration file (manifest, package index, route table, permission file) they can still share a wave, but the common rules must assign each ticket its own file zone.
 
