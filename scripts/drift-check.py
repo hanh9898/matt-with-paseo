@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
-"""Check every mattpocock-skills:<name> reference against the installed Matt plugin, and flag any
-line naming the beta loop lens that CODING_STANDARDS.md carries unnamed."""
+"""Check every mattpocock-skills:<name> reference against the installed Matt plugin, flag any
+line naming the beta loop lens that CODING_STANDARDS.md carries unnamed, and flag any pinned
+load-bearing phrase (scripts/pinned-lines.json) that a file no longer holds."""
 
 import argparse
 import json
@@ -17,6 +18,8 @@ DEFAULT_TARGETS = [PLUGIN / "skills" / "matt-with-paseo", PLUGIN / "skills" / "m
 REFERENCE = re.compile(r"mattpocock-skills:([a-z0-9][a-z0-9-]*)")
 BETA_LENS = "loop-me"
 BETA_LENS_NAMED = re.compile(rf"(?<![a-z0-9-]){BETA_LENS}(?![a-z0-9-])")
+PINNED_TABLE = Path(__file__).resolve().with_name("pinned-lines.json")
+PINNED_KEYS = ("file", "phrase", "reason")
 
 
 def fail(message):
@@ -88,14 +91,40 @@ def agent_flow_lines(path, lines):
     return flow
 
 
+def load_pinned(table):
+    if not table.is_file():
+        fail(f"No pinned lines table at {table}.")
+    try:
+        rows = json.loads(table.read_text(encoding="utf-8"))
+    except ValueError as error:
+        fail(f"{table}: not valid JSON ({error}).")
+    for number, row in enumerate(rows, 1):
+        if not isinstance(row, dict) or not all(isinstance(row.get(key), str) and row[key] for key in PINNED_KEYS):
+            fail(f"{table}: row {number} needs a non-empty file, phrase and reason.")
+    return rows
+
+
+def pinned_findings(rows, root):
+    """One line per pinned phrase that no single line of its file holds."""
+    for row in rows:
+        path = root / row["file"]
+        if not path.is_file():
+            yield f"{path}: pinned file missing ({row['reason']})"
+        elif not any(row["phrase"] in line for line in path.read_text(encoding="utf-8").splitlines()):
+            yield f"{path}: pinned phrase missing: \"{row['phrase']}\" ({row['reason']})"
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("targets", nargs="*", type=Path)
     parser.add_argument("--plugin-root", type=Path)
+    parser.add_argument("--pinned", type=Path, default=PINNED_TABLE)
+    parser.add_argument("--pinned-root", type=Path, default=REPO)
     args = parser.parse_args()
 
     plugin_root = args.plugin_root or find_installed_plugin()
     skills = installed_skills(plugin_root)
+    pinned = load_pinned(args.pinned)
     findings = 0
     for path in markdown_files(args.targets or DEFAULT_TARGETS):
         lines = path.read_text(encoding="utf-8").splitlines()
@@ -116,6 +145,9 @@ def main():
                     continue
                 print(f"{path}:{number}: mattpocock-skills:{name}: {reason} (compared against {plugin_root})")
                 findings += 1
+    for finding in pinned_findings(pinned, args.pinned_root):
+        print(finding)
+        findings += 1
     return 1 if findings else 0
 
 
