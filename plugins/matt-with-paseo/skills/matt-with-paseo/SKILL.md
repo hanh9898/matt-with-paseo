@@ -98,7 +98,7 @@ Once every ticket of the wave is done, the first row that matches is the step to
 
 | The wave shows | Resume at |
 |---|---|
-| A ticket branch of this wave still unmerged (`git branch --no-merged <integration branch>`, keeping only the ticket branch shape of "Names this run writes") | Step 5, which reads its report, then step 6 |
+| A ticket branch of this wave still unmerged (`git branch --no-merged <integration branch>`, keeping only the ticket branch shape of "Names this run writes"; a bundle's branch counts only once its last ticket is merged, and before that its row's merged-SHA column says which tickets are in, so a done ticket with no SHA there is unmerged) | Step 5, which reads its report, then step 6 |
 | No `## Review` yet, or a finding in it that reads **waiting on the user's decision** | Step 7 |
 | An uncleaned row | Step 8 |
 
@@ -255,19 +255,21 @@ Read [`PASEO-FACTS.md`](PASEO-FACTS.md) (verified Paseo behaviour, each row with
 
 ## 6. Merge into the integration branch
 
-Merge each ticket as soon as its report passes step 5, while the rest of the wave keeps running: steps 5 and 6 interleave. One merge commit per ticket, in three moves:
+Merge each ticket as soon as its report passes step 5, while the rest of the wave keeps running: steps 5 and 6 interleave. A bundle is merged ticket by ticket, never as a whole: when its agent reports a ticket with its last commit's SHA, that SHA is merged while the agent goes on or waits. One merge commit per ticket, in three moves:
 
-1. `git merge --no-ff --no-commit <ticket branch>`, resolving any conflict git reports.
+1. `git merge --no-ff --no-commit <sha>`, the last commit the ticket's report names (the ticket branch's tip for a bundle of one), resolving any conflict git reports.
 2. The conflict-marker search: `git diff --cached -G'^(<<<<<<<|>>>>>>>)( |$)' --name-only HEAD` must print nothing. It lists every staged file whose changes add or drop a marker line, including markers the ticket branch committed itself, which git merges without a conflict. A file it prints keeps the merge uncommitted.
-3. `git commit -m "<message>"`. `<message>` is the `wave merge message` pattern this run was given — the target repository's ship rules, told to this run by the stream skill, since the wave skill does not read ship rules itself — filled with `<ticket>` (`NN`) and `<name>` for this key, plus `<slug>`, `<owner>` and `<key>` where the ship rules define them; with none given, including every run without `stream`, the default: `Merge ticket NN (<name>) into <integration branch>`. `<name>` is the ticket's title, the text after `NN: ` in its file's heading, never `<slug>` (the branch-name form in "Names this run writes"). A commit already made is never reworded, rebased or squashed to fit a pattern that arrives later; squash stays the forge's own merge option.
+3. `git commit -m "<message>"`. `<message>` is the `wave merge message` pattern this run was given — the target repository's ship rules, told to this run by the stream skill, since the wave skill does not read ship rules itself — filled for this ticket with `<ticket>` (`NN`) and `<name>` for this key, plus `<slug>`, `<owner>` and `<key>` where the ship rules define them; with none given, including every run without `stream`, the default: `Merge ticket NN (<name>) into <integration branch>`. `<name>` is the ticket's title, the text after `NN: ` in its file's heading, never `<slug>` (the branch-name form in "Names this run writes"). A commit already made is never reworded, rebased or squashed to fit a pattern that arrives later; squash stays the forge's own merge option.
+
+Then write the SHA merged in move 1 into the merged-SHA column of the bundle's row in `## Wave agents`, next to the ticket's number (`70: <sha>`), before anything else runs: step 0 reads that column on resume, and the branch merged check of steps 0 and 8 needs it.
 
 After each merge, run the cheapest verification the repo has (install, build, lint, test). A failure listed in the common rules' "Failing on base" section is not this merge's; any other failure is.
 
-**Rolling start.** After each green merge, each time a ticket agent stops counting against the quota (step 4), and at each `release` or quota raise ("Prompts under `stream`"), re-read the graph: a ticket whose `Blocked by` is now fully merged and which is in the ready for agent role, or which step 2 left waiting on the quota, joins the current wave at once, without waiting for the rest of it, as long as step 4's quota rule allows; the rest keep waiting for the next agent to stop counting, or for the release. Spawn it per step 4, with the integration branch's new head as its base commit, written in its row and named in its prompt; append it to the wave file's title and graph, unless step 2 already put it there as waiting on the quota. Its agent's `mattpocock-skills:code-review` uses that base commit.
+**Rolling start.** After each green merge (each ticket's, not each bundle's), each time a ticket agent stops counting against the quota (step 4), and at each `release` or quota raise ("Prompts under `stream`"), re-read the graph: a ticket whose `Blocked by` is now fully merged and which is in the ready for agent role, or which step 2 left waiting on the quota, joins the current wave at once, without waiting for the rest of it, as long as step 4's quota rule allows. A ticket that a bundle agent holds, running or idle between tickets, is never spawned: that agent works it in its turn. The rest keep waiting for the next agent to stop counting, or for the release. Spawn it per step 4, with the integration branch's new head as its base commit, written in its row and named in its prompt; append it to the wave file's title and graph, unless step 2 already put it there as waiting on the quota. Its agent's `mattpocock-skills:code-review` uses that base commit.
 
 Conflict, a file the conflict-marker search prints, failure after a merge, or a test count after the merge that does not match the test files git tracks: see [`TROUBLESHOOTING.md`](TROUBLESHOOTING.md).
 
-**Done when**: every ticket in the wave is merged, the conflict-marker search printed nothing for each merge, every ticket its merges unblocked has been started in the wave unless a hold stands, and verification is green after the last merge.
+**Done when**: every ticket in the wave is merged as its own merge commit with its SHA in its bundle's row, the conflict-marker search printed nothing for each merge, every ticket its merges unblocked has been started in the wave unless a hold stands, and verification is green after the last merge.
 
 ## 7. Review where the tickets touch, fix, close
 
@@ -293,7 +295,7 @@ The `## Wave agents` table is the one record of what is live: a row not checked 
 
 - `get_agent_status` shows the agent has stopped;
 - `git -C <worktree> status --porcelain` is empty;
-- the ticket's branch appears in `git branch --merged <integration branch>`.
+- the ticket's branch appears in `git branch --merged <integration branch>`; a bundle's branch counts only once its last ticket is merged, and before that its row's merged-SHA column says which tickets are in.
 
 For a row that fails any check, archive nothing and see [`TROUBLESHOOTING.md`](TROUBLESHOOTING.md). The clean-worktree check is mandatory, never skipped: Paseo archives a worktree with uncommitted or untracked files without warning and deletes them with it (the workspaces and worktrees table of [`PASEO-FACTS.md`](PASEO-FACTS.md), read below).
 

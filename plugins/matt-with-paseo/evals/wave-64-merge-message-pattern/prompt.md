@@ -11,6 +11,8 @@ append_system_prompt: |
   - `git branch --no-merged stream/receipts`: `wave1/01-csv-export`, `wave1/02-pdf-export` (neither merged into the integration branch yet).
   - `git diff --cached -G'^(<<<<<<<|>>>>>>>)( |$)' --name-only HEAD` on each trial merge: prints nothing (no conflict markers).
   - Heartbeats and background jobs: none. The user's latest answer: none since the last question round.
+  - Bundle in the same wave: tickets 03 ("JSON export") and 04 ("XML export") are one bundle. Its agent-03 (labels wave=1, bundle=03, tickets=03,04) works both, one after the other, on the branch `wave1/03-json-export`, and has not been stopped. It has reported, at two separate turn ends, each ticket resolved with the last commit's SHA: ticket 03 with `3a1f9c2` ("03 JSON export done: tests green"), then ticket 04 with `7b4e0d8` ("04 XML export done: tests green"). Both reports passed step 5. The `## Wave agents` row of the bundle reads `03+04`, its merged-SHA column empty.
+  - `git branch --no-merged stream/receipts` also lists `wave1/03-json-export`; the trial merge of each of the two SHAs prints no conflict marker.
   - Name each command you would run next, in order, including the exact `git commit -m "<message>"` for each ticket's merge, instead of running it.
 ---
 
