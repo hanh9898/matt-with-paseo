@@ -225,3 +225,26 @@ The stream's one eval run, on 3d37060 (2026-09-30), the D9 command from `plugins
 - New or changed cases of this stream: `wave-121-bundle-turn-end` 1.00 (5/5); `wave-53` 1.00; `wave-76` 1.00; `wave-64-merge-message-pattern` 0.89 (the six new bundle graders pass; the older `no-default-message` fails, FAIL FAIL FAIL); `wave-54-repro-and-no-code-flow` 0.71 (new `chain-shown-as-bundle` and `no-quota-no-shared-file-bundle` pass; new `symptom-not-bundled` fails FAIL PASS FAIL; older `code-ticket-keeps-tdd` fails FAIL FAIL FAIL).
 - Other partial scores: `streams-61-ship-rules` 0.20, `streams-41-hung-agents` 0.50, `streams-51-overlap-and-need` 0.50, `streams-49-ship-branch` 0.56, `streams-50-after-ship` 0.67, `streams-40-silent-supervision` 0.80.
 - Against `mwp-seatworks`'s run on 8f7ede8 (1 run each, so noisy): no longer failing: `wave-75`, `wave-95`, `streams-48`, `streams-52`, `wave-tickets-with-width`. Failing now and passing then: `wave-54`, `wave-64`, `streams-50`, `streams-51`. Lower: `streams-61` 0.40 → 0.20, `streams-49` 0.78 → 0.56. Same: `streams-40`, `streams-41`.
+
+**Operator's decisions (D90, 2026-09-30):** 1a: quote the `streams-43` description and re-run that case alone; 2a: no fix for the partial cases, they go to the ship pull request's Merge Danger. The untracked ADR 0010 copy in the main checkout was moved away by the operator (it differed only in line endings).
+
+`streams-43-quota-follows-wave` fixed in 96b94b0 (description quoted; `yaml.safe_load` parses it). Re-run (D9 command plus `--case streams-43-quota-follows-wave`, on 96b94b0): **1.00**, 3/3 graders (`quota-counts-bundles-not-tickets`, `quota-follows-wave-width`, `quota-change-sends-prompt`, each PASS PASS PASS), 40 s, $0.22. Report under `evals/results/2026-09-30T04-16-36-197Z/`.
+
+### Merge Danger for the ship pull request
+
+- **Eval, full run on 3d37060 (1 run per case, compared with `mwp-seatworks`' run on 8f7ede8, also 1 run per case):** 24 of 32 loaded cases pass; `streams-43` did not load then and passes 1.00 on its re-run on 96b94b0, so 25 of 33. None of the partial scores was fixed (D90 2a).
+
+| Case | This stream (3d37060) | `mwp-seatworks` (8f7ede8) | Failing graders now |
+|---|---|---|---|
+| `streams-61-ship-rules` | 0.20 | 0.40 | `names-empty-key` and others |
+| `streams-41-hung-agents` | 0.50 | 0.50 | `closes-clean-merged-stream` and others |
+| `streams-51-overlap-and-need` | 0.50 | passed | `need-yields-merge-or-hold` |
+| `streams-49-ship-branch` | 0.56 | 0.78 | `conflict-reported-not-asked` (FAIL PASS FAIL) and others |
+| `streams-50-after-ship` | 0.67 | passed | `sets-reopened-status` |
+| `wave-54-repro-and-no-code-flow` (extended by #117) | 0.71 | passed | `code-ticket-keeps-tdd` (older grader); `symptom-not-bundled` (new, FAIL PASS FAIL) |
+| `streams-40-silent-supervision` | 0.80 | 0.80 | `writes-last-tick` |
+| `wave-64-merge-message-pattern` (extended by #120) | 0.89 | passed | `no-default-message` (older grader; the six new bundle graders pass) |
+
+  No longer failing since 8f7ede8: `wave-75`, `wave-95`, `streams-48`, `streams-52`, `wave-tickets-with-width`. With one run per case, a judge error cannot be told apart from a skill gap; `wave-54` and `wave-64` are the two cases this stream changed, and their older graders fail there.
+- **Tests not re-run after the fix pass (D86 3a):** the one full test run was on d314c9d (91 tests, 1 failure: the ratings test, fixed in 29a8b62; drift check exit 0). On 3d37060 only `scripts/troubleshooting-ratings.py` ran (exit 0). The unit-test suite and the drift check did not run on the fix pass's 16 commits.
+- **Follow-up:** step 2 says the ticket cap always bounds a bundle, but `wave-121-bundle-turn-end`'s approver widens one bundle to five tickets; no line in step 2 allows that widening. The fresh review agent of a bundle ended by `stop` can only be told apart once its `review` row is written (P2).
