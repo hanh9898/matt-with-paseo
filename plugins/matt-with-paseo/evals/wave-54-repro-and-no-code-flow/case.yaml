@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: wave-54-repro-and-no-code-flow
-description: Three tickets, no wave yet; the symptom ticket's only reproduction is a comment that read the code, and one ticket changes only documentation. At step 2, with the flow each ticket would get, the wave skill must not accept the symptom as reproduced and must give the documentation ticket the flow for tickets that change no code.
+description: Eight tickets, no wave yet; the symptom ticket's only reproduction is a comment that read the code, and one ticket changes only documentation. At step 2, with the flow each ticket would get, the wave skill must not accept the symptom as reproduced and must give the documentation ticket the flow for tickets that change no code. Ticket 05 is blocked only by ticket 04 (a chain), tickets 06 and 07 are independent and write the same registry file, ticket 08 is blocked only by the symptom ticket, and the run has no quota. At step 2 the graph must show the chain as a bundle [04+05], bundle neither the shared-file tickets nor the symptom, and leave the symptom's follower waiting.
 tags: [graph, spawn, wave]
 context:
   scaffold_script: fixture.sh

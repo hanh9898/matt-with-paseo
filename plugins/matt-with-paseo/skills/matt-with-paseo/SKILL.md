@@ -130,9 +130,9 @@ Read the repo's evidence standards file when it declares one: an `## Evidence st
 
 ## 2. Build the graph and split into waves
 
-**Width** is the point of this skill: every wave takes every ticket that can run now, and the orchestrator works to make that set wider. A ticket can run now when every ticket in its `Blocked by` is merged and it is in the ready for agent role.
+**Width** is the point of this skill: every wave takes every ticket that can run now, and the orchestrator works to make that set wider. A ticket can run now when every ticket in its `Blocked by` is merged and it is in the ready for agent role. A shared-file bundle (below) narrows a wave only when the tickets it joins would have waited on the quota anyway, and tickets waiting on the quota are proposed as bundles too.
 
-Read every ticket: status, dependency line (`Blocked by`), comments. Draw the dependency graph from each ticket's declared dependencies only — its `Blocked by` line and the tracker's own dependency records where the tracker configuration names them, reconciled when they differ — and add no edge a ticket does not declare, even between tickets whose content overlaps (a shared format, a design detail) — that overlap does not cost width. Draw the graph on one line, marking each ticket's status, for example `01✓ → {02, 03?} → {04, 05, 06} → 09`.
+Read every ticket: status, dependency line (`Blocked by`), comments. Draw the dependency graph from each ticket's declared dependencies only — its `Blocked by` line and the tracker's own dependency records where the tracker configuration names them, reconciled when they differ — and add no edge a ticket does not declare, even between tickets whose content overlaps (a shared format, a design detail) — that overlap does not cost width. Draw the graph on one line, marking each ticket's status, for example `01✓ → {02, 03?} → {04, 05, 06} → 09`; a bundle is written `[NN+NN]` in that line, for example `[04+05] → 09`.
 
 Two tickets in the same wave must be logically independent. If they touch the same registration file (manifest, package index, route table, permission file) they can still share a wave, but the common rules must assign each ticket its own file zone.
 
@@ -149,11 +149,21 @@ Then hunt for lost width, and list every case with the one thing that would reco
 - **A ticket waiting on a human** (in the needs triage, needs info or ready for human role, or a symptom whose reproduction only a human can run now) that would join this wave, or that blocks tickets which would: name the exact question the human must answer, the decision they must make, or the command they must run and send back with its output.
 - **A false edge**: a `Blocked by` that stands for a shared file rather than a logical dependency (the later ticket neither calls nor reads what the earlier one builds). Propose dropping the edge and giving both tickets a file zone; the edge changes only in the ticket, and only with the user's agreement.
 
-With `quota <N>`, the upcoming wave starts at most N tickets (see "Quota" in step 4). When more can run now, propose the N to start first, those that unblock the most tickets first, and list the rest as waiting on the quota: they belong to this wave and join it by rolling start (step 6). A ticket waiting on the quota is not lost width.
+Then plan the **bundles** (ADR 0010). A ticket that joins no bundle is a bundle of one.
 
-Present the graph, the upcoming wave, and the lost-width list to the user, and wait for approval, then mark the Checkpoint as step 7's marks paragraph says. A wave of one ticket is a signal to resolve the lost-width list first when the user can, unless the quota is 1 or, with `stream`, it is stage C's single ticket (ADR 0006).
+| The tickets | Bundled? |
+|---|---|
+| A chain: each ticket has at most one blocker and blocks at most one ticket of the chain, so its `Blocked by` edges have no branch | Yes, with or without `quota` |
+| Independent tickets that write the same place in a shared file | Only while more tickets can run now than the quota allows; without `quota`, never |
+| A symptom ticket | Never: its red-before loop needs its own base commit, so it cuts a chain |
 
-**Done when**: every open ticket has a wave number, every case of lost width has been named to the user with its unblocking question, the user has approved the upcoming wave, and the Checkpoint is marked.
+A bundle holds at most the ticket cap of the common rules' parameters section (step 3). A bundle never replaces the false-edge proposal above: a false edge is still proposed for removal.
+
+With `quota <N>`, the upcoming wave starts at most N ticket agents, one per bundle (see "Quota" in step 4). When more can run now, propose the N bundles to start first, those that unblock the most tickets first, and list the rest as waiting on the quota: they belong to this wave and join it by rolling start (step 6). Propose those tickets as bundles too, by the table above. A ticket waiting on the quota is not lost width.
+
+Present the graph, the upcoming wave, and the lost-width list to the user, and wait for approval. The approval covers the bundles with the wave, and the user may split any bundle into shorter bundles or single tickets. Then mark the Checkpoint as step 7's marks paragraph says. A wave of one ticket is a signal to resolve the lost-width list first when the user can, unless the quota is 1 or, with `stream`, it is stage C's single ticket (ADR 0006).
+
+**Done when**: every open ticket has a wave number, every case of lost width has been named to the user with its unblocking question, the user has approved the upcoming wave with its bundles, and the Checkpoint is marked.
 
 ## 3. Write the wave's common rules
 
