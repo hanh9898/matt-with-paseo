@@ -18,6 +18,7 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parent.parent
 HOOKS = REPO / ".githooks"
 GIT = shutil.which("git")
+SH = shutil.which("sh")
 
 DRIFT_CHECK = """\
 import sys
@@ -74,19 +75,24 @@ class PrePushHook(unittest.TestCase):
         write(self.repo / "scripts" / "findings.txt", findings)
 
     def path_with_only(self, *names):
-        """A PATH holding a shell, git and the named interpreter commands only.
+        """A PATH holding git and the named interpreter commands only.
 
         Each name is a wrapper that runs the interpreter running these tests; a
         name mapped to None is a wrapper that fails, as the Windows `python3`
-        Store alias does.
+        Store alias does. Git is a wrapper too, so no system directory joins the
+        PATH: on Linux and macOS the directories of `sh` and `git` are `/usr/bin`,
+        which holds a real `python3`. The hook's shell is started by its absolute
+        path (`run_hook`).
         """
         bin_dir = self.tmp / "bin"
         bin_dir.mkdir(exist_ok=True)
+        write(bin_dir / "git", f'#!/bin/sh\nexec "{Path(GIT).as_posix()}" "$@"\n')
+        (bin_dir / "git").chmod(0o755)
         for name in names:
             body = f'exec "{Path(sys.executable).as_posix()}" "$@"\n'
             write(bin_dir / name, "#!/bin/sh\n" + body)
             (bin_dir / name).chmod(0o755)
-        return os.pathsep.join([str(bin_dir), str(Path(shutil.which("sh")).parent), str(Path(GIT).parent)])
+        return str(bin_dir)
 
     def broken_interpreter(self, name):
         write(self.tmp / "bin" / name, "#!/bin/sh\nexit 49\n")
@@ -97,7 +103,7 @@ class PrePushHook(unittest.TestCase):
         if path is not None:
             env["PATH"] = path
         return subprocess.run(
-            ["sh", str(self.repo / ".githooks" / "pre-push")], cwd=self.repo,
+            [SH, str(self.repo / ".githooks" / "pre-push")], cwd=self.repo,
             capture_output=True, text=True, env=env, input="")
 
     def test_lets_the_push_go_on_when_tests_and_drift_check_pass(self):

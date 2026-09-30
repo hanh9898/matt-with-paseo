@@ -15,3 +15,7 @@ Single-context; the vocabulary is the words block in `plugins/matt-with-paseo/sk
 ### Ship rules
 
 How a stream's pull request is named and opened: `docs/agents/ship-rules.md`.
+
+## Evidence standards
+
+How this repo proves a change works: `docs/agents/evidence-standards.md`. Each ticket runs its own new or changed test file once, red then green; each merge runs only the conflict-marker search; CI runs every unit test and the drift check on each pull request into `main`, and a red pull request is never merged; one code review, one fix pass and one eval run once per stream, after its last wave.
