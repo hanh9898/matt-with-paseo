@@ -1,0 +1,38 @@
+name: CI
+
+# Runs on each pull request into main (docs/agents/evidence-standards.md): every
+# unit test, then the drift check. A red pull request is never merged.
+on:
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  check:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # The version gate compares with the latest release tag.
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Unit tests
+        run: python -B -m unittest discover -s scripts
+      - name: Drift check
+        shell: bash
+        # Exit 2 means the drift check could not run (for one, Matt's plugin is not
+        # installed on the runner): a warning, not a failure.
+        run: |
+          set +e
+          python -B scripts/drift-check.py
+          status=$?
+          if [ "$status" -eq 2 ]; then
+            echo "::warning::the drift check could not run (exit 2)"
+            exit 0
+          fi
+          exit "$status"
