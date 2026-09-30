@@ -61,7 +61,7 @@ Read the wave skill's [`PASEO-FACTS.md`](../matt-with-paseo/PASEO-FACTS.md) (ver
 
 ## Decisions, memory, machine and credentials
 
-**Decisions.** `decisions.md`, at the root of the control folder beside `streams.md`, is the history the status line does not keep. Each time you act on one of your own decisions (a ship, an overlap warning's answer, a change of the cap or a quota, a **Hold** or its release, a **Pause** or its resume), append one line: date and time, the slug (or `all`), the decision, and the user's answer it rests on, quoted (for a quota a split changed, the cap and priorities it read). Never rewrite or remove a line. A decision inside a stream (a wave approval, a review decision, a ticket's scope) is the stream agent's to record as its tickets' comments; it never goes into `decisions.md`. A line records what was decided, never how to decide: `decisions.md` is no source of rules.
+**Decisions.** `decisions.md`, at the root of the control folder beside `streams.md`, is the history the status line does not keep. Each time you act on one of your own decisions (a ship, an overlap warning's answer, a change of the cap or a quota, a **Hold** or its release, a **Pause** or its resume, an answer you sent from the delegation table), append one line: date and time, the slug (or `all`), the decision, and the user's answer it rests on, quoted (for a quota a split changed, the cap and priorities it read; for a delegated answer, the question, the answer sent and the grounds, as "Delegation" gives them). Never rewrite or remove a line. A decision inside a stream (a wave approval, a review decision, a ticket's scope) is the stream agent's to record as its tickets' comments; it never goes into `decisions.md`, except that an answer you sent for the user from the delegation table is your own decision and gets its line. A line records what was decided, never how to decide: `decisions.md` is no source of rules.
 
 **Claude memory.** How a run behaves comes from this skill, the wave skill and `streams.md` alone. Never write an operating rule (how to read an answer, when to ship, how to supervise) to Claude memory or to a file of the control folder, even when the user states one: tell the user that a lasting rule belongs in the skill. A setting this skill lets the user change (the restart budget, the respawn threshold) is a decision like any other, recorded in `decisions.md` and applied where its step says.
 
@@ -75,6 +75,69 @@ Read the wave skill's [`PASEO-FACTS.md`](../matt-with-paseo/PASEO-FACTS.md) (ver
 **Credentials.** No agent reads, prints or passes on a credential: never run `gh auth token`, `glab auth status --show-token` or `git credential fill`, never read a CLI's hosts or config file or an environment variable that holds a token, and never put a token in a URL, a command or a prompt. When a forge CLI fails (`gh`, `glab`, a push, an upload, an authentication error), stop the step that ran it and report to the user, headed with the slug, the command and its error as printed, and what they can do (log in again, grant a scope); never work around it with another tool, the forge's API or another account. The wave skill and its common rules hold stream agents and ticket agents to the same rule.
 
 **Done when**: each of your decisions acted on has one line in `decisions.md`, no operating rule was written to Claude memory, every machine-changing action ran only on the user's yes to that action, and no credential was read, printed or passed on, a forge CLI failure having gone to the user.
+
+## Delegation: what you may answer for the user
+
+The target repository's `AGENTS.md` may hold a `## Delegation` section with one policy table (ADR 0011). It is the only way the user hands a checkpoint to you. Read it in the stream's worktree, the way step 1 reads the tracker configuration; never write or edit it (ADR 0008 treats the ship rules the same way). The plugin reads the same table, in the same shape: [contract v1](https://github.com/hanh9898/matt-with-paseo-plugin/blob/main/docs/contract.md), "What the plugin reads from the delegation table".
+
+The table has rows of two cells, a rule and its value. A rule's name is read ignoring case, and the first row of a name wins:
+
+| Rule | Value | Reads as |
+|---|---|---|
+| `Switch` | `on` or `off` | `on`: delegation is on, and you may answer what the rows below let you. Any other value is `off`. A table with no `Switch` row is `on`, so write the row |
+| `Questions the orchestrator may decide` | door classes, separated by `,` or `;` | Only `two-way` and `costly` count; `one-way` and any other word are dropped. A question whose `Door:` line names a class not listed here is the user's |
+| `Appetite` | a spend limit per stream, in USD (`20 USD`) | Read as a dollar amount; any other value is no appetite. This skill only holds the field: the plugin sums the spend |
+| `Stage confirmation`, `Wave approval`, `Question-type permission`, `Overlap warning` | `orchestrator` or `user` | The standing order for that kind of checkpoint. Any other value, and a missing row, is `user`. The plugin ignores these rows |
+
+Example:
+
+```markdown
+## Delegation
+
+| Rule | Value |
+|---|---|
+| Switch | on |
+| Questions the orchestrator may decide | two-way, costly |
+| Appetite | 20 USD |
+| Stage confirmation | orchestrator |
+| Wave approval | orchestrator |
+| Question-type permission | orchestrator |
+| Overlap warning | orchestrator |
+```
+
+**The switch.** Resolve it once per stream, in this order:
+
+| Case | The switch is |
+|---|---|
+| The stream's Delegation cell in the index (The index) holds `on` or `off` | That value: it wins over the repository's |
+| The cell is empty, and the repository's `AGENTS.md` holds a `## Delegation` table | The table's `Switch` row |
+| The cell is empty, and there is no `## Delegation` section | `off`: every checkpoint reaches the user, exactly as before this section existed |
+
+**When you answer.** With the switch `on`, answer a checkpoint yourself only when every line below holds; otherwise it reaches the user in the next question round (step 4), verbatim, as it always did:
+
+1. The checkpoint's kind has the standing order `orchestrator`: a stage confirmation, a wave approval, a stream agent's question-type permission, or an overlap warning (step 7).
+2. The question carries a suggestion of the asking agent (the suggestion a terse answer binds to, step 4). A question with no suggestion waits for the user. The overlap warning's suggestion is `Continue both`, since the warning never blocks.
+3. The question's `Door:` line, when it has one, names a class the `Questions the orchestrator may decide` row lists, and it has no `Yours:` line.
+4. The answer costs nothing past the appetite. Once the plugin reports the appetite passed, every question of that stream reaches the user.
+5. The question is none of the items below.
+
+**Always the user's, whatever the table says.** No row widens these:
+
+| Item | What counts |
+|---|---|
+| A change to the concept | The spec, the words blocks, the ADRs |
+| Adding or dropping tickets | An intake agent still starts only when the user names it (ADR 0005) |
+| Spend past the appetite | Any answer that would take the stream's spend past it |
+| An irreversible action | The ship question (push and open the pull request), an action that changes the machine ("Decisions, memory, machine and credentials"), anything that needs a credential, and resuming a stream stopped on its restart budget |
+| Merging the pull request | It stays with the repository's reviewers (step 6) |
+
+**A delegated answer.** Send the asking agent's suggestion as the answer, through the route step 4 gives that kind of question, and never a choice of your own. Then, in the same turn:
+
+1. Append one line to `decisions.md`: the question, the answer sent and the grounds (the switch's source, the standing order's row, the suggestion, the door class).
+2. Write into the stream's status line, in place of `waits on the user`: `answered from the delegation table (decisions.md <date> <time>)`, naming that entry.
+3. Tell the user in the next question round, under the stream's slug, what you answered, quoting the question and the answer sent.
+
+**Done when**: each checkpoint answered from the table met all five lines above, none was one of the user's items, and each has one `decisions.md` line and one status line item; every other checkpoint went to the user.
 
 ## The index
 
@@ -92,6 +155,7 @@ The index is `streams.md` at the root of the control folder: one line for the ca
 | PR target | The branch the stream's pull request goes to; empty means resolve per step 1 |
 | Forge | `GitHub` or `GitLab`: the forge that hosts the repository, where step 6 opens the pull request; empty means resolve per step 1, which writes it. An index without this column reads as empty; add the column when you write the row |
 | Key | The stream's external reference (an issue key, a ticket id), for a ship rules pattern's `<key>` placeholder; it is data about the stream, not a rule (ADR 0008). Empty means a pattern needing it is named at setup (step 1). An index without this column reads as empty; add the column when you write the row |
+| Delegation | The stream's own setting of the delegation switch ("Delegation: what you may answer for the user"): `on` or `off`. It wins over the repository's `Switch`; empty means the repository's value. An index without this column reads as empty; add the column when you write the row |
 | Priority | A number, 1 first; empty means the order of rows (first come first served) |
 | Quota | The quota last given to the stream's stream agent: its spawn command's `quota <N>` (step 3) or a later `quota <N>` prompt ("Split the cap into quotas"; step 4's "At a wave boundary"). Empty only before the stream's first stream agent is spawned: not yet started, or waiting on the cap. No step blanks it afterward, including once the stream ships: its idle stream agent keeps the quota it last held, though it starts no more waves |
 | Status | The stream's status line: one line you keep current, holding only the items of "The status line" below |
@@ -104,10 +168,10 @@ Example:
 Agent cap: 6
 Last tick: 2026-09-27 14:15, heartbeat streams-reconcile 7f3e2a19 every 15 min, expires 2026-09-27 22:00
 
-| Slug | Repository | Owner | Tickets | Base branch | PR target | Forge | Key | Priority | Quota | Status |
-|---|---|---|---|---|---|---|---|---|---|---|
-| billing-export | D:\src\opms | Lan | label `stream:billing-export` | | | GitLab | | 1 | 3 | 2026-09-27 wave 1 running, waits on the stream agent |
-| login-bug | D:\src\opms | Minh | `.scratch/login-bug/issues/` | test | test | | PROJ-482 | 2 | | 2026-09-27 not started |
+| Slug | Repository | Owner | Tickets | Base branch | PR target | Forge | Key | Delegation | Priority | Quota | Status |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| billing-export | D:\src\opms | Lan | label `stream:billing-export` | | | GitLab | | | 1 | 3 | 2026-09-27 wave 1 running, waits on the stream agent |
+| login-bug | D:\src\opms | Minh | `.scratch/login-bug/issues/` | test | test | | PROJ-482 | off | 2 | | 2026-09-27 not started |
 ```
 
 With no index yet, write `streams.md` with the cap line and the table header, ask the user for the cap and each stream's fields, and write them in. Each Repository is the absolute path of a local checkout that the user gives; ask for it rather than searching the disks. Ask for each field by its name alone: the example's values above belong to no user and appear in no question, as a default or a suggestion. The Forge cell may stay empty; step 1 fills it.
@@ -119,7 +183,7 @@ The status line is the reconcile loop's only memory (step 5). Every step writes 
 - It always starts with the date, the stage, and who the stream waits on. The other items appear when the step that writes them has run, and nothing the table below does not list goes in.
 - It is a snapshot of about 160 characters, never a log. A step replaces its own item rather than adding a second one, and an item goes once it no longer holds (a question shown, once its answer is sent).
 - An item stays while a later step or tick can still read it. The latest handled message time stays, or a tick handles that message twice.
-- An answer routed to a stream agent (step 4) never goes in: once it is sent, the line says only that the stream waits on the stream agent.
+- An answer routed to a stream agent (step 4) never goes in: once it is sent, the line says only that the stream waits on the stream agent. The one exception is an answer you sent from the delegation table, whose `decisions.md` entry the line names in place of `waits on the user`.
 - History goes elsewhere: your own decisions to `decisions.md` ("Decisions, memory, machine and credentials"); a stream's decisions stay in its tickets' comments.
 
 | Item | Written by | Example |
@@ -133,6 +197,7 @@ The status line is the reconcile loop's only memory (step 5). Every step writes 
 | Waits on the cap | step 3, and "Replace a stream agent" at a wave boundary | `waits on the cap` |
 | The last end-of-turn message handled, with its time | step 4 | `handled message of 2026-09-27 14:02` |
 | A question shown to the user | step 4 | `waits on the user (wave 2 approval shown)` |
+| An answer sent from the delegation table, with its `decisions.md` entry | "Delegation: what you may answer for the user" | `answered from the delegation table (decisions.md 2026-09-27 14:03)` |
 | Restart count, per wave | step 5 | `restarts 1/2 in wave 3` |
 | A running stream agent's activity count, and the ticks it has not moved | step 5 | `activity 41 unchanged 2 ticks` |
 | A resume prompt sent to a failed stream agent, or a restart held back by running ticket agents | "Replace a stream agent" | `resume sent 14:05`, `restart held: wave 3 ticket agents running` |
@@ -375,17 +440,17 @@ On each notification:
 
 Capacity and context change a stream's quota or agent only here and at the choking response of step 5's tick table: you never prompt, cancel or archive a stream agent for capacity or context anywhere else, and neither ever cuts a running wave without the user's yes. A split that frees slots (a stream archived here, or a stream with no ticket left for agents) gives them to the streams that wait on the cap, in priority order, each spawned per step 3.
 
-**A question round.** Every approval gate of the wave skill keeps its meaning only if the user is the one who passes it. These rules come first; nothing below overrides them:
+**A question round.** Every approval gate of the wave skill keeps its meaning only if the user is the one who passes it, or has handed that kind of checkpoint to you in the repository's delegation table ("Delegation: what you may answer for the user"). These rules come first; nothing below overrides them except that section:
 
-- **The answers are the user's alone.** Never answer, approve, or pick an option for the user, even when the answer looks obvious.
+- **The answers are the user's alone.** Never answer, approve, or pick an option for the user, even when the answer looks obvious. The one exception is a checkpoint the delegation table lets you answer (switch on, its kind's standing order `orchestrator`, the asking agent's suggestion as the answer): answer it there, record it there, and never any other. With no `## Delegation` section, or the switch off, every checkpoint reaches the user.
 - **A terse answer binds only to the asking agent's own suggestions.** "Go with the suggestions" (or "as suggested", "defaults") answers each question where the stream agent itself suggested an option, with that option, and nothing else. A question with no such suggestion is not answered: it stays pending and comes back in the next round. There you may add a suggestion of your own below the agent's verbatim text, marked `(orchestrator's suggestion)`; it is sent only when the user picks it.
 - **An answer names its stream.** While more than one stream waits on the user, an answer under no `[<slug>]` heading and naming no stream is asked back ("which stream is this for?") and sent nowhere. Never guess, even when one stream is left unanswered, and never send one answer to several streams unless the user gives it to each of them.
-- **"ok" approves only the question it answers.** Agreeing to a stage confirmation or to a plan inside it approves no wave. A wave starts only when the user answers the wave skill's own wave approval (its step 2); never tell a stream agent on your own that a wave is approved, or to spawn: only the user's answer to that approval, relayed as written, does.
+- **"ok" approves only the question it answers.** Agreeing to a stage confirmation or to a plan inside it approves no wave. A wave starts only when the user answers the wave skill's own wave approval (its step 2), or when the delegation table hands wave approvals to you; never tell a stream agent on your own that a wave is approved, or to spawn: only the user's answer to that approval, relayed as written, or a delegated answer sent as "Delegation: what you may answer for the user" gives it, does.
 - **Relays are verbatim.** A stream agent's question reaches the user word for word: no options, defaults, advice or answer templates added, apart from a marked suggestion of your own as above. Ask no question of your own beyond the items listed below and the questions another step of this skill asks (for example step 1's setup choices or step 3's model and permission mode).
 - **Confirmations quote the answer.** When you tell the user what you sent, quote their answer as they wrote it, under its slug.
-- **The stage confirmation stays.** Each stream agent's wave skill asks its own stage confirmation (its step 0); relay it like any other question, and never answer it or ask the agent to skip it.
+- **The stage confirmation stays.** Each stream agent's wave skill asks its own stage confirmation (its step 0); relay it like any other question, and never ask the agent to skip it. Answer it yourself only under the delegation table's `Stage confirmation` standing order.
 
-Gather every question pending across all streams:
+Gather every question pending across all streams, leaving out each one you answered from the delegation table:
 
 - each stream whose status line says it waits on the user;
 - every stream agent that `list_pending_permissions` lists with a question-type permission;
@@ -404,6 +469,7 @@ The user's answer comes as a message in this session; route it when it arrives:
 | To the ship question | Step 6, and no agent |
 | To an overlap warning or a need item | Step 7, and no agent unless it sends a prompt (its hold sends `hold`, and later `release`, to the waiting stream agent) |
 | To a machine-changing action | "Decisions, memory, machine and credentials", and no agent |
+| To a checkpoint the delegation table lets you answer | No user answer: send the asking agent's suggestion by the route of its kind (a turn-end question by `send_agent_prompt`, a question-type permission by `respond_to_permission`), then record it as "Delegation: what you may answer for the user" says |
 | To a question-type permission | The user's choice, as the wave skill's [`TROUBLESHOOTING.md`](../matt-with-paseo/TROUBLESHOOTING.md) entry "Agent waits on a question-type permission" describes |
 
 A message that asks nothing (a progress report) only updates the status line.
@@ -691,7 +757,7 @@ Continue both, or defer one's next wave? If deferring, which one?
 
 When the two PR targets differ, add under the targets' line that the conflict appears once one target merges into the other, not when either pull request merges.
 
-The next question round is the next time you present questions to the user (step 4). The message that reported the merge usually asks the user to approve the stream's next wave, so the warning joins that round; when no question is pending at all, the warning makes a round of its own, shown right away. This item is your own, not a stream agent's question: relaying the other questions of the round and sending their answers back never waits for it. When both streams merged a wave in the same round, the pair gets one item. Until the user answers, both streams keep running.
+With the delegation table's `Overlap warning` standing order `orchestrator` ("Delegation: what you may answer for the user"), you answer the warning yourself with `Continue both`, its own suggestion, and never with a deferral or a hold, and record and report that answer as that section says. Otherwise the next question round is the next time you present questions to the user (step 4). The message that reported the merge usually asks the user to approve the stream's next wave, so the warning joins that round; when no question is pending at all, the warning makes a round of its own, shown right away. This item is your own, not a stream agent's question: relaying the other questions of the round and sending their answers back never waits for it. When both streams merged a wave in the same round, the pair gets one item. Until the user answers, both streams keep running.
 
 **The user's answer.** A deferral uses the gate the wave skill already has: it starts no wave before the user approves it (its step 2), and a running wave is never cut.
 
