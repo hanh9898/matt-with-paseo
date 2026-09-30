@@ -34,9 +34,9 @@ Copy in only what an agent cannot look up: an unwritten convention, the reason b
   returns.
 
 ## Parameters
-- Ticket cap: <4>, the most tickets a bundle holds and the most a ticket agent works before the orchestrator answers `stop`.
-- Context stop: <600K> `contextWindowUsedTokens`, the size of an agent's context at which the orchestrator answers `stop`.
-- Both apply only while Jev is not available; with Jev, its flag is what stops a bundle.
+- Ticket cap: <4>, the most tickets step 2 plans into a bundle. While Jev is not available it is also the fallback stop: once a ticket agent has worked this many tickets, the orchestrator answers `stop` (step 5).
+- Context stop: <600K> `contextWindowUsedTokens`, the size of a ticket agent's context at which the orchestrator answers `stop`, while Jev is not available (step 5).
+- With Jev, its flag is what stops a bundle (step 5); the ticket cap still bounds the bundle's size.
 
 ## Existing interfaces to reuse
 - `<function / hook / module>`: <signature>, <what it returns>, <what it already handles, e.g. sending mail, logging>.
