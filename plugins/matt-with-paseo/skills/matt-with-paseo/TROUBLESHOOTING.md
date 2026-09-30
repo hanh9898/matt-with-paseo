@@ -12,7 +12,7 @@ Rating: caught — check: `plugins/matt-with-paseo/skills/matt-with-paseo/SKILL.
 
 **Report is correct but incomplete.** A claim like "clean" or "passing" only covers what the agent checked. Open the real artifact (screenshot, page, command output) and check the aspects the report does not mention.
 
-Rating: caught — check: `plugins/matt-with-paseo/skills/matt-with-paseo/SKILL.md`, phrase "check the real artifacts, not the report's words".
+Rating: caught — check: `plugins/matt-with-paseo/skills/matt-with-paseo/SKILL.md`, phrase "check that ticket's real artifacts, not the report's words".
 
 **Branch name differs from directory name.** A Paseo worktree directory is named by a slug, not by the branch. Get the branch name with `git -C <worktree> branch --show-current`.
 
@@ -84,7 +84,7 @@ Rating: caught — check: `plugins/matt-with-paseo/skills/matt-with-paseo/SKILL.
 
 **Ticket branch not merged.** Go back to steps 5 and 6 for that ticket; clean up only after the merge.
 
-Rating: caught — check: `plugins/matt-with-paseo/skills/matt-with-paseo/SKILL.md`, phrase "the ticket's branch appears in `git branch --merged <integration branch>`".
+Rating: caught — check: `plugins/matt-with-paseo/skills/matt-with-paseo/SKILL.md`, phrase "appears in `git branch --merged <integration branch>`".
 
 **Agent has not stopped.** `archive_agent` would interrupt it midway. Wait for it to stop, or ask the user before interrupting.
 
