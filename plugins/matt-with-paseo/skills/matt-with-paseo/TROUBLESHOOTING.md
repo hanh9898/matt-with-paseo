@@ -46,7 +46,7 @@ Rating: caught — check: `plugins/matt-with-paseo/skills/matt-with-paseo/SKILL.
 
 **Agent waits on a question-type permission** (it asked the user a question, and `list_pending_permissions` shows the request). Answer with `respond_to_permission`, `behavior: "allow"`, and an `updatedInput` holding the request's `questions` plus an `answers` map from each question's text to the chosen option's label, for example `answers: { "Which database?": "Postgres" }` (the first row of the permissions and modes table in [`PASEO-FACTS.md`](PASEO-FACTS.md) says why). The stream skill's tick finds a stream agent's request; the wave skill's heartbeat tick (step 5) finds a ticket agent's.
 
-Rating: caught — check: `plugins/matt-with-paseo/skills/matt-with-paseo-streams/SKILL.md`, phrase "has a question-type permission in `list_pending_permissions` not yet shown to the user".
+Rating: caught — check: `plugins/matt-with-paseo/skills/matt-with-paseo-streams/HEARTBEAT-PATH.md`, phrase "has a question-type permission in `list_pending_permissions` not yet shown to the user".
 
 ## Merging
 

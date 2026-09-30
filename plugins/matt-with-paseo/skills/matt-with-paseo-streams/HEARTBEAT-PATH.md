@@ -30,4 +30,16 @@ In a new session, stream agents the dead session spawned send it their finish no
 
 **Done when**: the old heartbeat was deleted or left to its expiry, and this session holds its own.
 
+## 3. The rows the plugin's messages replace
+
+Step 5's table of "Observed, for one stream" holds only the rows both paths need. These three exist because a notification can go missing, and the plugin's messages replace them on the message path; on the heartbeat path each applies exactly as it did in that table. Read the first two together with the table just before its row "Stream agent idle on the message the status line records, the status line waiting on the user", and the third just after that row.
+
+| Observed, for one stream | Action | Replaced on the message path by |
+|---|---|---|
+| Stream agent idle, and its last end-of-turn message is newer than the one the status line records | Step 4 on that message. This is how a turn that ended without a finish notification (probe A2) is caught: the next tick finds it | `Turn ended` (stream cases): its `Next:` line has you check the stream's report with `get_agent_activity`, which is step 4 on the message |
+| Stream agent, running or idle, has a question-type permission in `list_pending_permissions` not yet shown to the user | Step 4: the permission joins the next question round. An agent that waits on a permission may be reported `running`; the running row above leaves such an agent to this row | `Permission pending` (stream question case): its `Next:` line has you read the request with `list_pending_permissions` and leave the checkpoint to the user, which is step 4's question round |
+| Stream agent idle on the message the status line records; the status line waits on the stream agent and records no nudge for that message; no agent with a `wave` label runs for the stream; the step 6 row below does not match | `send_agent_prompt` "where does the stream stand?" to it, `background: true`, `notifyOnFinish: true`, and write `nudged <time>` into the status line: the stream waits on an agent that waits for nothing, as when a ticket agent's finish notification never reached it. A stream agent idle while its ticket agents run is waiting for them and is not nudged. Its answer comes back through step 4 as a newer message, and the item lapses with it | `Turn ended` (stream cases), and for the ticket agents the stream agent supervises, their own `Turn ended` messages to it: each ends a turn with a message that reaches the reader, so no agent waits for a notification that never came |
+
+**Done when**: on the heartbeat path each tick read these three rows in that order with the table, and a tick on the message path did not need them.
+
 Read the wave skill's [`PASEO-FACTS.md`](../matt-with-paseo/PASEO-FACTS.md) (verified Paseo behaviour, each row with its version): its status calls and heartbeats table when this session's heartbeat stops ticking.

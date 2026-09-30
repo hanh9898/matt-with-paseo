@@ -153,7 +153,7 @@ The status line is the reconcile loop's only memory (step 5). Every step writes 
 | Respawned for context | step 4 at a wave boundary | `respawned for context` |
 | Stopped, with the owner | step 5 | `stopped: restart budget spent (2/2 in wave 3), owner Lan` |
 | A finding reported to the user | step 5 | `reported: open pull request not recorded` |
-| A nudge sent to an idle stream agent, for the message the status line records | step 5 | `nudged 11:40` |
+| A nudge sent to an idle stream agent, for the message the status line records | step 5 (heartbeat path) | `nudged 11:40` |
 | Nothing to ship, for the integration branch's head | step 6 | `nothing to ship at 1a2b3c4` |
 | Ship question asked, for the integration branch's head | step 6 | `ship question asked at 1a2b3c4` |
 | Paths the user kept in the ship branch | step 6 | `keeps docs/agents/issue-tracker.md` |
@@ -431,12 +431,12 @@ Every running stream stays under one reconcile loop (ADR 0004). A **tick** compa
 
 A tick runs:
 
-- on each message the plugin sends about a stream agent (the message path): `Turn ended` (step 4 is then the action of its gap), `Permission pending` (the permission row below) and `Agent archived`; each carries a `Next:` line, the plugin's suggestion, and the judgement stays with this skill (ADR 0009). The plugin relays a stream agent and its ticket agents to the agent that spawned them (contract v1, "Message types"), so a ticket agent's messages reach the stream agent, never you;
+- on each message the plugin sends about a stream agent (the message path): `Turn ended` (step 4 is then the action of its gap), `Permission pending` (step 4 gathers it into the next question round) and `Agent archived`; each carries a `Next:` line, the plugin's suggestion, and the judgement stays with this skill (ADR 0009). The plugin relays a stream agent and its ticket agents to the agent that spawned them (contract v1, "Message types"), so a ticket agent's messages reach the stream agent, never you;
 - on every heartbeat prompt (the heartbeat path);
 - after every finish notification from a stream agent (step 4 is then the action of its gap);
 - first thing in any session opened in the control folder.
 
-On the message path, this session creates no heartbeat for a stream agent it spawned. On the heartbeat path, [`HEARTBEAT-PATH.md`](HEARTBEAT-PATH.md) says how the heartbeat is kept: read it only then, or for a stream agent this session did not spawn.
+On the message path, this session creates no heartbeat for a stream agent it spawned. On the heartbeat path, [`HEARTBEAT-PATH.md`](HEARTBEAT-PATH.md) says how the heartbeat is kept and holds the three rows of the table below that the plugin's messages replace (its section 3): read it only then, or for a stream agent this session did not spawn.
 
 - **Desired state** is the index. A stream should run when its status line holds a stream agent id (step 3 or "Replace a stream agent" wrote it) and records none of shipped, stopped, or waits on the cap; any other row should not run. A stream that waits on the cap has no stream agent on purpose: only a split spawns it (The index), never a restart.
 - **Observed state** is the public signals of the Inputs section and nothing else:
@@ -451,17 +451,14 @@ The stream's status line ("The status line", The index) is the loop's only memor
 
 Every prompt you send a stream agent, in any step, goes with `send_agent_prompt`, `background: true` and `notifyOnFinish: true`: the agent's answer reaches you only as a finish notification, and a prompt without one leaves the stream waiting on a message no one reads.
 
-One stream may match several rows of the table below; each row it matches acts, in table order, and a stream gets at most one restart per tick.
+The table below holds the rows both paths need. One stream may match several rows of it; each row it matches acts, in table order, and a stream gets at most one restart per tick.
 
 | Observed, for one stream | Action |
 |---|---|
 | Should run, and no worktree on `stream/<slug>` | Step 2, which opens the existing branch instead of cutting a new one |
 | Should run, and no stream agent | A restart, per "Supervise one-for-one" below |
 | Stream agent running, with no question-type permission pending | None beyond the activity check of "Supervise one-for-one" below; its finish notification, or a later tick, brings its message |
-| Stream agent idle, and its last end-of-turn message is newer than the one the status line records | Step 4 on that message. This is how a turn that ended without a finish notification (probe A2) is caught: the next tick finds it |
-| Stream agent, running or idle, has a question-type permission in `list_pending_permissions` not yet shown to the user | Step 4: the permission joins the next question round. An agent that waits on a permission may be reported `running`; the running row above leaves such an agent to this row |
 | Stream agent idle on the message the status line records, the status line waiting on the user | None; the question is already shown, and a tick never shows it twice. What a partial answer left open, or an answer asked back, stays pending and joins the next round (step 4) |
-| Stream agent idle on the message the status line records; the status line waits on the stream agent and records no nudge for that message; no agent with a `wave` label runs for the stream; the step 6 row below does not match | `send_agent_prompt` "where does the stream stand?" to it, `background: true`, `notifyOnFinish: true`, and write `nudged <time>` into the status line: the stream waits on an agent that waits for nothing, as when a ticket agent's finish notification never reached it. A stream agent idle while its ticket agents run is waiting for them and is not nudged. Its answer comes back through step 4 as a newer message, and the item lapses with it |
 | Stream agent failed | A restart, per "Supervise one-for-one" below |
 | Stream agent idle on the message the status line records, and its context past the respawn threshold | None; the respawn waits for the stream's next wave boundary (step 4), so a running wave is never cut |
 | Every ticket of the stream resolved or in the ready for human or needs info role, the stream agent idle, and the status line records neither shipped nor, for the integration branch's current head, nothing to ship or the ship question asked | Step 6 |
