@@ -223,9 +223,9 @@ Leave `notifyOnFinish` at its default. Each agent reports when it finishes; betw
 
 Read each agent's progress and report with `get_agent_activity`, not by reconstructing them from commits and ticket comments; this also covers reports from agents an earlier session spawned, which are no longer in the conversation. If this session spawned the agents, finish notifications arrive on their own. A session reopened mid-wave does not receive notifications from agents an earlier session spawned: create a heartbeat for them under the heartbeat contract below.
 
-Each time an agent reports done, check the real artifacts, not the report's words:
+Each time a ticket agent ends a turn with a ticket's report (a bundle of one ends its turn once), check that ticket's real artifacts, not the report's words:
 
-- the commits sit on the ticket's own branch (`git log <branch>`);
+- the commits sit on the ticket's own branch (`git log <branch>`); for a bundle, the last commit the report names, its SHA, sits on the bundle's branch;
 - the ticket's status has changed, and its comments carry verification evidence;
 - the report's most decisive claim is re-run once by you (call the endpoint, open the screen, look at the screenshot); for a change the user sees, the screenshots include the screen scrolled past its first view and at a narrow width;
 - a report claim tagged `decided: X because Y` is evidence once X has been re-run or read, as above; one tagged `assumed: X, unchecked`, or carrying neither tag, is not: check it yourself or send it back before this ticket counts as done;
@@ -233,8 +233,19 @@ Each time an agent reports done, check the real artifacts, not the report's word
 - the ticket's comments carry the `mattpocock-skills:code-review` result: the number of findings per axis and the outcome of each. Missing means the agent did not finish its flow;
 - symptom tickets: the report shows the loop **red before** the fix and green after, each as a run's command and output; a red read from the code is no loop. Green alone does not tell you whether the fix hit the right place or only masked the symptom;
 - a failure the report names is not the agent's when the common rules' "Failing on base" lists it; any other failure is explained in the report;
-- the report names every change outside the ticket's file zone or outside git (a file in another checkout, a machine setting, a created resource), and `git -C <worktree> status --porcelain` is empty or each file it lists is named there;
-- the report lists the private resources the agent created, for step 8 to remove.
+- the report names every change outside the ticket's file zone or outside git (a file in another checkout, a machine setting, a created resource);
+- once per bundle, at its last turn end: `git -C <worktree> status --porcelain` is empty or each file it lists is named in a report, and the reports list the private resources the agent created, for step 8 to remove.
+
+**At each turn end of a bundle agent**, in this order:
+
+1. Check the ticket's report, as above. A report that fails a check goes back to the agent, and steps 2 to 4 wait for the corrected report.
+2. Merge the ticket (step 6), by the SHA its report names.
+3. Read the stop signals:
+   - **With the plugin:** a Jev flag that reaches you at this turn end is weighed by you (the stream agent, under `stream`); accepting it means `stop`. This skill names that seam and nothing of Jev's inside: the plugin never judges (ADR 0009).
+   - **Without the plugin:** read `contextWindowUsedTokens` from `lastUsage` in `get_agent_status`; when that field is missing, from the last main-chain `usage` in the agent's transcript. The signal is `stop` at or past the common rules' context stop, or when the bundle has done the common rules' ticket cap.
+4. Answer the agent with `send_agent_prompt`, `notifyOnFinish` set: `next`, or `stop` when step 3 gave a stop. The bundle's last ticket needs no answer: its agent has finished.
+
+After `stop`, the bundle's unfinished tickets are handled as "Agent stops midway" in [`TROUBLESHOOTING.md`](TROUBLESHOOTING.md) says.
 
 A finished report whose artifacts are not there yet (no commits on the ticket's branch, no status change on the ticket) means the agent is still working: Paseo sends no notification for a turn an agent starts on its own after a background command (the turns and notifications table of [`PASEO-FACTS.md`](PASEO-FACTS.md), read below). Do not record the ticket as failed; create a heartbeat for its agent under the heartbeat contract, and check the report again once the agent has really stopped.
 
@@ -242,7 +253,7 @@ A finished report whose artifacts are not there yet (no commits on the ticket's 
 
 | Last activity entry | Do |
 |---|---|
-| A shell command (`[Shell]`, `[Powershell]`) or no tool call (text, a `[Task notification]`) | Hung: a foreground shell command cannot legitimately run that long. `kill_agent` it, never cancel and prompt it (a prompt only queues behind the stuck call), and hand its remainder to a new agent in the same workspace, as [`TROUBLESHOOTING.md`](TROUBLESHOOTING.md) "A ticket goes wrong while its agent is running" gives for `kill_agent`. Each ticket gets 2 such restarts per wave (ADR 0004's budget); a hang past them records the ticket as failed, hung past its budget: leave its agent as it is, restart nothing, and name the ticket in your end-of-turn message |
+| A shell command (`[Shell]`, `[Powershell]`) or no tool call (text, a `[Task notification]`) | Hung: a foreground shell command cannot legitimately run that long. `kill_agent` it, never cancel and prompt it (a prompt only queues behind the stuck call), and hand its remainder to a new agent in the same workspace, as [`TROUBLESHOOTING.md`](TROUBLESHOOTING.md) "A ticket goes wrong while its agent is running" gives for `kill_agent`. Each bundle gets 2 such restarts per wave (ADR 0004's budget, counted per bundle); a hang past them records the bundle's unfinished tickets as failed, hung past its budget: leave its agent as it is, restart nothing, name the tickets in your end-of-turn message, and run them as single tickets in the next wave |
 | A subagent (`[Agent]`, such as the `mattpocock-skills:code-review` reviewers) or another tool that can run long | Not hung: tell the user once, with the ticket and that entry, and let it run |
 
 `delete_heartbeat` once the agent has really stopped and its artifacts pass the checks above, and at the latest in step 8.
@@ -251,7 +262,7 @@ Agent stopped midway or report incomplete: see [`TROUBLESHOOTING.md`](TROUBLESHO
 
 Read [`PASEO-FACTS.md`](PASEO-FACTS.md) (verified Paseo behaviour, each row with its version): its turns and notifications table when a finish notification is missing, and its status calls and heartbeats table when a heartbeat stops ticking.
 
-**Done when**: every ticket in the wave has a checked report, or is recorded as failed with a reason.
+**Done when**: every ticket in the wave has a checked report, or is recorded as failed with a reason; every bundle that has finished has had its worktree and private resources checked once; every turn end but a bundle's last was answered `next` or `stop`.
 
 ## 6. Merge into the integration branch
 

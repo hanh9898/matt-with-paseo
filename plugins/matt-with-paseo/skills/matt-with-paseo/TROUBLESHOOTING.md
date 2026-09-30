@@ -6,7 +6,7 @@ A rating says how a run notices the symptom: `caught` when a check in a skill fi
 
 ## Agents
 
-**Agent stops midway** (session limit, API error, context exhausted). Check its branch and directory for what is really done. If the remainder is small, do it yourself. If it is large, wait for the limit to reset, then send it back to the same agent with `send_agent_prompt`: state which part is done and who did it, narrow the task to exactly the unfinished part, and restate the common rules. Send it to the same agent so it keeps the context it already read.
+**Agent stops midway** (session limit, API error, context exhausted, or a bundle ended by step 5's `stop`). Check its branch and directory for what is really done; for a bundle, the remainder is its unmerged tickets. If the remainder is small, do it yourself. If it is large, wait for the limit to reset, then send it back to the same agent with `send_agent_prompt`: state which part is done and who did it, narrow the task to exactly the unfinished part (each unmerged ticket, one after another), and restate the common rules. Past the bundle's restart budget of 2 (step 5's heartbeat contract), run its unfinished tickets as single tickets in the next wave instead. Send it to the same agent so it keeps the context it already read.
 
 Rating: caught — check: `plugins/matt-with-paseo/skills/matt-with-paseo/SKILL.md`, phrase "Missing means the agent did not finish its flow".
 
@@ -28,7 +28,7 @@ Rating: nothing yet.
 
 Rating: nothing yet.
 
-**A tool call hangs and the agent goes quiet** (it stays `running`, its activity count unchanged for three ticks). Judge and act on it exactly as the wave skill's heartbeat contract (step 5) says for a ticket agent, or the stream skill's "Supervise one-for-one" and "Replace a stream agent" say for a stream agent. Either way, never cancel and re-prompt a hung agent: a prompt only queues behind the stuck call (the `cancel_agent` row of the turns and notifications table in [`PASEO-FACTS.md`](PASEO-FACTS.md)). Kill and replace a hung ticket agent within the contract's restart budget; a hung stream agent is not killed while its ticket agents still run, since `kill_agent` may take them along too, and its restart waits until none does. The common rules' rule to start any command that may take more than two minutes in the background keeps an agent off a shell command that hangs.
+**A tool call hangs and the agent goes quiet** (it stays `running`, its activity count unchanged for three ticks). Judge and act on it exactly as the wave skill's heartbeat contract (step 5) says for a ticket agent, or the stream skill's "Supervise one-for-one" and "Replace a stream agent" say for a stream agent. Either way, never cancel and re-prompt a hung agent: a prompt only queues behind the stuck call (the `cancel_agent` row of the turns and notifications table in [`PASEO-FACTS.md`](PASEO-FACTS.md)). Kill and replace a hung ticket agent within the contract's restart budget, 2 per bundle; a hung stream agent is not killed while its ticket agents still run, since `kill_agent` may take them along too, and its restart waits until none does. The common rules' rule to start any command that may take more than two minutes in the background keeps an agent off a shell command that hangs.
 
 Rating: caught — check: `plugins/matt-with-paseo/skills/matt-with-paseo/SKILL.md`, phrase "whose count has not moved for three ticks".
 

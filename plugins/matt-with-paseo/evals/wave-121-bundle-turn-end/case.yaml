@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: wave-121-bundle-turn-end
+description: A stream agent runs the wave skill under `stream menus quota 4`. Four bundle agents each end a turn in the same moment, each with one ticket's report that passed step 5. At each turn end, step 5 orders four moves (check, merge the ticket by its SHA, read the stop signals, answer `next` or `stop`); the answer follows the context read from `lastUsage` (or, when that field is missing, from the transcript's last main-chain `usage`), the context stop and the ticket cap. The Jev path is not graded.
+tags: [bundle, turn-end, step-5, stream, wave]
+context:
+  scaffold_script: fixture.sh
