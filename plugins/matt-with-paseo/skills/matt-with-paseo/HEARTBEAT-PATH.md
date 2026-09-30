@@ -1,6 +1,6 @@
 # The heartbeat path of step 5
 
-Read this file only when the run takes the heartbeat path (the wave skill's words block; step 1 records which path the run takes), or when step 5 sends you here for one agent: an agent an earlier session spawned, or one whose finished report has no artifacts yet. On the message path a ticket agent this session spawned needs no heartbeat.
+Read this file only when the run takes the heartbeat path (the wave skill's words block; step 1 records which path the run takes), or when step 5 sends you here for one agent: an agent an earlier session spawned, one whose finished report has no artifacts yet, or one a `Stall suspected` message names (read the hung-agent table of section 1 at once, not after three ticks). On the message path a ticket agent this session spawned needs no heartbeat.
 
 ## 1. Create the heartbeat
 

@@ -32,7 +32,7 @@ Words used throughout:
 - **Hold**: a run with `stream` told `hold` spawns nothing new, rolling start included, while its running agents carry on; `release` lifts it (ADR 0006).
 - **User's language**: the language the user writes to you in; your own text to the user (a stage, a brief, a question, a status) follows it, and text you relay verbatim stays as its author wrote it; step 4 says what stays English.
 - **Message path**: supervision from the plugin's messages, taken when step 1 detects the plugin with the required contract version. It creates no heartbeat for the agents the plugin relays (step 5).
-- **Heartbeat path**: supervision from finish notifications and a heartbeat, taken in every other case, and the only path before the plugin existed. Its rules sit in [`HEARTBEAT-PATH.md`](HEARTBEAT-PATH.md), read only when the run takes it.
+- **Heartbeat path**: supervision from finish notifications and a heartbeat, taken in every other case, and the only path before the plugin existed. Its rules sit in [`HEARTBEAT-PATH.md`](HEARTBEAT-PATH.md), read only when the run takes it, or when step 5 sends an agent there (a `Stall suspected` message among them).
 
 Requires plugin contract: 1
 
@@ -302,7 +302,7 @@ After `stop`, the bundle's unfinished tickets are handled as "Agent stops midway
 
 A finished report whose artifacts are not there yet (no commits on the ticket's branch, no status change on the ticket) means the agent is still working: Paseo sends no notification for a turn an agent starts on its own after a background command (the turns and notifications table of [`PASEO-FACTS.md`](PASEO-FACTS.md), read below). Do not record the ticket as failed. On the message path, wait for that agent's next `Turn ended` message; on the heartbeat path, create a heartbeat for its agent under [`HEARTBEAT-PATH.md`](HEARTBEAT-PATH.md). Check the report again once the agent has really stopped.
 
-**The heartbeat path** lives in [`HEARTBEAT-PATH.md`](HEARTBEAT-PATH.md): its heartbeat contract, its tick checks, its rule for a hung agent and its delete rule. Read it only when this run takes that path, or for the agents the table above sends there.
+**The heartbeat path** lives in [`HEARTBEAT-PATH.md`](HEARTBEAT-PATH.md): its heartbeat contract, its tick checks, its rule for a hung agent and its delete rule. Read it only when this run takes that path, for the agents the table above sends there, or for the agent a `Stall suspected` message names, whose hung-agent table it holds.
 
 Agent stopped midway or report incomplete: see [`TROUBLESHOOTING.md`](TROUBLESHOOTING.md).
 
