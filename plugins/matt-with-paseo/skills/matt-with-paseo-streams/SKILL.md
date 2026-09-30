@@ -497,10 +497,22 @@ Every running stream stays under one reconcile loop (ADR 0004). A **tick** compa
 
 A tick runs:
 
-- on each message the plugin sends about a stream agent (the message path): `Turn ended` (step 4 is then the action of its gap), `Permission pending` (step 4 gathers it into the next question round) and `Agent archived`; each carries a `Next:` line, the plugin's suggestion, and the judgement stays with this skill (ADR 0009). The plugin relays a stream agent and its ticket agents to the agent that spawned them (contract v1, "Message types"), so a ticket agent's messages reach the stream agent, never you;
+- on each message the plugin sends about a stream agent (the message path), by its lead in the table below; each carries a `Next:` line, the plugin's suggestion, and the judgement stays with this skill (ADR 0009). The plugin relays a stream agent and its ticket agents to the agent that spawned them (contract v1, "Message types"), so a ticket agent's messages reach the stream agent, never you;
 - on every heartbeat prompt (the heartbeat path);
 - after every finish notification from a stream agent (step 4 is then the action of its gap);
 - first thing in any session opened in the control folder.
+
+On the message path, the plugin sends you one text for each event of a stream agent and holds it while your own turn runs: the messages held arrive as one text when your turn ends, the bodies in order, then one `Next:` line (contract v1, "Message types"). The plugin is a trusted Paseo plugin on the daemon, so a permission it answers under the delegation table resolves before you read it. Each body starts with a lead that says what to do:
+
+| Lead | Do |
+|---|---|
+| `Turn ended` | Step 4 on that stream agent's end-of-turn message: this is the action of the gap the tick closes |
+| `Permission pending`, a question | Read the request with `list_pending_permissions`, and treat it as settled when it is no longer listed. Otherwise step 4 gathers it into the next question round, or answers it from the delegation table as "Delegation: what you may answer for the user" says |
+| `Permission pending`, a tool | Read the request with `list_pending_permissions`, and treat it as settled when it is no longer listed. Otherwise answer it with `respond_to_permission`, or leave it to the user when the decision is theirs |
+| `Agent archived` | Nothing more when this skill archived the agent ("Replace a stream agent", the close-out of a merged stream); otherwise check the stream's status on the tracker before counting its work done, and let the gone agent be judged by "Supervise one-for-one" below |
+| `Appetite passed` | Every question of that stream now reaches the user, which "Delegation: what you may answer for the user" reads as "once the plugin reports the appetite passed". Any **Hold** stays this skill's decision: the plugin cancels nothing and stops no agent |
+| `Question budget spent` | Information only: it never widens delegation, and questions keep reaching the user; the delegation table alone says what you may decide |
+| Any other lead | Read its `Next:` line and judge the moves under this skill's rules |
 
 On the message path, this session creates no heartbeat for a stream agent it spawned. On the heartbeat path, [`HEARTBEAT-PATH.md`](HEARTBEAT-PATH.md) says how the heartbeat is kept and holds the three rows of the table below that the plugin's messages replace (its section 3): read it only then, or for a stream agent this session did not spawn.
 
