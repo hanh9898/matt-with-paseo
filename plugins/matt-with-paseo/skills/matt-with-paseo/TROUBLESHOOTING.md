@@ -6,7 +6,7 @@ A rating says how a run notices the symptom: `caught` when a check in a skill fi
 
 ## Agents
 
-**Agent stops midway** (session limit, API error, context exhausted, or a bundle ended by step 5's `stop`). Check its branch and directory for what is really done; for a bundle, the remainder is its unmerged tickets. If the remainder is small, do it yourself. If it is large, wait for the limit to reset, then send it back to the same agent with `send_agent_prompt`: state which part is done and who did it, narrow the task to exactly the unfinished part (each unmerged ticket, one after another), and restate the common rules. Past the bundle's restart budget of 2 (step 5's heartbeat contract), run its unfinished tickets as single tickets in the next wave instead. Send it to the same agent so it keeps the context it already read. A bundle ended by `stop` is reviewed by a fresh review agent (step 4), not by the stopped agent.
+**Agent stops midway** (session limit, API error, context exhausted, or a bundle ended by step 5's `stop`). Check its branch and directory for what is really done; for a bundle, the remainder is its unmerged tickets. If the remainder is small, do it yourself. If it is large, wait for the limit to reset, then send it back to the same agent with `send_agent_prompt`: state which part is done and who did it, narrow the task to exactly the unfinished part (each unmerged ticket, one after another), and restate the common rules. Past the bundle's restart budget of 2 (the heartbeat path, `HEARTBEAT-PATH.md`), run its unfinished tickets as single tickets in the next wave instead. Send it to the same agent so it keeps the context it already read. A bundle ended by `stop` is reviewed by a fresh review agent (step 4), not by the stopped agent.
 
 Rating: caught — check: `plugins/matt-with-paseo/skills/matt-with-paseo/SKILL.md`, phrase "Missing means the agent did not finish its flow".
 
@@ -22,15 +22,15 @@ Rating: nothing yet.
 
 | Control | What it does | Use it when |
 |---|---|---|
-| `cancel_agent` | Stops the current turn; the agent and its context stay | The agent can still do the ticket: redirect it with `send_agent_prompt`, narrowing the task as in "Agent stops midway". Never for a hung agent, which step 5's heartbeat contract kills |
+| `cancel_agent` | Stops the current turn; the agent and its context stay | The agent can still do the ticket: redirect it with `send_agent_prompt`, narrowing the task as in "Agent stops midway". Never for a hung agent, which the heartbeat path (`HEARTBEAT-PATH.md`) kills |
 | `kill_agent` | Ends the agent's session for good; its workspace and worktree stay | The session itself is broken (errors on every turn, context unusable): handle the remainder as in "Agent stops midway", sent to a new agent spawned in the same workspace per step 4 instead of the same one |
 | `archive_agent` | Interrupts the agent if running and removes it from the active list; the worktree stays | Only in step 8 cleanup, after its three checks. Archiving the workspace (`archive_workspace`) is what deletes the worktree |
 
 Rating: nothing yet.
 
-**A tool call hangs and the agent goes quiet** (it stays `running`, its activity count unchanged for three ticks). Judge and act on it exactly as the wave skill's heartbeat contract (step 5) says for a ticket agent, or the stream skill's "Supervise one-for-one" and "Replace a stream agent" say for a stream agent. Either way, never cancel and re-prompt a hung agent: a prompt only queues behind the stuck call (the `cancel_agent` row of the turns and notifications table in [`PASEO-FACTS.md`](PASEO-FACTS.md)). Kill and replace a hung ticket agent within the contract's restart budget, 2 per bundle; a hung stream agent is not killed while its ticket agents still run, since `kill_agent` may take them along too, and its restart waits until none does. The common rules' rule to start any command that may take more than two minutes in the background keeps an agent off a shell command that hangs.
+**A tool call hangs and the agent goes quiet** (it stays `running`, its activity count unchanged for three ticks). Judge and act on it exactly as the wave skill's heartbeat path (`HEARTBEAT-PATH.md`) says for a ticket agent, or the stream skill's "Supervise one-for-one" and "Replace a stream agent" say for a stream agent. Either way, never cancel and re-prompt a hung agent: a prompt only queues behind the stuck call (the `cancel_agent` row of the turns and notifications table in [`PASEO-FACTS.md`](PASEO-FACTS.md)). Kill and replace a hung ticket agent within the contract's restart budget, 2 per bundle; a hung stream agent is not killed while its ticket agents still run, since `kill_agent` may take them along too, and its restart waits until none does. The common rules' rule to start any command that may take more than two minutes in the background keeps an agent off a shell command that hangs.
 
-Rating: caught — check: `plugins/matt-with-paseo/skills/matt-with-paseo/SKILL.md`, phrase "whose count has not moved for three ticks".
+Rating: caught — check: `plugins/matt-with-paseo/skills/matt-with-paseo/HEARTBEAT-PATH.md`, phrase "whose count has not moved for three ticks".
 
 **`paseo ls` lists an agent carrying a `stream` label this run does not have.** Another run in the same repository uses the same wave number under its own `stream` slug; a run without `stream` does not filter it out. It has no row in this run's `## Wave agents` table and its branch lacks this run's ticket branch shape ("Names this run writes" in the skill): it is not an unlogged agent of this wave. Never add its row, prompt it or archive it.
 
@@ -44,9 +44,9 @@ Rating: nothing yet.
 
 Rating: caught — check: `plugins/matt-with-paseo/skills/matt-with-paseo/SKILL.md`, phrase "may still have made the worktree, so read what git shows before calling again".
 
-**Agent waits on a question-type permission** (it asked the user a question, and `list_pending_permissions` shows the request). Answer with `respond_to_permission`, `behavior: "allow"`, and an `updatedInput` holding the request's `questions` plus an `answers` map from each question's text to the chosen option's label, for example `answers: { "Which database?": "Postgres" }` (the first row of the permissions and modes table in [`PASEO-FACTS.md`](PASEO-FACTS.md) says why). The stream skill's tick finds a stream agent's request; the wave skill's heartbeat tick (step 5) finds a ticket agent's.
+**Agent waits on a question-type permission** (it asked the user a question, and `list_pending_permissions` shows the request). Answer with `respond_to_permission`, `behavior: "allow"`, and an `updatedInput` holding the request's `questions` plus an `answers` map from each question's text to the chosen option's label, for example `answers: { "Which database?": "Postgres" }` (the first row of the permissions and modes table in [`PASEO-FACTS.md`](PASEO-FACTS.md) says why). The stream skill's tick finds a stream agent's request; the wave skill's heartbeat path (`HEARTBEAT-PATH.md`) finds a ticket agent's.
 
-Rating: caught — check: `plugins/matt-with-paseo/skills/matt-with-paseo-streams/SKILL.md`, phrase "has a question-type permission in `list_pending_permissions` not yet shown to the user".
+Rating: caught — check: `plugins/matt-with-paseo/skills/matt-with-paseo-streams/HEARTBEAT-PATH.md`, phrase "has a question-type permission in `list_pending_permissions` not yet shown to the user".
 
 ## Merging
 

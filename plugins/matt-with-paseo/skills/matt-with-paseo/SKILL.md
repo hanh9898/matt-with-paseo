@@ -31,6 +31,10 @@ Words used throughout:
 - **Brief**: what a checkpoint shows the user: a tight, decision-ready summary of what was produced and why, with a link to the asset itself, never the raw output.
 - **Hold**: a run with `stream` told `hold` spawns nothing new, rolling start included, while its running agents carry on; `release` lifts it (ADR 0006).
 - **User's language**: the language the user writes to you in; your own text to the user (a stage, a brief, a question, a status) follows it, and text you relay verbatim stays as its author wrote it; step 4 says what stays English.
+- **Message path**: supervision from the plugin's messages, taken when step 1 detects the plugin with the required contract version. It creates no heartbeat for the agents the plugin relays (step 5).
+- **Heartbeat path**: supervision from finish notifications and a heartbeat, taken in every other case, and the only path before the plugin existed. Its rules sit in the file step 5 points to, read only when the run takes it, or when step 5 sends an agent there (a `Stall suspected` message among them).
+
+Requires plugin contract: 1
 
 ## Names this run writes
 
@@ -39,6 +43,7 @@ This table is the only place the naming rule lives; the steps point here. With `
 | Name | Without `stream` | With `stream` |
 |---|---|---|
 | Ticket agent labels (step 4) | `labels: { wave: "<N>", bundle: "<NN>", tickets: "<NN>,<NN>" }` (`bundle` is the bundle's first ticket; `tickets` lists every ticket of the bundle in order) | `labels: { stream: "<stream>", wave: "<N>", bundle: "<NN>", tickets: "<NN>,<NN>" }` |
+| Ticket agent labels and title on the message path (step 4) | `labels: { wave: "<N>", ticket: "<NN>" }`, title `[Wave N] <NN> <ticket name>`: the shape contract v1 relays. An agent so labelled is a bundle of one; step 0 reads its `ticket` label as it reads `tickets` | `labels: { stream: "<stream>", wave: "<N>", ticket: "<NN>" }`, the same title |
 | Review agent labels (step 7) | `labels: { wave: "<N>" }` | `labels: { stream: "<stream>", wave: "<N>" }` |
 | Label filter of every `paseo ls` (steps 0 and 8) | the `wave` label only | the same, plus `--label stream=<stream>` |
 | Ticket branch (step 4; a bundle works on its first ticket's ticket branch, `<NN>` and `<slug>` being that ticket's) | `wave<N>/<NN>-<slug>` | `<stream>/wave<N>/<NN>-<slug>` |
@@ -58,7 +63,7 @@ With `stream`, the run takes three prompts at any time, from the stream skill or
 
 Ownership: when a `stream` run must settle who decides or may do something, read the table in [`OWNERSHIP.md`](../matt-with-paseo-streams/OWNERSHIP.md) (each role's ownership, its lines of speech and its never-items).
 
-With `stream`, the run's work ends on its integration branch: shipping belongs to the stream skill (`/matt-with-paseo:matt-with-paseo-streams`). The run pushes nothing, opens no pull request, and creates no heartbeat outside step 5's heartbeat contract. Asked to ship, by anyone, answer that shipping belongs to the stream skill, and carry on with the run.
+With `stream`, the run's work ends on its integration branch: shipping belongs to the stream skill (`/matt-with-paseo:matt-with-paseo-streams`). The run pushes nothing, opens no pull request, and creates no heartbeat outside the heartbeat path's contract. Asked to ship, by anyone, answer that shipping belongs to the stream skill, and carry on with the run.
 
 ## 0. Locate the state and suggest the next step
 
@@ -127,7 +132,15 @@ Read the triage label file the `## Agent skills` section points to (its triage l
 
 Read the repo's evidence standards file when it declares one: an `## Evidence standards` section of `CLAUDE.md`/`AGENTS.md`, outside the `## Agent skills` block, pointing to a file of free prose on how this repo proves a change works. Fill the template's `<path to the evidence standards file, or "none declared">` placeholder with its path in step 3. When the section or its file is absent, write "none declared" there and continue; nothing else in the wave changes.
 
-**Done when**: you have stated six things: the ticket folder, how status and dependencies are recorded, the label string of each triage role above, the integration branch, the profile the agents will use (or the model and permission mode the user gave), and the evidence standards file's path or that the repo declares none; and, when given, the stream slug and the quota.
+Detect the plugin `matt-with-paseo-plugin` by the rule of the "Plugin detection" section of its [contract](https://github.com/hanh9898/matt-with-paseo-plugin/blob/main/docs/contract.md), and by no other signal: run `paseo plugin ls`. The contract version the plugin reports is the one its `CHANGELOG.md` entry gives for the release `paseo plugin ls` shows. The plugin is optional: a wave runs without it.
+
+| `paseo plugin ls` shows | The run takes | Tell the user |
+|---|---|---|
+| The Paseo id `matt-with-paseo` with status `running`, and a contract version equal to the `Requires plugin contract` line of the words block | The message path (step 5) | Nothing |
+| Anything else: no such line, another status, the command failing, or a release whose contract version cannot be read | The heartbeat path (step 5), as it ran before the plugin existed | Nothing |
+| The Paseo id `matt-with-paseo` with status `running`, and another contract version | The heartbeat path | Once: the version the plugin reports, the version this skill requires, and that supervision runs by heartbeat. With `stream`, nothing: the stream skill has told the user |
+
+**Done when**: you have stated seven things: the ticket folder, how status and dependencies are recorded, the label string of each triage role above, the integration branch, the profile the agents will use (or the model and permission mode the user gave), and the evidence standards file's path or that the repo declares none, and the path the plugin detection took; and, when given, the stream slug and the quota.
 
 ## 2. Build the graph and split into waves
 
@@ -158,7 +171,7 @@ Then plan the **bundles** (ADR 0010), chain bundles first. A ticket that joins n
 | Independent tickets that write the same place in a shared file | Only while more bundles (ticket agents) can run now than the quota allows, counted once the chain bundles are formed; without `quota`, never |
 | A symptom ticket | Never: its red-before loop needs its own base commit, so it cuts a chain |
 
-A bundle holds at most the ticket cap of the common rules' parameters section (step 3). A bundle never replaces the false-edge proposal above: a false edge is still proposed for removal.
+A bundle holds at most the ticket cap of the common rules' parameters section (step 3). A bundle never replaces the false-edge proposal above: a false edge is still proposed for removal. On the message path every ticket is a bundle of one, whatever the table says: the plugin relays only agents labelled `wave` and `ticket` (step 4), so plan no bundle of several tickets.
 
 With `quota <N>`, the upcoming wave starts at most N ticket agents, one per bundle (see "Quota" in step 4). When more can run now, propose the N bundles to start first, those that unblock the most tickets first, and list the rest as waiting on the quota: they belong to this wave and join it by rolling start (step 6). Propose those tickets as bundles too, by the table above. A ticket waiting on the quota is not lost width.
 
@@ -188,6 +201,8 @@ Write the `## Wave agents` heading and the table header row (bundle's tickets, a
 
 **Quota.** With `quota <N>` or a **Hold**, this rule gates every ticket agent spawn in any step: the spawns below, a spawn from step 0's recovery sweep, rolling start (step 6), a new agent replacing a broken one ([`TROUBLESHOOTING.md`](TROUBLESHOOTING.md)). A ticket agent counts from its spawn until its bundle's last ticket passes step 5 or it is recorded as stopped or failed; a ticket agent idle between tickets, waiting for `next` or `stop`, still counts, whatever `get_agent_status` shows in between, since a turn it starts on its own sends no notification. Spawn only while no hold stands and, with a quota, fewer than N ticket agents count; otherwise the ticket waits, and rolling start picks it up. Step 7 sends a finding back to a ticket agent under the same rule: that agent counts again until its fix is merged. The review agent and the cross-ticket fix agent of step 7 are not ticket agents; they start only once every ticket of the wave is merged and no hold stands, so they run in the slots its ticket agents freed: counting them with every ticket agent that counts again, step 7 runs at most N agents at once.
 
+**Labels and title.** Give each ticket agent the labels and the title of the row of "Names this run writes" for the path step 1 recorded, and only that row's: the table alone states their shape. On the message path that row is a bundle of one, so the plugin relays it; on the heartbeat path bundles stay as ADR 0010 says.
+
 For each bundle in the wave, within the quota (one workspace, one agent and one quota slot per bundle):
 
 1. `create_workspace` with `projectId` set to the repository's Paseo project id, `isolation: "worktree"`, `mode: "branch-off"`, `baseBranch` set to the integration branch, and `branchName` shaped as the ticket branch in "Names this run writes" (the bundle's first ticket's). The project id is the `projectId` of the `paseo project ls --json` entry whose `path` is the repository's main checkout (the first line of `git worktree list`); read it once per wave. When no entry has that path, Paseo does not know the repository yet: `paseo project create <main checkout>` registers it, and its id is the one to pass. A call that times out may still have made the worktree, so read what git shows before calling again:
@@ -199,7 +214,7 @@ For each bundle in the wave, within the quota (one workspace, one agent and one 
    | Neither | Call again as above |
 
    Check that `git -C <worktree> rev-parse HEAD` equals the base commit; if the integration branch stays still while you spawn, every worktree in the wave shares one base. Paseo's MCP tools and CLI cannot label a workspace (the workspaces and worktrees table of [`PASEO-FACTS.md`](PASEO-FACTS.md), read below), so the workspace itself stays unlabelled and is found through the labelled agent that runs in it.
-2. `create_agent` with `workspaceId` set to that workspace's id (without it, the agent lands in this session's own workspace), titled `[Wave N] [<NN>+<NN>] <first ticket name>` (`[Wave N] <NN> <ticket name>` for a bundle of one), with the ticket agent labels of "Names this run writes"; the labels, not the title, are how step 0 finds the wave's agents again. The prompt holds exactly three things: the **absolute** path to the common rules in the integration branch's checkout (the file is the wave's live log and is not in the worktree), the tickets in order, each with the path to its ticket file and its own flow row, and the private resources (database name, port when no service is declared, volume, temp directory; a distinct set per agent, named per "Names this run writes"). Write that prompt in English, whatever language the user writes in, and even when the user asks for another language. Every other prompt you send an agent is English too: a finding sent back, the review agent's and fix agent's prompts (step 7), and the common rules (step 3). The agents' reports stay English. Your text to the user stays in the user's language.
+2. `create_agent` with `workspaceId` set to that workspace's id (without it, the agent lands in this session's own workspace), titled `[Wave N] [<NN>+<NN>] <first ticket name>` (`[Wave N] <NN> <ticket name>` for a bundle of one), with the ticket agent labels of "Labels and title" above; the labels, not the title, are how step 0 finds the wave's agents again. The prompt holds exactly three things: the **absolute** path to the common rules in the integration branch's checkout (the file is the wave's live log and is not in the worktree), the tickets in order, each with the path to its ticket file and its own flow row, and the private resources (database name, port when no service is declared, volume, temp directory; a distinct set per agent, named per "Names this run writes"). Write that prompt in English, whatever language the user writes in, and even when the user asks for another language. Every other prompt you send an agent is English too: a finding sent back, the review agent's and fix agent's prompts (step 7), and the common rules (step 3). The agents' reports stay English. Your text to the user stays in the user's language.
 
 Before writing the private resources into the prompt, read the target repo's `paseo.json` in the integration branch's checkout, and never create or edit it: declared `worktree.setup` means Paseo runs that setup in each new worktree, so the prompt carries no environment setup; declared services (scripts with `"type": "service"`) mean Paseo gives each worktree its own port, so no port goes in the private resources; a service with a fixed `port` breaks this (see the README), so tell the user before spawning.
 
@@ -239,7 +254,27 @@ Leave `notifyOnFinish` at its default. Each agent reports when it finishes; betw
 
 ## 5. Check each report
 
-Read each agent's progress and report with `get_agent_activity`, not by reconstructing them from commits and ticket comments; this also covers reports from agents an earlier session spawned, which are no longer in the conversation. If this session spawned the agents, finish notifications arrive on their own. A session reopened mid-wave does not receive notifications from agents an earlier session spawned: create a heartbeat for them under the heartbeat contract below.
+Read each agent's progress and report with `get_agent_activity`, not by reconstructing them from commits and ticket comments; this also covers reports from agents an earlier session spawned, which are no longer in the conversation. The path step 1 recorded says how a turn end reaches you:
+
+| Path | A ticket agent's turn end reaches you as | Heartbeat |
+|---|---|---|
+| Message path | the plugin's `Turn ended` message (below) | None for an agent this session spawned. For an agent an earlier session spawned, one under the heartbeat path: the plugin sends its messages to the agent's parent, which a reopened session may not be |
+| Heartbeat path | the agent's finish notification, when this session spawned it | One under the heartbeat path for an agent an earlier session spawned, which sends this session no notification, and for an agent whose finished report has no artifacts yet |
+
+**On the message path**, the plugin sends you one text for each event of a ticket agent, and holds it while your own turn runs: the messages held arrive as one text when your turn ends, the bodies in order, then one `Next:` line (contract v1, "Message types"). Each body starts with a lead that says what to do:
+
+| Lead | Do |
+|---|---|
+| `Turn ended` | Run "At each turn end" below for the ticket it names. Outcome `failed` or `canceled`: as "Agent stops midway" in [`TROUBLESHOOTING.md`](TROUBLESHOOTING.md) says |
+| `Permission pending` | Read the request with `list_pending_permissions`, and treat it as settled when it is no longer listed. A question-type one goes to the user at a Checkpoint and is answered as [`TROUBLESHOOTING.md`](TROUBLESHOOTING.md)'s "Agent waits on a question-type permission" says; any other kind is answered, or left to the user, as its `Next:` line offers |
+| `Agent created` | Nothing: step 4 wrote the agent's row when it spawned it |
+| `Agent archived` | Finish step 8's clean-up of that ticket when you archived the agent; otherwise check the ticket's status before counting its work done |
+| `Gate cap passed` | Spawn no further ticket agent until fewer than the cap it names run, whatever the quota says (step 4) |
+| `Human words` | The user typed into a ticket agent's chat; the message carries a count and message ids, never the words. Read those messages with `get_agent_activity` for the agent it names, then comment on the ticket it names: `Human words: <n> messages typed to agent <agent> (message <ids>). changed the plan: yes` or `no`, with one line on why. That comment is the record, not the agent's own report; step 8's summary reads it |
+| `Stall suspected` | Judge the agent it names now, not after three ticks, since the sensor has flagged it: read its recent activity with `get_agent_activity` and take its last entry through the heartbeat path's hung-agent table, which gives the verdict for a shell command or no tool call and for a subagent or another long tool, and the restart budget. An agent hung on a shell command is never prompted to resume, whatever the `Next:` line offers: never prompt it to resume, since a prompt only queues behind the stuck call. The agent has stopped with its work unfinished: prompt it to resume, or record the ticket as stalled with the reason |
+| Any other lead | Read its `Next:` line and judge the moves under this skill's rules |
+
+The `Next:` line is the plugin's suggestion; the judgement stays with this skill (ADR 0009). The plugin sends a message only for an agent labelled `wave` and `ticket`, so an agent it does not name reaches you as its finish notification, as on the heartbeat path.
 
 Each time a ticket agent ends a turn with a ticket's report (a bundle of one ends its turn once), check that ticket's real artifacts, not the report's words:
 
@@ -265,20 +300,13 @@ Each time a ticket agent ends a turn with a ticket's report (a bundle of one end
 
 After `stop`, the bundle's unfinished tickets are handled as "Agent stops midway" in [`TROUBLESHOOTING.md`](TROUBLESHOOTING.md) says.
 
-A finished report whose artifacts are not there yet (no commits on the ticket's branch, no status change on the ticket) means the agent is still working: Paseo sends no notification for a turn an agent starts on its own after a background command (the turns and notifications table of [`PASEO-FACTS.md`](PASEO-FACTS.md), read below). Do not record the ticket as failed; create a heartbeat for its agent under the heartbeat contract, and check the report again once the agent has really stopped.
+A finished report whose artifacts are not there yet (no commits on the ticket's branch, no status change on the ticket) means the agent is still working: Paseo sends no notification for a turn an agent starts on its own after a background command (the turns and notifications table of [`PASEO-FACTS.md`](PASEO-FACTS.md), read below). Do not record the ticket as failed. On the message path, wait for that agent's next `Turn ended` message; on the heartbeat path, create a heartbeat for its agent under the heartbeat path. Check the report again once the agent has really stopped.
 
-**Heartbeat contract**, for both cases above: `create_heartbeat` always with `expiresIn` set; the cadence is yours (for example every 15 minutes), always capped by an expiry, so no heartbeat outlives its wave. Each tick checks, for every agent it watches, `get_agent_status`, the commits on the ticket's branch (`git log <branch>`), uncommitted files in its worktree (`git -C <worktree> status --porcelain`), the ticket's comments, its pending permissions (`list_pending_permissions`: a question-type one goes to the user at a Checkpoint and is answered as [`TROUBLESHOOTING.md`](TROUBLESHOOTING.md)'s "Agent waits on a question-type permission" says), and its activity count (`updateCount` in `get_agent_activity`), kept from tick to tick in this session. A ticket agent still `running` whose count has not moved for three ticks is judged by its last activity entry:
-
-| Last activity entry | Do |
-|---|---|
-| A shell command (`[Shell]`, `[Powershell]`) or no tool call (text, a `[Task notification]`) | Hung: a foreground shell command cannot legitimately run that long. `kill_agent` it, never cancel and prompt it (a prompt only queues behind the stuck call), and hand its remainder to a new agent in the same workspace, as [`TROUBLESHOOTING.md`](TROUBLESHOOTING.md) "A ticket goes wrong while its agent is running" gives for `kill_agent`. Each bundle gets 2 such restarts per wave (ADR 0004's budget, counted per bundle); a hang past them records the bundle's unfinished tickets as failed, hung past its budget: leave its agent as it is, restart nothing, name the tickets in your end-of-turn message, and run them as single tickets in the next wave |
-| A subagent (`[Agent]`, such as the `mattpocock-skills:code-review` reviewers) or another tool that can run long | Not hung: tell the user once, with the ticket and that entry, and let it run |
-
-`delete_heartbeat` once the agent has really stopped and its artifacts pass the checks above, and at the latest in step 8.
+**The heartbeat path** lives in [`HEARTBEAT-PATH.md`](HEARTBEAT-PATH.md): its heartbeat contract, its tick checks, its rule for a hung agent and its delete rule. Read it only when this run takes that path, for the agents the table above sends there, or for the agent a `Stall suspected` message names, whose hung-agent table it holds.
 
 Agent stopped midway or report incomplete: see [`TROUBLESHOOTING.md`](TROUBLESHOOTING.md).
 
-Read [`PASEO-FACTS.md`](PASEO-FACTS.md) (verified Paseo behaviour, each row with its version): its turns and notifications table when a finish notification is missing, and its status calls and heartbeats table when a heartbeat stops ticking.
+Read [`PASEO-FACTS.md`](PASEO-FACTS.md) (verified Paseo behaviour, each row with its version): its turns and notifications table when a finish notification is missing.
 
 **Done when**: every ticket in the wave has a checked report, or is recorded as failed with a reason; every bundle that has finished has had its worktree and private resources checked once; every turn end but a bundle's last was answered `next` or `stop`.
 
@@ -334,7 +362,7 @@ With all three passed, `archive_agent`, `archive_workspace`, clean up the non-Pa
 
 Then commit the wave file on the integration branch, alone in its commit (`git add <wave file>`, `git commit -m "docs: wave <N> log"`). Until this point it stays uncommitted in this checkout, so no worktree of the wave carries a copy of it (step 4).
 
-Before returning to step 2, run step 1 again, reading its files and `list_profiles` afresh rather than from what this session read before. Compare with what step 1 stated last time (its six things, the profile's `notes` included): a change to the tracker configuration, the triage label file, a profile or the evidence standards file is named to the user in step 2's presentation, and the next wave follows the new version. For the tracked files, `git diff <this wave's base commit> HEAD -- <their paths>` shows the change. Read [`COMMON-RULES-TEMPLATE.md`](COMMON-RULES-TEMPLATE.md) again too: a section it has and this wave's rules lack, or the reverse (the log sections `## Checkpoints`, `## Wave agents` and `## Review` aside), is named the same way, and step 3 writes the next wave's rules from this reading.
+Before returning to step 2, run step 1 again, reading its files and `list_profiles` afresh rather than from what this session read before. Compare with what step 1 stated last time (its seven things, the profile's `notes` included): a change to the tracker configuration, the triage label file, a profile, the evidence standards file or the path the plugin detection took is named to the user in step 2's presentation, and the next wave follows the new version. For the tracked files, `git diff <this wave's base commit> HEAD -- <their paths>` shows the change. Read [`COMMON-RULES-TEMPLATE.md`](COMMON-RULES-TEMPLATE.md) again too: a section it has and this wave's rules lack, or the reverse (the log sections `## Checkpoints`, `## Wave agents` and `## Review` aside), is named the same way, and step 3 writes the next wave's rules from this reading.
 
 Learning across waves is Matt's `/mattpocock-skills:retro` (the user invokes it; agents cannot). Add one line naming it to the message that follows this step, step 2's presentation or the summary below, with the two rules that bind the change a retrospective proposes:
 
@@ -345,4 +373,12 @@ Learning across waves is Matt's `/mattpocock-skills:retro` (the user invokes it;
 
 Return to step 2 with the new base commit. When no open ticket can join a wave, report a summary: which tickets are `resolved`, which wait on a human, and which remain open and what blocks them. End it with the counts of step 7's marks, added up over the `## Review` and `## Checkpoints` of every wave file of the run: review runs and how many marked `changed the work: yes`; Checkpoints, how many marked `changed the work: yes` and how many marked `took the recommendation: yes`. A count of zero reads `0 of 0`, and a mark missing from a wave file is reported as missing, never counted as `no`.
 
-**Done when**: every row in the table is checked as cleaned or has a reason for keeping it that the user has been told, no agent or workspace outside the table was archived, every agent the closing `paseo ls` scan listed has a row and was named to the user, no heartbeat of the wave remains, the wave file is committed, step 1 has run again, and the next wave is open or the summary, with the counts, is reported, the message that follows naming `/mattpocock-skills:retro`.
+The summary also carries one `Human words:` part, read from the tickets' `Human words:` comments (step 5), not from memory:
+
+| Case | The part reads |
+|---|---|
+| Message path, at least one such comment | One line for each ticket so commented: the ticket, the number of messages, and its `changed the plan` mark |
+| Message path, no such comment | `Human words: none` |
+| Heartbeat path (plugin absent, failing, or reporting another contract version) | `Human words: not watched (plugin absent)`; no message came, so `none` is never claimed without the relay |
+
+**Done when**: every row in the table is checked as cleaned or has a reason for keeping it that the user has been told, no agent or workspace outside the table was archived, every agent the closing `paseo ls` scan listed has a row and was named to the user, no heartbeat of the wave remains, the wave file is committed, step 1 has run again, and the next wave is open or the summary, with the counts and the `Human words:` part, is reported, the message that follows naming `/mattpocock-skills:retro`.

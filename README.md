@@ -104,7 +104,9 @@ The wave skill asks for your approval at the decisions that are yours: the stage
 
 A **stream** is one ticket set that ships through one integration branch and one pull request. Use the wave skill alone when you run one ticket set from its own checkout. Use the stream skill, `matt-with-paseo-streams`, when you run several ticket sets at once, often in one repository, and each must ship on its own: work for several requesters, or an independent bug that should not wait for an unrelated feature. Unrelated work that ships separately becomes separate streams. Streams never depend on each other: a ticket that waits on another belongs in the same stream.
 
-The stream skill gives each stream one worktree on its own integration branch, `stream/<slug>`, cut from the stream's base branch, and one Paseo agent there that runs the wave skill. It brings you every question from every stream in one batched round, verbatim, and never answers for you. A heartbeat reconciles the index with what is running, restarting a failed stream agent without touching the other streams. After each wave it warns you when two streams in one repository change the same file, and never blocks. When a stream's tickets are all done, it asks you, and only after you confirm does it push the integration branch and open one pull request per stream (a merge request on GitLab) to the stream's target, with a description written with `mattpocock-skills:pr` and a link posted on the stream's spec or tickets. It never merges: that stays with the repository's reviewers.
+The stream skill gives each stream one worktree on its own integration branch, `stream/<slug>`, cut from the stream's base branch, and one Paseo agent there that runs the wave skill. It brings you every question from every stream in one batched round, verbatim, and answers for you only what your repository's `## Delegation` table hands it (see "When the orchestrator answers" below). A heartbeat reconciles the index with what is running, restarting a failed stream agent without touching the other streams. After each wave it warns you when two streams in one repository change the same file, and never blocks. When a stream's tickets are all done, it asks you, and only after you confirm does it push the integration branch and open one pull request per stream (a merge request on GitLab) to the stream's target, with a description written with `mattpocock-skills:pr` and a link posted on the stream's spec or tickets. It never merges: that stays with the repository's reviewers.
+
+**When the orchestrator answers.** By default it never does: with no `## Delegation` section in the target repository's `AGENTS.md`, every question reaches you. That section holds one table the skills read and never write. Its `Switch` row set to `on` turns delegation on (a table with no `Switch` row counts as `on`, so write the row); a stream's own `Delegation` cell in the index wins over it, and an empty cell means the repository's value. With delegation on, the orchestrator answers a checkpoint only when the table's standing order for its kind says `orchestrator` (stage confirmation, wave approval, a stream agent's question-type permission, the overlap warning) and the asking agent gave a recommendation; it sends that recommendation and writes one `decisions.md` entry and one status line item for it. A question with no recommendation still waits for you. Whatever the table says, these stay yours: a change to the concept (spec, words, ADRs), adding or dropping tickets, spend past the stream's `Appetite`, an irreversible action (the ship question, an action that changes the machine, anything that needs credentials, resuming a stream stopped on its restart budget) and merging the pull request. ADR 0011 records the decision.
 
 ### How the stream skill runs
 
@@ -167,6 +169,8 @@ Beyond the two streams above, the stream skill also holds, ships and takes in ne
 **Pause.** Ask it to `pause` and it sends `hold` to every stream's agent, not just the one you're talking to, and once nothing is left running writes `paused` into each status line — the point where you can restart the machine. Asking to resume afterwards, or just opening a new session in the control folder, is one reconcile tick, the same as any other recovery. See [Pause and resume](plugins/matt-with-paseo/skills/matt-with-paseo-streams/SKILL.md#pause-and-resume).
 
 **Intake agents.** Name one of Matt's intake skills — `triage`, `grilling` or `wayfinder` — for an existing stream or for work that has no stream yet, and the stream skill spawns an **intake agent** to run it (an existing stream is held at its next wave boundary first, so only one agent writes its worktree at a time). Nothing else ever writes a spec or a ticket: not the stream skill, not a stream agent. See [Intake agents](plugins/matt-with-paseo/skills/matt-with-paseo-streams/SKILL.md#intake-agents).
+
+**Two ways to supervise.** With the optional plugin detected at the required contract version, the stream skill runs its reconcile tick on each message the plugin sends about a stream agent, and the wave skill supervises its ticket agents from the messages too, so neither creates a heartbeat for agents it spawned (the **message path**, [ADR 0012](docs/adr/0012-supervise-from-the-plugins-messages-with-the-heartbeat-as-fallback.md)); on it the wave skill runs one agent per ticket. With the plugin absent, failing or reporting another contract version, both skills supervise through a heartbeat, exactly as before (the **heartbeat path**, in each skill's `HEARTBEAT-PATH.md`).
 
 Shipping goes through a **ship branch**, never the integration branch itself (see [Ship the stream](plugins/matt-with-paseo/skills/matt-with-paseo-streams/SKILL.md#6-ship-the-stream) and [ADR 0007](docs/adr/0007-pull-request-comes-from-a-ship-branch.md)), and a running stream also takes `hold`, `release` and `quota <N>` prompts between waves (see [The two wave-skill arguments](#the-two-wave-skill-arguments) below).
 
@@ -250,6 +254,8 @@ Claude Code only: the skills need a shell, git and the Paseo MCP server. What th
 - [Matt Pocock's skills](https://github.com/mattpocock/skills), installed as the `mattpocock-skills` Claude Code plugin. Both skills suggest commands in the plugin's namespaced form, `/mattpocock-skills:<skill>`; if you installed Matt's skills another way, type the same skill without the prefix (`/<skill>`).
 - A git repository whose tracker is configured by `/mattpocock-skills:setup-matt-pocock-skills`
 
+The Paseo plugin [`matt-with-paseo-plugin`](https://github.com/hanh9898/matt-with-paseo-plugin) is optional. The skills detect it by the rule in its [contract](https://github.com/hanh9898/matt-with-paseo-plugin/blob/main/docs/contract.md) ("Plugin detection"), and this release requires plugin contract version 1. With the plugin absent, or reporting another contract version, the skills supervise by heartbeat, as they did before the plugin existed; a version mismatch is reported to you once.
+
 ### Target repo `paseo.json` (optional)
 
 If the target repo commits a `paseo.json`, the wave skill uses it when spawning: with `worktree.setup` declared, it stops pasting environment setup into agent prompts; with services declared, it stops assigning ports and relies on the port Paseo gives each worktree. Neither skill writes `paseo.json`; the target repo owns it. Notes for whoever maintains that file:
@@ -294,7 +300,7 @@ npx skills add hanh9898/matt-with-paseo --skill '*' -g -a claude-code
 gh skill install hanh9898/matt-with-paseo --all --agent claude-code --scope user
 ```
 
-`--all` takes both skills. This resolves the latest tagged release; add `--pin v0.6.0` to fix a version. The commands are `/matt-with-paseo` and `/matt-with-paseo-streams`.
+`--all` takes both skills. This resolves the latest tagged release; add `--pin v0.7.0` to fix a version. The commands are `/matt-with-paseo` and `/matt-with-paseo-streams`.
 
 ### Option 4: Manual copy
 
@@ -376,6 +382,14 @@ Issues and pull requests are welcome. Every document an agent reads, and every s
 
 When a fix comes from a real incident, describe the symptom you saw in the pull request.
 
+To have git run the checks before every push, turn on the committed pre-push hook once per clone:
+
+```
+git config core.hooksPath .githooks
+```
+
+The hook (`.githooks/pre-push`) runs the drift check's tests, then the drift check. Failing tests, or drift check exit 1, refuse the push and print the findings; drift check exit 2 (Matt's plugin is not installed, or the check cannot run) prints a warning and lets the push go on. It never runs on a commit, and it works with Python 3 on PATH as `python` or only as `python3`. Its tests: `python -B -m unittest scripts/test_pre_push_hook.py`.
+
 Before a release, run the drift check by hand (Python 3, standard library only):
 
 ```
@@ -407,7 +421,7 @@ cd plugins/matt-with-paseo
 claude plugin eval . --scaffold
 ```
 
-`--scaffold` runs each case's `fixture.sh` as you, to build its repository; read them first. The first run in a directory asks you to trust the plugin, so start it from an interactive terminal; from a script, CI or an agent session, add `--trust-plugin` once you have read the suite. A full run is 33 cases (29 from 0.4.2, 3 added for 0.5.0, 1 added for 0.6.0), 3 runs each, in two arms (with and without the plugin); the report scores each arm case by case. Each fixture strips carriage returns before it runs, so a CRLF checkout on Windows works too.
+`--scaffold` runs each case's `fixture.sh` as you, to build its repository; read them first. The first run in a directory asks you to trust the plugin, so start it from an interactive terminal; from a script, CI or an agent session, add `--trust-plugin` once you have read the suite. A full run is 34 cases (29 from 0.4.2, 3 added for 0.5.0, 1 added for 0.6.0, 1 added for 0.7.0), 3 runs each, in two arms (with and without the plugin); the report scores each arm case by case. Each fixture strips carriage returns before it runs, so a CRLF checkout on Windows works too.
 
 **Eval gate.** A change under `plugins/matt-with-paseo/skills/` merges only after the eval gate's slice passes. The slice is three cases, one per entry point the skills guard, each with a one-line prompt, read-only tools and no observed-state block: `wave-not-configured` (the wave skill sends an unconfigured repository to setup and stops), `streams-no-paseo-tools` (the stream skill stops when Paseo's tools are missing) and `streams-free-text-argument` (the stream skill stops on an argument that is not a slug). At 3 runs in two arms that is 18 agent runs. Cost: measured in the stream's final eval run. Run it from `plugins/matt-with-paseo`, one command per case, and merge only when all three exit 0 (the default threshold is 1.0, so any case below a perfect score fails); from a script, add `--trust-plugin` as above:
 

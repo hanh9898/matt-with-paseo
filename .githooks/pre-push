@@ -1,0 +1,48 @@
+#!/bin/sh
+# Pre-push hook: run the drift check's tests, then the drift check. Turn it on with
+#   git config core.hooksPath .githooks
+# Tests failing or drift check exit 1 refuse the push; drift check exit 2 (it could not run,
+# for one, when Matt's plugin is not installed) warns and lets the push go on. There is no
+# pre-commit hook on purpose: ticket agents commit but never push.
+
+cd "$(git rev-parse --show-toplevel)" || exit 0
+
+# `python3` can be a Windows Store alias that fails, so each name must run before it is used.
+python=
+for candidate in python3 python; do
+    if "$candidate" -c 'import sys; sys.exit(0 if sys.version_info[0] == 3 else 1)' >/dev/null 2>&1; then
+        python=$candidate
+        break
+    fi
+done
+if [ -z "$python" ]; then
+    echo "pre-push warning: no working Python 3 on PATH; the drift check did not run." >&2
+    exit 0
+fi
+
+if ! output=$("$python" -B -m unittest discover -s scripts -p 'test_drift_check.py' 2>&1); then
+    printf '%s\n' "$output" >&2
+    echo "pre-push: the drift check's tests fail; push refused." >&2
+    exit 1
+fi
+
+output=$("$python" -B scripts/drift-check.py 2>&1)
+status=$?
+case $status in
+    0) exit 0 ;;
+    2)
+        printf '%s\n' "$output" >&2
+        echo "pre-push warning: the drift check could not run (exit 2); push goes on." >&2
+        exit 0
+        ;;
+    1)
+        printf '%s\n' "$output" >&2
+        echo "pre-push: the drift check reported findings (exit 1); push refused." >&2
+        exit 1
+        ;;
+    *)
+        printf '%s\n' "$output" >&2
+        echo "pre-push: the drift check failed (exit $status); push refused." >&2
+        exit 1
+        ;;
+esac
