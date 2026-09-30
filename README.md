@@ -300,7 +300,7 @@ npx skills add hanh9898/matt-with-paseo --skill '*' -g -a claude-code
 gh skill install hanh9898/matt-with-paseo --all --agent claude-code --scope user
 ```
 
-`--all` takes both skills. This resolves the latest tagged release; add `--pin v0.6.0` to fix a version. The commands are `/matt-with-paseo` and `/matt-with-paseo-streams`.
+`--all` takes both skills. This resolves the latest tagged release; add `--pin v0.7.0` to fix a version. The commands are `/matt-with-paseo` and `/matt-with-paseo-streams`.
 
 ### Option 4: Manual copy
 
@@ -421,7 +421,7 @@ cd plugins/matt-with-paseo
 claude plugin eval . --scaffold
 ```
 
-`--scaffold` runs each case's `fixture.sh` as you, to build its repository; read them first. The first run in a directory asks you to trust the plugin, so start it from an interactive terminal; from a script, CI or an agent session, add `--trust-plugin` once you have read the suite. A full run is 33 cases (29 from 0.4.2, 3 added for 0.5.0, 1 added for 0.6.0), 3 runs each, in two arms (with and without the plugin); the report scores each arm case by case. Each fixture strips carriage returns before it runs, so a CRLF checkout on Windows works too.
+`--scaffold` runs each case's `fixture.sh` as you, to build its repository; read them first. The first run in a directory asks you to trust the plugin, so start it from an interactive terminal; from a script, CI or an agent session, add `--trust-plugin` once you have read the suite. A full run is 34 cases (29 from 0.4.2, 3 added for 0.5.0, 1 added for 0.6.0, 1 added for 0.7.0), 3 runs each, in two arms (with and without the plugin); the report scores each arm case by case. Each fixture strips carriage returns before it runs, so a CRLF checkout on Windows works too.
 
 **Eval gate.** A change under `plugins/matt-with-paseo/skills/` merges only after the eval gate's slice passes. The slice is three cases, one per entry point the skills guard, each with a one-line prompt, read-only tools and no observed-state block: `wave-not-configured` (the wave skill sends an unconfigured repository to setup and stops), `streams-no-paseo-tools` (the stream skill stops when Paseo's tools are missing) and `streams-free-text-argument` (the stream skill stops on an argument that is not a slug). At 3 runs in two arms that is 18 agent runs. Cost: measured in the stream's final eval run. Run it from `plugins/matt-with-paseo`, one command per case, and merge only when all three exit 0 (the default threshold is 1.0, so any case below a perfect score fails); from a script, add `--trust-plugin` as above:
 
