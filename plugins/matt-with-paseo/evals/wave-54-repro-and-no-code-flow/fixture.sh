@@ -71,6 +71,9 @@ const lines = [{ amount: 10 }, { amount: 12 }, { amount: 20 }];
 console.log(`total ${invoiceTotal(lines)}, expected 42`);
 EOF
 
+cat > src/formats.js <<'EOF'
+export const formats = ["csv"];
+EOF
 mkdir -p .scratch/invoices/issues
 cat > .scratch/invoices/spec.md <<'EOF'
 # Spec: invoice totals and export
@@ -121,6 +124,66 @@ A `## Export` section in `README.md` explaining how an accountant exports invoic
 ## Acceptance criteria
 - [ ] `README.md` has a `## Export` section.
 - [ ] The section gives one example of an exported line.
+EOF
+
+cat > .scratch/invoices/issues/04-sort-by-date.md <<'EOF'
+# 04: Sort invoices by date
+
+Status: ready-for-agent
+
+## What to build
+List invoices oldest first.
+
+## Acceptance criteria
+- [ ] Listing three invoices shows them in date order.
+EOF
+cat > .scratch/invoices/issues/05-sort-by-amount.md <<'EOF'
+# 05: Sort invoices by amount
+
+Status: ready-for-agent
+
+Blocked by: 04
+
+## What to build
+List invoices by amount, using the sorting 04 adds.
+
+## Acceptance criteria
+- [ ] Listing three invoices with `--by amount` shows them from the largest amount down.
+EOF
+cat > .scratch/invoices/issues/06-json-format.md <<'EOF'
+# 06: Export format JSON
+
+Status: ready-for-agent
+
+## What to build
+Add a `json` line to the format registry `src/formats.js`.
+
+## Acceptance criteria
+- [ ] `src/formats.js` lists `json`.
+EOF
+cat > .scratch/invoices/issues/07-tsv-format.md <<'EOF'
+# 07: Export format TSV
+
+Status: ready-for-agent
+
+## What to build
+Add a `tsv` line to the format registry `src/formats.js`.
+
+## Acceptance criteria
+- [ ] `src/formats.js` lists `tsv`.
+EOF
+cat > .scratch/invoices/issues/08-show-corrected-total.md <<'EOF'
+# 08: Show the corrected total on the invoice page
+
+Status: ready-for-agent
+
+Blocked by: 02
+
+## What to build
+Show the total that 02 corrects on the invoice page.
+
+## Acceptance criteria
+- [ ] The invoice page shows `total 42` for the invoice of ticket 02.
 EOF
 
 git add -A
