@@ -6,8 +6,8 @@ append_system_prompt: |
   Observed-state block. Paseo's MCP server cannot run inside this session; this block states what its tools report, in their place. Now is 2026-09-29 15:00.
   - Paseo's MCP tools: available to this session.
   - Files and Paseo calls: this session writes no file and sends no prompt. State in your final reply each prompt you would send (to which agent, with its exact text) and each status line you would write, instead of making it.
-  - Agents (`paseo ls -g --label stream=<slug> --json`), billing-export: `3e0a7953` "[Stream] billing-export", labels `stream=billing-export` (no `wave` label), status running, workspace `ws-billing` at `/srv/worktrees/billing-export`; `7c1d2e40` labels `stream=billing-export, wave=3, ticket=05`, status running; `9a8b7c6d` labels `stream=billing-export, wave=3, ticket=06`, status running.
-  - Agents, login-bug: `5b7c9d11` "[Stream] login-bug", labels `stream=login-bug` (no `wave` label), status idle, workspace `ws-login` at `/srv/worktrees/login-bug`; `1e2f3a4b` labels `stream=login-bug, wave=2, ticket=03`, status running. No other agent carries a `stream` label.
+  - Agents (`paseo ls -g --label stream=<slug> --json`), billing-export: `3e0a7953` "[Stream] billing-export", labels `stream=billing-export` (no `wave` label), status running, workspace `ws-billing` at `/srv/worktrees/billing-export`; `7c1d2e40` labels `stream=billing-export, wave=3, bundle=05, tickets=05`, status running; `9a8b7c6d` labels `stream=billing-export, wave=3, bundle=06, tickets=06`, status running.
+  - Agents, login-bug: `5b7c9d11` "[Stream] login-bug", labels `stream=login-bug` (no `wave` label), status idle, workspace `ws-login` at `/srv/worktrees/login-bug`; `1e2f3a4b` labels `stream=login-bug, wave=2, bundle=03, tickets=03`, status running. No other agent carries a `stream` label.
   - `get_agent_status` on `3e0a7953` and on `5b7c9d11`: lifecycle as above, no error, context under 200000 of 1000000 tokens.
   - Pending permissions (`list_pending_permissions`): none.
   - Worktrees: `/srv/worktrees/billing-export` on `stream/billing-export` and `/srv/worktrees/login-bug` on `stream/login-bug`, both clean.
