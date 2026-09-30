@@ -99,7 +99,7 @@ Once every ticket of the wave is done, the first row that matches is the step to
 
 | The wave shows | Resume at |
 |---|---|
-| A ticket branch of this wave still unmerged (`git branch --no-merged <integration branch>`, keeping only the ticket branch shape of "Names this run writes"; a bundle's branch counts only once its last ticket is merged, and before that its row's merged-SHA column says which tickets are in, so a done ticket with no SHA there is unmerged) | Step 5, which reads its report, then step 6 |
+| A ticket branch of this wave still unmerged (`git branch --no-merged <integration branch>`, keeping only the ticket branch shape of "Names this run writes"; a bundle's branch counts as merged only once its last ticket and its review fixes are merged, and before that its row's merged-SHA column says which tickets are in, so a done ticket with no SHA there is unmerged) | Step 5, which reads its report, then step 6 |
 | No `## Review` yet, or a finding in it that reads **waiting on the user's decision** | Step 7 |
 | An uncleaned row | Step 8 |
 
@@ -324,7 +324,7 @@ The `## Wave agents` table is the one record of what is live: a row not checked 
 
 - `get_agent_status` shows the agent has stopped;
 - `git -C <worktree> status --porcelain` is empty;
-- the row's branch (the bundle's, for a bundle) appears in `git branch --merged <integration branch>`; a bundle's branch counts only once its last ticket and its review fixes are merged, and before that its row's merged-SHA column says which tickets are in.
+- the row's branch (the bundle's, for a bundle) appears in `git branch --merged <integration branch>`; a bundle's branch counts as merged only once its last ticket and its review fixes are merged, and before that its row's merged-SHA column says which tickets are in.
 
 For a row that fails any check, archive nothing and see [`TROUBLESHOOTING.md`](TROUBLESHOOTING.md). The clean-worktree check is mandatory, never skipped: Paseo archives a worktree with uncommitted or untracked files without warning and deletes them with it (the workspaces and worktrees table of [`PASEO-FACTS.md`](PASEO-FACTS.md), read below).
 
