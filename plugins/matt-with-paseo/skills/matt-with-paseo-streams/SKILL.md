@@ -554,17 +554,19 @@ A tick that closes a stream (the merged row above) names `/mattpocock-skills:ret
 
 Everything a tick does stays at the stream agent's level: a tick never prompts, cancels, kills or archives a ticket agent, which the stream agent's wave skill supervises.
 
-**Supervise one-for-one.** Each stream agent is supervised on its own; what happens to one stream never touches another. A running stream agent is checked too: each tick reads its activity count (`updateCount` in `get_agent_activity`) and keeps it in the status line as `activity <count> unchanged <k> ticks`, writing 0 for a new count and adding one for the same count; the item goes once the agent is not running.
+**Supervise one-for-one.** Each stream agent is supervised on its own; what happens to one stream never touches another. On the heartbeat path a running stream agent is checked too: each tick reads its activity count (`updateCount` in `get_agent_activity`) and keeps it in the status line as `activity <count> unchanged <k> ticks`, writing 0 for a new count and adding one for the same count; the item goes once the agent is not running.
 
 | Stream agent state | Means | Restart budget |
 |---|---|---|
 | Gone from `paseo ls` while its stream should run (killed, or archived by hand) | Failed | Spends one |
 | Gone from `paseo ls` while its stream's status line records `paused` or `pausing, hold sent <time>` (a real restart of the machine, which **Pause** exists to allow) | Not failed: "Replace a stream agent" spawns the replacement once the user resumes, carrying forward every hold the status line still records | Spends none |
 | `get_agent_status` reports an error, or its last turn ended on an error that prompting again does not get past (the wave skill's [`TROUBLESHOOTING.md`](../matt-with-paseo/TROUBLESHOOTING.md) "Agent stops midway" cases) | Failed | Spends one |
-| Running, its activity count unchanged for three ticks, and its last activity entry one the wave skill's heartbeat path calls hung (its hung-agent table) | Failed, **hung** | Spends one |
-| Running, its activity count unchanged for three ticks, and its last activity entry one that contract calls not hung | Not failed: report it to the user, headed with the slug, with that last entry and how long it has run, once (the status line records it as reported); never kill, cancel or prompt it on this signal | Spends none |
+| Heartbeat path: running, its activity count unchanged for three ticks, and its last activity entry one the wave skill's heartbeat path calls hung (its hung-agent table) | Failed, **hung** | Spends one |
+| Heartbeat path: running, its activity count unchanged for three ticks, and its last activity entry one that table calls not hung | Not failed: report it to the user, headed with the slug, with that last entry and how long it has run, once (the status line records it as reported); never kill, cancel or prompt it on this signal | Spends none |
 | Stopped on a session or usage limit that resets | Not failed: after the reset, `send_agent_prompt` "where does the stream stand?" to the same agent, `background: true`, `notifyOnFinish: true` | Spends none |
 | Idle with a question, or idle between waves | Not failed: step 4 handles it | Spends none |
+
+On the message path no tick counts a stream agent's activity from one tick to the next, so the two heartbeat path rows above never match: a hung stream agent has no signal in contract v1, and only its next message, or the user, shows it (the consequence in ADR 0012, "A hung stream agent has no signal on the message path").
 
 Read the wave skill's [`PASEO-FACTS.md`](../matt-with-paseo/PASEO-FACTS.md) (verified Paseo behaviour, each row with its version): its workspaces and worktrees table before archiving or killing a stream agent.
 
