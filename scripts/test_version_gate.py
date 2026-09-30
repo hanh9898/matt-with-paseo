@@ -266,8 +266,10 @@ class ThisRepository(unittest.TestCase):
             f"{skills}/matt-with-paseo/COMMON-RULES-TEMPLATE.md",
             f"{skills}/matt-with-paseo/TROUBLESHOOTING.md",
             f"{skills}/matt-with-paseo/PASEO-FACTS.md",
+            f"{skills}/matt-with-paseo/HEARTBEAT-PATH.md",
             f"{skills}/matt-with-paseo-streams/SKILL.md",
             f"{skills}/matt-with-paseo-streams/OWNERSHIP.md",
+            f"{skills}/matt-with-paseo-streams/HEARTBEAT-PATH.md",
         ]))
 
     def test_the_list_leaves_out_the_trigger_data_and_the_human_facing_template(self):
