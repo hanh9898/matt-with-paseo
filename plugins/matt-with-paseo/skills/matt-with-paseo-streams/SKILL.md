@@ -82,7 +82,7 @@ The index is `streams.md` at the root of the control folder: one line for the ca
 
 | Field | Holds |
 |---|---|
-| Agent cap | Above the table: the most agents running at once across every stream, counting every agent the orchestrator causes to run, directly or through a stream agent: stream agents, ticket agents, intake agents (ADR 0005) and diagnosis agents. The wave skill's step 7 review agent and cross-ticket fix agent need no slot of their own: they start only after every ticket of their wave is merged, so they run inside the quota slots its ticket agents freed |
+| Agent cap | Above the table: the most agents running at once across every stream, counting every agent the orchestrator causes to run, directly or through a stream agent: stream agents, ticket agents (one agent per bundle, as the wave skill's words block defines it), intake agents (ADR 0005) and diagnosis agents. The wave skill's step 7 review agent and cross-ticket fix agent need no slot of their own: they start only after every ticket of their wave is merged, so they run inside the quota slots its ticket agents freed |
 | Last tick | Under the cap line: `Last tick: <date> <time>, heartbeat streams-reconcile <id> every <interval>, expires <date> <time>`, when step 5's last tick ran and the reconcile heartbeat it left, by id, since `delete_heartbeat` takes an id and never a name. Every tick rewrites it as its last action; no line means no tick has run yet |
 | Slug | The stream's name, lowercase letters, digits and `-`; unique in the index. The wave skill derives its label and branch prefix from it |
 | Repository | Absolute path to a local checkout of the target repository |
@@ -165,14 +165,14 @@ A stream's quota is the wave skill's `quota <N>` argument in its stream agent's 
 
    | The stream | Its next wave's width |
    |---|---|
-   | At its wave boundary now, or already running | The tickets its stream agent's last wave approval names as starting, plus every ticket that message lists as waiting on the quota (the wave skill's step 2 states both; together they are every ticket that can run now, regardless of quota) |
+   | At its wave boundary now, or already running | The **bundles** its stream agent's last wave approval names as starting, plus every bundle that message lists as waiting on the quota, counting a `[NN+NN]` bundle once and a ticket in no bundle as a bundle of one, since a bundle is one ticket agent (the wave skill's step 2 states both; together they are every bundle that can run now, regardless of quota) |
    | Not yet started: no wave approval exists yet | 1, since the graph is the wave skill's to build (ADR 0002); the next split corrects it once the stream's first wave approval states the true width |
 
    A stream left with fewer than two slots waits on the cap, with no stream agent; it waits at its next wave boundary, never in the middle of a wave. The total of ready tickets on the tracker plays no part: a ticket blocked by another is not part of the width, however many sit in the ready for agent role.
 
 A running stream with no ticket left for agents (every ticket resolved or waiting on a human) counts only its stream agent's slot and is left out of the walk: its wave skill plans no more waves, so its command is never changed. A shipped stream (step 6) counts no slot and is left out of the walk: its stream agent stays idle and starts no wave.
 
-With billing-export and login-bug of the example above, and a cap of 6: billing-export reaches its wave boundary with 16 tickets in the ready for agent role, but its last wave approval names a next wave of width 5 (most of the 16 are still blocked). It takes 1 + quota 5 and leaves 0. login-bug has not started, so it waits on the cap, with no stream agent, until a later split frees room.
+With billing-export and login-bug of the example above, and a cap of 6: billing-export reaches its wave boundary with 16 tickets in the ready for agent role, but its last wave approval names bundles `[12+13]` and 14 as starting and `[15+16]`, 17 and 18 as waiting on the quota, a next wave of width 5 (five bundles, though they hold eight tickets; most of the 16 are still blocked). It takes 1 + quota 5 and leaves 0. login-bug has not started, so it waits on the cap, with no stream agent, until a later split frees room.
 
 Changing the cap or a priority in the index takes effect at the next wave boundary: it changes the next split, never a quota a stream is running a wave with. A cap lowered below the slots in use is reached as each stream comes to its boundary. Append each quota a split changes, and each change of the cap or a priority, to `decisions.md`.
 
