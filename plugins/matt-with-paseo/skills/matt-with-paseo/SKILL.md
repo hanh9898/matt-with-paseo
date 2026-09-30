@@ -235,7 +235,7 @@ If the wave's first agent reports it cannot find a skill, the plugin has not rea
 
 Leave `notifyOnFinish` at its default. Each agent reports when it finishes; between reports, spend the time on other work of the wave. A finish the notification misses is caught in step 5.
 
-**Done when**: every ticket in the wave belongs to a bundle with exactly one running agent and one row in the table, except, with `quota` or while a hold stands, the tickets waiting on it.
+**Done when**: every ticket in the wave belongs to a bundle with exactly one running agent and one row in the table, except, with `quota` or while a hold stands, the tickets waiting on it; and each bundle ended by `stop` (step 5) whose review runs has its fresh review agent, with a row of its own.
 
 ## 5. Check each report
 
