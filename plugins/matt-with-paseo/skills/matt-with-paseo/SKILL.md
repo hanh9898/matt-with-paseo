@@ -270,6 +270,7 @@ Read each agent's progress and report with `get_agent_activity`, not by reconstr
 | `Agent created` | Nothing: step 4 wrote the agent's row when it spawned it |
 | `Agent archived` | Finish step 8's clean-up of that ticket when you archived the agent; otherwise check the ticket's status before counting its work done |
 | `Gate cap passed` | Spawn no further ticket agent until fewer than the cap it names run, whatever the quota says (step 4) |
+| `Stall suspected` | Judge the agent it names now, without waiting three ticks, since the sensor has flagged it: read that agent's recent activity with `get_agent_activity`, and take its last entry through the hung-agent table of [`HEARTBEAT-PATH.md`](HEARTBEAT-PATH.md), with the restart budget it gives. A shell command or no tool call: hung, so `kill_agent` it and hand its remainder to a new agent, and never prompt it to resume, whatever the `Next:` line offers, since a prompt only queues behind the stuck call. A subagent or another long tool: working, so leave it alone and tell the user once. The agent has stopped with its work unfinished: prompt it to resume, or record the ticket as stalled with the reason |
 | Any other lead | Read its `Next:` line and judge the moves under this skill's rules |
 
 The `Next:` line is the plugin's suggestion; the judgement stays with this skill (ADR 0009). The plugin sends a message only for an agent labelled `wave` and `ticket`, so an agent it does not name reaches you as its finish notification, as on the heartbeat path.
