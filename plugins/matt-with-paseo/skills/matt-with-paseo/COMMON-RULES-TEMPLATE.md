@@ -22,8 +22,8 @@ Copy in only what an agent cannot look up: an unwritten convention, the reason b
   Run `git branch --show-current` before every commit.
 - Read before you start: <spec>, <glossary / CONTEXT.md>, <ADRs>, your ticket, and the comments
   of tickets <...> for decisions already made.
-- <k> other agents are working the remaining tickets of this wave in parallel, on other branches.
-  Work only on your own ticket.
+- <k> other agents (bundles) are working the remaining tickets of this wave in parallel, on other branches.
+  Work only on your own bundle, one ticket at a time, in the order of your prompt.
 - Do not end your turn while work you started is still running in the background (a build, a test run,
   a long command, the review sub-agents `mattpocock-skills:code-review` launches): wait for it inside
   the same turn. Paseo sends no finish notification for a turn you start on your own afterwards, so
@@ -32,6 +32,11 @@ Copy in only what an agent cannot look up: an unwritten convention, the reason b
   with slow hooks) in the background from the start, and read its output when it finishes. A foreground
   command the shell moves to the background halfway can leave your turn waiting on a result that never
   returns.
+
+## Parameters
+- Ticket cap: <4>, the most tickets a bundle holds and the most a bundle agent works before the orchestrator answers `stop`.
+- Context stop: <600K> `contextWindowUsedTokens`, the size of an agent's context at which the orchestrator answers `stop`.
+- Both apply only while Jev is not available; with Jev, its flag is what stops a bundle.
 
 ## Existing interfaces to reuse
 - `<function / hook / module>`: <signature>, <what it returns>, <what it already handles, e.g. sending mail, logging>.
@@ -96,17 +101,23 @@ Whoever answers a challenge to a chosen default writes why the plan changes or s
   Name it in your `mattpocock-skills:code-review` call.
 
 ## Done when:
+Each item below holds for one ticket, and you go through them again for each ticket of your bundle.
 - Commit to your branch. The orchestrator merges it. Pull-request descriptions and discussion are written
   by whoever ships, outside this wave: keep none in your worktree, and put what they need in your report.
 - Before the last commit: run `/mattpocock-skills:code-review` with your base commit as the fixed point, fix the
   findings, and write the number of findings per axis and the outcome of each into the ticket's comments.
 - Change the ticket status: `resolved` if fully done, `<ready for human label from the triage label file>` for the part a human must do.
-  Write in the comments what you verified, with evidence, and what remains open.
+  Write in the comments of that ticket's own issue what you verified, with evidence, and what remains open;
+  there is no bundle-level evidence.
 - For a change the user sees, the screenshots include the screen scrolled past its first view and at a
   narrow width.
-- Report back: a design summary, files touched, how you verified with evidence, work not done or still
+- Report back for that ticket, with the SHA of its last commit: a design summary, files touched, how you verified with evidence, work not done or still
   in doubt, every change outside your file zone or outside git (a file in another checkout, a machine
   setting, an uncommitted file) with where it is, each private resource you created, and decisions the
   user must make. Tag each decision `decided: X because Y` or `assumed: X, unchecked`, and each finding
   `reproduced` or `traced`, so a reader scans the report instead of parsing its prose.
+- End your turn after each ticket's report, then wait for `next` (start the bundle's next ticket) or `stop`
+  (finish as the orchestrator's message says). The rule above about background work holds at every one of
+  these turn ends: wait for it inside the turn, so the report means the work is done. A bundle of one ends
+  its turn once.
 ```
