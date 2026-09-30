@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: streams-43-quota-follows-wave
-description: reports reaches its wave boundary with 16 tickets in the ready for agent role, but its stream agent's wave approval names bundles: two start now (`[12+13]` and 14) and three wait on the quota (`[15+16]`, 17 and 18), a next wave of width 5 that holds seven tickets. The proposed quota counts those bundles, so it is 5, not the seven tickets and not the ready-ticket total, and going from its current quota of 2 to 5 sends the stream agent a `quota 5` prompt; no agent is archived, killed or spawned.
+description: "reports reaches its wave boundary with 16 tickets in the ready for agent role, but its stream agent's wave approval names bundles: two start now (`[12+13]` and 14) and three wait on the quota (`[15+16]`, 17 and 18), a next wave of width 5 that holds seven tickets. The proposed quota counts those bundles, so it is 5, not the seven tickets and not the ready-ticket total, and going from its current quota of 2 to 5 sends the stream agent a `quota 5` prompt; no agent is archived, killed or spawned."
 tags: [capacity, quota, streams]
 context:
   scaffold_script: fixture.sh
