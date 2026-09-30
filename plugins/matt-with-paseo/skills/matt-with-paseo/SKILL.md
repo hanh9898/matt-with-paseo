@@ -379,6 +379,6 @@ The summary also carries one `Human words:` part, read from the tickets' `Human 
 |---|---|
 | Message path, at least one such comment | One line for each ticket so commented: the ticket, the number of messages, and its `changed the plan` mark |
 | Message path, no such comment | `Human words: none` |
-| Heartbeat path (plugin absent) | `Human words: not watched (plugin absent)`; no message came, so `none` is never claimed without the relay |
+| Heartbeat path (plugin absent, failing, or reporting another contract version) | `Human words: not watched (plugin absent)`; no message came, so `none` is never claimed without the relay |
 
 **Done when**: every row in the table is checked as cleaned or has a reason for keeping it that the user has been told, no agent or workspace outside the table was archived, every agent the closing `paseo ls` scan listed has a row and was named to the user, no heartbeat of the wave remains, the wave file is committed, step 1 has run again, and the next wave is open or the summary, with the counts and the `Human words:` part, is reported, the message that follows naming `/mattpocock-skills:retro`.
