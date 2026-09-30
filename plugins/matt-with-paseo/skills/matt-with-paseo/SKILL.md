@@ -150,12 +150,12 @@ Then hunt for lost width, and list every case with the one thing that would reco
 - **A ticket waiting on a human** (in the needs triage, needs info or ready for human role, or a symptom whose reproduction only a human can run now) that would join this wave, or that blocks tickets which would: name the exact question the human must answer, the decision they must make, or the command they must run and send back with its output.
 - **A false edge**: a `Blocked by` that stands for a shared file rather than a logical dependency (the later ticket neither calls nor reads what the earlier one builds). Propose dropping the edge and giving both tickets a file zone; the edge changes only in the ticket, and only with the user's agreement.
 
-Then plan the **bundles** (ADR 0010). A ticket that joins no bundle is a bundle of one.
+Then plan the **bundles** (ADR 0010), chain bundles first. A ticket that joins no bundle is a bundle of one.
 
 | The tickets | Bundled? |
 |---|---|
 | A chain: each ticket has at most one blocker and blocks at most one ticket of the chain, so its `Blocked by` edges have no branch | Yes, with or without `quota` |
-| Independent tickets that write the same place in a shared file | Only while more tickets can run now than the quota allows; without `quota`, never |
+| Independent tickets that write the same place in a shared file | Only while more bundles (ticket agents) can run now than the quota allows, counted once the chain bundles are formed; without `quota`, never |
 | A symptom ticket | Never: its red-before loop needs its own base commit, so it cuts a chain |
 
 A bundle holds at most the ticket cap of the common rules' parameters section (step 3). A bundle never replaces the false-edge proposal above: a false edge is still proposed for removal.
