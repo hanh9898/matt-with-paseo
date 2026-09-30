@@ -6,13 +6,13 @@ A rating says how a run notices the symptom: `caught` when a check in a skill fi
 
 ## Agents
 
-**Agent stops midway** (session limit, API error, context exhausted, or a bundle ended by step 5's `stop`). Check its branch and directory for what is really done; for a bundle, the remainder is its unmerged tickets. If the remainder is small, do it yourself. If it is large, wait for the limit to reset, then send it back to the same agent with `send_agent_prompt`: state which part is done and who did it, narrow the task to exactly the unfinished part (each unmerged ticket, one after another), and restate the common rules. Past the bundle's restart budget of 2 (step 5's heartbeat contract), run its unfinished tickets as single tickets in the next wave instead. Send it to the same agent so it keeps the context it already read.
+**Agent stops midway** (session limit, API error, context exhausted, or a bundle ended by step 5's `stop`). Check its branch and directory for what is really done; for a bundle, the remainder is its unmerged tickets. If the remainder is small, do it yourself. If it is large, wait for the limit to reset, then send it back to the same agent with `send_agent_prompt`: state which part is done and who did it, narrow the task to exactly the unfinished part (each unmerged ticket, one after another), and restate the common rules. Past the bundle's restart budget of 2 (step 5's heartbeat contract), run its unfinished tickets as single tickets in the next wave instead. Send it to the same agent so it keeps the context it already read. A bundle ended by `stop` is reviewed by a fresh review agent (step 4), not by the stopped agent.
 
 Rating: caught — check: `plugins/matt-with-paseo/skills/matt-with-paseo/SKILL.md`, phrase "Missing means the agent did not finish its flow".
 
 **Report is correct but incomplete.** A claim like "clean" or "passing" only covers what the agent checked. Open the real artifact (screenshot, page, command output) and check the aspects the report does not mention.
 
-Rating: caught — check: `plugins/matt-with-paseo/skills/matt-with-paseo/SKILL.md`, phrase "check the real artifacts, not the report's words".
+Rating: caught — check: `plugins/matt-with-paseo/skills/matt-with-paseo/SKILL.md`, phrase "check that ticket's real artifacts, not the report's words".
 
 **Branch name differs from directory name.** A Paseo worktree directory is named by a slug, not by the branch. Get the branch name with `git -C <worktree> branch --show-current`.
 
@@ -84,7 +84,7 @@ Rating: caught — check: `plugins/matt-with-paseo/skills/matt-with-paseo/SKILL.
 
 **Ticket branch not merged.** Go back to steps 5 and 6 for that ticket; clean up only after the merge.
 
-Rating: caught — check: `plugins/matt-with-paseo/skills/matt-with-paseo/SKILL.md`, phrase "the ticket's branch appears in `git branch --merged <integration branch>`".
+Rating: caught — check: `plugins/matt-with-paseo/skills/matt-with-paseo/SKILL.md`, phrase "appears in `git branch --merged <integration branch>`".
 
 **Agent has not stopped.** `archive_agent` would interrupt it midway. Wait for it to stop, or ask the user before interrupting.
 

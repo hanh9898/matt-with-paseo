@@ -8,7 +8,7 @@ append_system_prompt: |
   - Paseo's MCP tools: available to this session.
   - Profiles (`list_profiles`): one, `default`, with empty `notes`.
   - `git branch --show-current`: main
-  - Agents (`paseo ls -g --label wave=1 --json`): agent-01 (labels wave=1, ticket=01) stopped, after
+  - Agents (`paseo ls -g --label wave=1 --json`): agent-01 (labels wave=1, bundle=01, tickets=01) stopped, after
     reporting ticket 01 resolved; `get_agent_activity` on agent-01 ends with the same text as the
     ticket's `**agent:**` comment.
   - `git branch --no-merged main`: wave1/01-csv-export
