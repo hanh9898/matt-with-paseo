@@ -74,8 +74,9 @@ cat > .scratch/menus/wave1-common-rules.md <<EOT
 # Common rules for wave 1 (bundles 11+12, 21+22, 31+32+33+34+35, 41+42+43)
 
 ## Parameters
-- Ticket cap: 4, the most tickets a bundle holds and the most a bundle agent works before the orchestrator answers \`stop\`.
-- Context stop: 600K \`contextWindowUsedTokens\`, the size of an agent context at which the orchestrator answers \`stop\`.
+- Ticket cap: 4, the most tickets step 2 plans into a bundle. While Jev is not available it is also the fallback stop: once a ticket agent has worked this many tickets, the orchestrator answers \`stop\` (step 5).
+- Context stop: 600K \`contextWindowUsedTokens\`, the size of a ticket agent context at which the orchestrator answers \`stop\`, while Jev is not available (step 5).
+- The approver widened bundle 31+32+33+34+35 to five tickets in step 2, past the ticket cap of 4; the cap's stop still ends it at its 4th ticket.
 
 ## Context
 - Your worktree branches off \`stream/menus\` at \`$base\`.
