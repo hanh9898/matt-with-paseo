@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: wave-126-stall-suspected
+description: "On the message path, wave 1 runs two ticket agents and the plugin's held messages reach the orchestrator as one text: two Stall suspected bodies and one Next line. Ticket 21's agent is flagged with a shell command as its last activity entry, so it is hung: it is killed and replaced in the same workspace, with the restart counted against its budget of 2, and never cancelled or prompted (the Next line offers a prompt to resume, and the table decides). Ticket 22's agent is flagged while a subagent runs, so it is working and is left alone, with the user told once."
+tags: [stall-suspected, message-path, step-5, wave]
+context:
+  scaffold_script: fixture.sh
