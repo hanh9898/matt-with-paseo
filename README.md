@@ -168,6 +168,8 @@ Beyond the two streams above, the stream skill also holds, ships and takes in ne
 
 **Intake agents.** Name one of Matt's intake skills — `triage`, `grilling` or `wayfinder` — for an existing stream or for work that has no stream yet, and the stream skill spawns an **intake agent** to run it (an existing stream is held at its next wave boundary first, so only one agent writes its worktree at a time). Nothing else ever writes a spec or a ticket: not the stream skill, not a stream agent. See [Intake agents](plugins/matt-with-paseo/skills/matt-with-paseo-streams/SKILL.md#intake-agents).
 
+**Two ways to supervise.** With the optional plugin detected at the required contract version, the stream skill runs its reconcile tick on each message the plugin sends about a stream agent, and the wave skill supervises its ticket agents from the messages too, so neither creates a heartbeat for agents it spawned (the **message path**, [ADR 0012](docs/adr/0012-supervise-from-the-plugins-messages-with-the-heartbeat-as-fallback.md)); on it the wave skill runs one agent per ticket. With the plugin absent, failing or reporting another contract version, both skills supervise through a heartbeat, exactly as before (the **heartbeat path**, in each skill's `HEARTBEAT-PATH.md`).
+
 Shipping goes through a **ship branch**, never the integration branch itself (see [Ship the stream](plugins/matt-with-paseo/skills/matt-with-paseo-streams/SKILL.md#6-ship-the-stream) and [ADR 0007](docs/adr/0007-pull-request-comes-from-a-ship-branch.md)), and a running stream also takes `hold`, `release` and `quota <N>` prompts between waves (see [The two wave-skill arguments](#the-two-wave-skill-arguments) below).
 
 ### The control folder and its index

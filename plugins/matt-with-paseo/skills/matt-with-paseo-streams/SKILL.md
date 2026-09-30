@@ -97,7 +97,7 @@ The index is `streams.md` at the root of the control folder: one line for the ca
 | Field | Holds |
 |---|---|
 | Agent cap | Above the table: the most agents running at once across every stream, counting every agent the orchestrator causes to run, directly or through a stream agent: stream agents, ticket agents (one agent per bundle, as the wave skill's words block defines it), intake agents (ADR 0005) and diagnosis agents. The wave skill's step 7 review agent and cross-ticket fix agent need no slot of their own: they start only after every ticket of their wave is merged, so they run inside the quota slots its ticket agents freed |
-| Last tick | Under the cap line: `Last tick: <date> <time>, heartbeat streams-reconcile <id> every <interval>, expires <date> <time>`, when step 5's last tick ran and the reconcile heartbeat it left, by id, since `delete_heartbeat` takes an id and never a name. Every tick rewrites it as its last action; no line means no tick has run yet |
+| Last tick | Under the cap line: `Last tick: <date> <time>, heartbeat streams-reconcile <id> every <interval>, expires <date> <time>`, when step 5's last tick ran and the reconcile heartbeat it left, by id, since `delete_heartbeat` takes an id and never a name. On the message path with no heartbeat held, the line reads `Last tick: <date> <time>, message path`. Every tick rewrites it as its last action; no line means no tick has run yet |
 | Slug | The stream's name, lowercase letters, digits and `-`; unique in the index. The wave skill derives its label and branch prefix from it |
 | Repository | Absolute path to a local checkout of the target repository |
 | Owner | The requester the stream works for; the rest of this skill calls them the owner |
@@ -431,11 +431,12 @@ Every running stream stays under one reconcile loop (ADR 0004). A **tick** compa
 
 A tick runs:
 
-- on every heartbeat prompt;
+- on each message the plugin sends about a stream agent (the message path): `Turn ended` (step 4 is then the action of its gap), `Permission pending` (the permission row below) and `Agent archived`; each carries a `Next:` line, the plugin's suggestion, and the judgement stays with this skill (ADR 0009). The plugin relays a stream agent and its ticket agents to the agent that spawned them (contract v1, "Message types"), so a ticket agent's messages reach the stream agent, never you;
+- on every heartbeat prompt (the heartbeat path);
 - after every finish notification from a stream agent (step 4 is then the action of its gap);
 - first thing in any session opened in the control folder.
 
-Every other turn of yours, whatever started it (an answer from the user included), first reads the index's Last tick line: a time older than two cycles of the heartbeat it names (30 minutes for a 15-minute cron) means the heartbeat has gone silent. Then it runs a tick at once, before anything else the turn does. Every tick ends by rewriting the Last tick line with its own time and the heartbeat this session holds after it.
+On the message path, this session creates no heartbeat for a stream agent it spawned. On the heartbeat path, [`HEARTBEAT-PATH.md`](HEARTBEAT-PATH.md) says how the heartbeat is kept: read it only then, or for a stream agent this session did not spawn.
 
 - **Desired state** is the index. A stream should run when its status line holds a stream agent id (step 3 or "Replace a stream agent" wrote it) and records none of shipped, stopped, or waits on the cap; any other row should not run. A stream that waits on the cap has no stream agent on purpose: only a split spawns it (The index), never a restart.
 - **Observed state** is the public signals of the Inputs section and nothing else:
@@ -474,23 +475,7 @@ One stream may match several rows of the table below; each row it matches acts, 
 
 A tick that closes a stream (the merged row above) names `/mattpocock-skills:retro` to the user in the message that reports the close, once: the status line's `merged <date>` keeps a later tick from closing it, and so from naming it, again. The two rules for the change it proposes are written once, in the wave skill's step 8 ([`SKILL.md`](../matt-with-paseo/SKILL.md)).
 
-The loop's own heartbeat is reconciled in the same tick:
-
-| Observed, for this session | Action |
-|---|---|
-| A stream should run and this session holds no reconcile heartbeat | `create_heartbeat` with `expiresIn` always set (for example a `*/15 * * * *` cron that expires in `8h`), named `streams-reconcile`, prompting "Reconcile tick: run step 5 of the matt-with-paseo-streams skill on streams.md". Keep its id and expiry in this session and write them, with its interval, into the Last tick line |
-| A stream should run and this session's heartbeat expires before its next firing | `delete_heartbeat`, then create it again as above; heartbeats have no update tool |
-| A stream should run, this session holds a heartbeat, and this turn found the Last tick older than two cycles | `delete_heartbeat`, then create it again as above: a heartbeat that stops firing gives no other sign, and a new one costs nothing |
-| No stream runs and this session holds a heartbeat | `delete_heartbeat` |
-
-**Recovery after the top session dies is: run one tick**, in a session in the control folder; there is no separate recovery procedure. The tick finds each stream agent by its label, handles the end-of-turn message the dead session may never have read, restarts only what has failed, and creates this session's heartbeat. The old heartbeat is the one in the Last tick line; what the tick does with it depends on the session:
-
-| Session | Old heartbeat |
-|---|---|
-| Reopened: the session that created that heartbeat, resumed | `delete_heartbeat` on its id, then create a new one as the heartbeat table says; it may have stopped firing while the session was closed |
-| New: any other session | Try `delete_heartbeat` on its id. If that fails, the heartbeat belongs to the dead session and only its expiry, in the Last tick line, ends it. Either way, create this session's heartbeat, and ask the user to close the old session if it still lives, since two sessions ticking at once could both spawn for the same gap |
-
-In a new session, stream agents the dead session spawned send it their finish notifications, not this one, until this session prompts them with `notifyOnFinish: true`; the heartbeat covers them meanwhile.
+**Recovery after the top session dies is: run one tick**, in a session in the control folder; there is no separate recovery procedure. The tick finds each stream agent by its label, handles the end-of-turn message the dead session may never have read, and restarts only what has failed. On the heartbeat path it also creates this session's heartbeat and deals with the old one; a new session on the message path holds a heartbeat only for the stream agents it did not spawn ([`HEARTBEAT-PATH.md`](HEARTBEAT-PATH.md), its section 2).
 
 Everything a tick does stays at the stream agent's level: a tick never prompts, cancels, kills or archives a ticket agent, which the stream agent's wave skill supervises.
 
@@ -501,12 +486,12 @@ Everything a tick does stays at the stream agent's level: a tick never prompts, 
 | Gone from `paseo ls` while its stream should run (killed, or archived by hand) | Failed | Spends one |
 | Gone from `paseo ls` while its stream's status line records `paused` or `pausing, hold sent <time>` (a real restart of the machine, which **Pause** exists to allow) | Not failed: "Replace a stream agent" spawns the replacement once the user resumes, carrying forward every hold the status line still records | Spends none |
 | `get_agent_status` reports an error, or its last turn ended on an error that prompting again does not get past (the wave skill's [`TROUBLESHOOTING.md`](../matt-with-paseo/TROUBLESHOOTING.md) "Agent stops midway" cases) | Failed | Spends one |
-| Running, its activity count unchanged for three ticks, and its last activity entry one the wave skill's heartbeat contract ([`SKILL.md`](../matt-with-paseo/SKILL.md) step 5) calls hung | Failed, **hung** | Spends one |
+| Running, its activity count unchanged for three ticks, and its last activity entry one the wave skill's heartbeat path ([`HEARTBEAT-PATH.md`](../matt-with-paseo/HEARTBEAT-PATH.md)) calls hung | Failed, **hung** | Spends one |
 | Running, its activity count unchanged for three ticks, and its last activity entry one that contract calls not hung | Not failed: report it to the user, headed with the slug, with that last entry and how long it has run, once (the status line records it as reported); never kill, cancel or prompt it on this signal | Spends none |
 | Stopped on a session or usage limit that resets | Not failed: after the reset, `send_agent_prompt` "where does the stream stand?" to the same agent, `background: true`, `notifyOnFinish: true` | Spends none |
 | Idle with a question, or idle between waves | Not failed: step 4 handles it | Spends none |
 
-Read the wave skill's [`PASEO-FACTS.md`](../matt-with-paseo/PASEO-FACTS.md) (verified Paseo behaviour, each row with its version): its workspaces and worktrees table before archiving or killing a stream agent, and its status calls and heartbeats table when this session's heartbeat stops ticking.
+Read the wave skill's [`PASEO-FACTS.md`](../matt-with-paseo/PASEO-FACTS.md) (verified Paseo behaviour, each row with its version): its workspaces and worktrees table before archiving or killing a stream agent.
 
 A **restart** touches only that stream's row, agent and worktree; the other streams are untouched. It runs "Replace a stream agent" (the section before step 0):
 

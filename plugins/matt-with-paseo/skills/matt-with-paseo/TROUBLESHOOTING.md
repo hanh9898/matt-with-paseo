@@ -30,7 +30,7 @@ Rating: nothing yet.
 
 **A tool call hangs and the agent goes quiet** (it stays `running`, its activity count unchanged for three ticks). Judge and act on it exactly as the wave skill's heartbeat contract (step 5) says for a ticket agent, or the stream skill's "Supervise one-for-one" and "Replace a stream agent" say for a stream agent. Either way, never cancel and re-prompt a hung agent: a prompt only queues behind the stuck call (the `cancel_agent` row of the turns and notifications table in [`PASEO-FACTS.md`](PASEO-FACTS.md)). Kill and replace a hung ticket agent within the contract's restart budget, 2 per bundle; a hung stream agent is not killed while its ticket agents still run, since `kill_agent` may take them along too, and its restart waits until none does. The common rules' rule to start any command that may take more than two minutes in the background keeps an agent off a shell command that hangs.
 
-Rating: caught — check: `plugins/matt-with-paseo/skills/matt-with-paseo/SKILL.md`, phrase "whose count has not moved for three ticks".
+Rating: caught — check: `plugins/matt-with-paseo/skills/matt-with-paseo/HEARTBEAT-PATH.md`, phrase "whose count has not moved for three ticks".
 
 **`paseo ls` lists an agent carrying a `stream` label this run does not have.** Another run in the same repository uses the same wave number under its own `stream` slug; a run without `stream` does not filter it out. It has no row in this run's `## Wave agents` table and its branch lacks this run's ticket branch shape ("Names this run writes" in the skill): it is not an unlogged agent of this wave. Never add its row, prompt it or archive it.
 
