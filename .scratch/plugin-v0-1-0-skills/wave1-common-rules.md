@@ -191,18 +191,18 @@ Wave 1 cleaned: 7 tickets and the fix pass merged; every row stopped, clean and 
 
 ### Eval run
 
-The stream's one eval run, on 8f7f5b9 (2026-09-30), the owner's command from `plugins/matt-with-paseo`: 34 cases loaded and run (1 run each, 701 s, $6.99, exit 1): **20 pass, 12 partial, 2 at 0.00**. Report at `plugins/matt-with-paseo/evals/results/2026-09-30T05-47-04-318Z/` (gitignored).
+The stream's one eval run, on 8f7f5b9 (2026-09-30), the owner's command from `plugins/matt-with-paseo`: 34 cases loaded and run (1 run each, 701 s, $6.99, exit 1): **21 pass, 11 partial, 2 at 0.00** (corrected from a first count of 20/12/2). Report at `plugins/matt-with-paseo/evals/results/2026-09-30T05-47-04-318Z/` (gitignored).
 
 - New case of this stream: `wave-126-stall-suspected` 1.00.
 - Partial or failing, with the stream's text they could touch: `wave-121-bundle-turn-end` 0.80 (`turn-end-merges-sha-and-answers-next` FAIL×3; wave step 5, changed by #112); `streams-40-silent-supervision` 0.80 (`writes-last-tick`; the Last tick field, #112 and P6); `streams-41-hung-agents` 0.83 (`names-kill-agent`; the restart-budget table, P6); `streams-52-answer-and-machine` 0.50 (`status-line-drops-answer`; the status line, #110); `streams-46-adopt-unstreamed-wave` 0.50 (`maps-and-waits-for-the-wave`).
 - Partial or failing elsewhere: `wave-75-chosen-default-challenge` 0.00, `wave-95-user-language-one-door` 0.00, `streams-39` 0.60, `streams-47` 0.67, `streams-49` 0.78, `streams-50` 0.33, `streams-51` 0.50, `streams-61` 0.40.
 - Against `ticket-sizing`'s run on 3d37060 (1 run each, noisy): passing now, partial then: `wave-54`, `wave-64`, `streams-43` (now loaded). Failing now, passing then: `wave-75`, `wave-95`, `wave-121`, `streams-39`, `streams-46`, `streams-47`, `streams-52`. Lower: `streams-50` 0.67 → 0.33. Higher: `streams-61` 0.20 → 0.40, `streams-49` 0.56 → 0.78, `streams-51` same.
 
-**Operator's decisions (D97, 2026-09-30):** 1: no fix for the eval's partial and failing cases; all 14 go to the ship pull request's Merge Danger with the comparison below (as D90). 2: the hung-stream-agent gap on the message path (#112's open question, ADR 0012's consequence) is filed on the plugin side by the orchestrator, with plugin#45. 3: #110–#114, #125, #126 close through the ship pull request.
+**Operator's decisions (D97, 2026-09-30):** 1: no fix for the eval's partial and failing cases; all 13 go to the ship pull request's Merge Danger (asked as 14, a miscount of mine: the run has 13) with the comparison below (as D90). 2: the hung-stream-agent gap on the message path (#112's open question, ADR 0012's consequence) is filed on the plugin side by the orchestrator, with plugin#45. 3: #110–#114, #125, #126 close through the ship pull request.
 
 ### Merge Danger
 
-The stream's one eval run on 8f7f5b9 (1 run each, noisy) left 14 of 34 cases below 1.00. None was fixed (D97). Compared with `ticket-sizing`'s run on 3d37060:
+The stream's one eval run on 8f7f5b9 (1 run each, noisy) left 13 of 34 cases below 1.00. None was fixed (D97). Compared with `ticket-sizing`'s run on 3d37060:
 
 | Case | Score now | Score on 3d37060 | Failing grader now | Stream text it could touch |
 |---|---|---|---|---|
@@ -221,4 +221,4 @@ The stream's one eval run on 8f7f5b9 (1 run each, noisy) left 14 of 34 cases bel
 | `streams-61-ship-rules` | 0.40 | 0.20 | `reads-target-not-stream-branch` | none named |
 | `wave-54`, `wave-64`, `streams-43` | 1.00 | partial or not loaded | none | now passing |
 
-The 13 rows above the last are the 14 cases counted with `streams-40` and `streams-51` (same score as before) included; "Score on 3d37060" for cases passing then is 1.00 as that run's log names only its partial cases.
+The 13 rows above the last are the 13 cases below 1.00. "Score on 3d37060" reads 1.00 for a case that run's log does not name among its partial cases.
