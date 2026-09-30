@@ -119,7 +119,7 @@ Each item below holds for one ticket, and you go through them again for each tic
   user must make. Tag each decision `decided: X because Y` or `assumed: X, unchecked`, and each finding
   `reproduced` or `traced`, so a reader scans the report instead of parsing its prose.
 - End your turn after each ticket's report, then wait for `next` (start the bundle's next ticket) or `stop`
-  (finish as the orchestrator's message says). The rule above about background work holds at every one of
+  (run no bundle review and hand off as the orchestrator's message says: a fresh review agent runs the review). The rule above about background work holds at every one of
   these turn ends: wait for it inside the turn, so the report means the work is done. A bundle of one ends
   its turn once.
 ```

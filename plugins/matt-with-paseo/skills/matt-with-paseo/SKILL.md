@@ -261,7 +261,7 @@ Each time a ticket agent ends a turn with a ticket's report (a bundle of one end
 3. Read the stop signals:
    - **With the plugin:** a Jev flag that reaches you at this turn end is weighed by you (the stream agent, under `stream`); accepting it means `stop`. This skill names that seam and nothing of Jev's inside: the plugin never judges (ADR 0009).
    - **Without the plugin:** read `contextWindowUsedTokens` from `lastUsage` in `get_agent_status`; when that field is missing, from the last main-chain `usage` in the agent's transcript. The signal is `stop` when the common rules' parameters section calls for it (its context stop, its ticket cap).
-4. Answer the agent with `send_agent_prompt`, `notifyOnFinish` set: `next`, or `stop` when step 3 gave a stop. The bundle's last ticket needs no answer: its agent has finished.
+4. Answer the agent with `send_agent_prompt`, `notifyOnFinish` set: `next`, or `stop` when step 3 gave a stop; `stop` tells the agent to run no bundle review and to hand off, since the fresh review agent of step 4 runs it. The bundle's last ticket needs no answer: its agent has finished.
 
 After `stop`, the bundle's unfinished tickets are handled as "Agent stops midway" in [`TROUBLESHOOTING.md`](TROUBLESHOOTING.md) says.
 
