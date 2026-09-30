@@ -270,6 +270,7 @@ Read each agent's progress and report with `get_agent_activity`, not by reconstr
 | `Agent created` | Nothing: step 4 wrote the agent's row when it spawned it |
 | `Agent archived` | Finish step 8's clean-up of that ticket when you archived the agent; otherwise check the ticket's status before counting its work done |
 | `Gate cap passed` | Spawn no further ticket agent until fewer than the cap it names run, whatever the quota says (step 4) |
+| `Human words` | The user typed into a ticket agent's chat; the message carries a count and message ids, never the words. Read those messages with `get_agent_activity` for the agent it names, then comment on the ticket it names: `Human words: <n> messages typed to agent <agent> (message <ids>). changed the plan: yes` or `no`, with one line on why. That comment is the record, not the agent's own report; step 8's summary reads it |
 | Any other lead | Read its `Next:` line and judge the moves under this skill's rules |
 
 The `Next:` line is the plugin's suggestion; the judgement stays with this skill (ADR 0009). The plugin sends a message only for an agent labelled `wave` and `ticket`, so an agent it does not name reaches you as its finish notification, as on the heartbeat path.
@@ -371,4 +372,12 @@ Learning across waves is Matt's `/mattpocock-skills:retro` (the user invokes it;
 
 Return to step 2 with the new base commit. When no open ticket can join a wave, report a summary: which tickets are `resolved`, which wait on a human, and which remain open and what blocks them. End it with the counts of step 7's marks, added up over the `## Review` and `## Checkpoints` of every wave file of the run: review runs and how many marked `changed the work: yes`; Checkpoints, how many marked `changed the work: yes` and how many marked `took the recommendation: yes`. A count of zero reads `0 of 0`, and a mark missing from a wave file is reported as missing, never counted as `no`.
 
-**Done when**: every row in the table is checked as cleaned or has a reason for keeping it that the user has been told, no agent or workspace outside the table was archived, every agent the closing `paseo ls` scan listed has a row and was named to the user, no heartbeat of the wave remains, the wave file is committed, step 1 has run again, and the next wave is open or the summary, with the counts, is reported, the message that follows naming `/mattpocock-skills:retro`.
+The summary also carries one `Human words:` part, read from the tickets' `Human words:` comments (step 5), not from memory:
+
+| Case | The part reads |
+|---|---|
+| Message path, at least one such comment | One line for each ticket so commented: the ticket, the number of messages, and its `changed the plan` mark |
+| Message path, no such comment | `Human words: none` |
+| Heartbeat path (plugin absent) | `Human words: not watched (plugin absent)`; no message came, so `none` is never claimed without the relay |
+
+**Done when**: every row in the table is checked as cleaned or has a reason for keeping it that the user has been told, no agent or workspace outside the table was archived, every agent the closing `paseo ls` scan listed has a row and was named to the user, no heartbeat of the wave remains, the wave file is committed, step 1 has run again, and the next wave is open or the summary, with the counts and the `Human words:` part, is reported, the message that follows naming `/mattpocock-skills:retro`.
