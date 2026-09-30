@@ -104,8 +104,10 @@ Whoever answers a challenge to a chosen default writes why the plan changes or s
 Each item below holds for one ticket, and you go through them again for each ticket of your bundle.
 - Commit to your branch. The orchestrator merges it. Pull-request descriptions and discussion are written
   by whoever ships, outside this wave: keep none in your worktree, and put what they need in your report.
-- Before the last commit: run `/mattpocock-skills:code-review` with your base commit as the fixed point, fix the
-  findings, and write the number of findings per axis and the outcome of each into the ticket's comments.
+- Before the last commit of your bundle's last ticket: where the evidence standards above do not defer it, run
+  `/mattpocock-skills:code-review` once over the bundle, with your bundle's base commit as the fixed point, fix the
+  findings, and write the number of findings per axis and the outcome of each into the comments of every ticket
+  of your bundle. Where they defer it, run no review.
 - Change the ticket status: `resolved` if fully done, `<ready for human label from the triage label file>` for the part a human must do.
   Write in the comments of that ticket's own issue what you verified, with evidence, and what remains open;
   there is no bundle-level evidence.
