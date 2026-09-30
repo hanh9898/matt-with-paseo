@@ -59,6 +59,20 @@ Ownership: when the question is who decides or may do something (yours, a stream
 
 Read the wave skill's [`PASEO-FACTS.md`](../matt-with-paseo/PASEO-FACTS.md) (verified Paseo behaviour, each row with its version): its turns and notifications table when a stream agent's finish notification is missing.
 
+## Detect the plugin
+
+The plugin `matt-with-paseo-plugin` is optional. Detect it by the rule of the "Plugin detection" section of its [contract](https://github.com/hanh9898/matt-with-paseo-plugin/blob/main/docs/contract.md), and by no other signal: run `paseo plugin ls`. The contract version the plugin reports is the one its `CHANGELOG.md` entry gives for the release `paseo plugin ls` shows. The version this skill requires is the wave skill's `Requires plugin contract` line, in its words block. Detect at each run of this skill and at the start of each tick (step 5).
+
+| `paseo plugin ls` shows | This skill takes | Tell the user |
+|---|---|---|
+| The Paseo id `matt-with-paseo` with status `running`, and a contract version equal to the required one | The message path | Nothing |
+| Anything else: no such line, another status, the command failing, or a release whose contract version cannot be read | The heartbeat path, as it ran before the plugin existed | Nothing |
+| The Paseo id `matt-with-paseo` with status `running`, and another contract version | The heartbeat path | Once per stream: the version the plugin reports, the version this skill requires, and that supervision runs by heartbeat; the stream's status line then records the mismatch as reported |
+
+A tick that finds the same mismatch already recorded in the stream's status line tells the user nothing; a different reported version is a new mismatch. Once the plugin reports the required version again, or is absent, the item goes from the status line.
+
+**Done when**: each run and tick took the path its detection gave, and a mismatch was told to the user once per reported version, then only recorded.
+
 ## Decisions, memory, machine and credentials
 
 **Decisions.** `decisions.md`, at the root of the control folder beside `streams.md`, is the history the status line does not keep. Each time you act on one of your own decisions (a ship, an overlap warning's answer, a change of the cap or a quota, a **Hold** or its release, a **Pause** or its resume), append one line: date and time, the slug (or `all`), the decision, and the user's answer it rests on, quoted (for a quota a split changed, the cap and priorities it read). Never rewrite or remove a line. A decision inside a stream (a wave approval, a review decision, a ticket's scope) is the stream agent's to record as its tickets' comments; it never goes into `decisions.md`. A line records what was decided, never how to decide: `decisions.md` is no source of rules.
@@ -154,6 +168,7 @@ The status line is the reconcile loop's only memory (step 5). Every step writes 
 | Merge with another stream agreed | step 7 | `merge with login-bug agreed` |
 | Pause in progress, or complete | Pause and resume | `pausing, hold sent 14:05` / `paused` |
 | Held for an intake agent, with the skill | "Intake agents" | `held for triage intake` |
+| Plugin contract mismatch, as reported | "Detect the plugin" | `plugin contract 2 reported, heartbeat path` |
 
 ### Split the cap into quotas
 

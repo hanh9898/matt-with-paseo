@@ -32,6 +32,8 @@ Words used throughout:
 - **Hold**: a run with `stream` told `hold` spawns nothing new, rolling start included, while its running agents carry on; `release` lifts it (ADR 0006).
 - **User's language**: the language the user writes to you in; your own text to the user (a stage, a brief, a question, a status) follows it, and text you relay verbatim stays as its author wrote it; step 4 says what stays English.
 
+Requires plugin contract: 1
+
 ## Names this run writes
 
 This table is the only place the naming rule lives; the steps point here. With `stream <slug>`, the slug is written `<stream>`; `<slug>` in a branch name stays the ticket's short name.
@@ -127,7 +129,15 @@ Read the triage label file the `## Agent skills` section points to (its triage l
 
 Read the repo's evidence standards file when it declares one: an `## Evidence standards` section of `CLAUDE.md`/`AGENTS.md`, outside the `## Agent skills` block, pointing to a file of free prose on how this repo proves a change works. Fill the template's `<path to the evidence standards file, or "none declared">` placeholder with its path in step 3. When the section or its file is absent, write "none declared" there and continue; nothing else in the wave changes.
 
-**Done when**: you have stated six things: the ticket folder, how status and dependencies are recorded, the label string of each triage role above, the integration branch, the profile the agents will use (or the model and permission mode the user gave), and the evidence standards file's path or that the repo declares none; and, when given, the stream slug and the quota.
+Detect the plugin `matt-with-paseo-plugin` by the rule of the "Plugin detection" section of its [contract](https://github.com/hanh9898/matt-with-paseo-plugin/blob/main/docs/contract.md), and by no other signal: run `paseo plugin ls`. The contract version the plugin reports is the one its `CHANGELOG.md` entry gives for the release `paseo plugin ls` shows. The plugin is optional: a wave runs without it.
+
+| `paseo plugin ls` shows | The run takes | Tell the user |
+|---|---|---|
+| The Paseo id `matt-with-paseo` with status `running`, and a contract version equal to the `Requires plugin contract` line of the words block | The message path (step 5) | Nothing |
+| Anything else: no such line, another status, the command failing, or a release whose contract version cannot be read | The heartbeat path (step 5's heartbeat contract), as it ran before the plugin existed | Nothing |
+| The Paseo id `matt-with-paseo` with status `running`, and another contract version | The heartbeat path | Once: the version the plugin reports, the version this skill requires, and that supervision runs by heartbeat. With `stream`, nothing: the stream skill has told the user |
+
+**Done when**: you have stated seven things: the ticket folder, how status and dependencies are recorded, the label string of each triage role above, the integration branch, the profile the agents will use (or the model and permission mode the user gave), and the evidence standards file's path or that the repo declares none, and the path the plugin detection took; and, when given, the stream slug and the quota.
 
 ## 2. Build the graph and split into waves
 
@@ -334,7 +344,7 @@ With all three passed, `archive_agent`, `archive_workspace`, clean up the non-Pa
 
 Then commit the wave file on the integration branch, alone in its commit (`git add <wave file>`, `git commit -m "docs: wave <N> log"`). Until this point it stays uncommitted in this checkout, so no worktree of the wave carries a copy of it (step 4).
 
-Before returning to step 2, run step 1 again, reading its files and `list_profiles` afresh rather than from what this session read before. Compare with what step 1 stated last time (its six things, the profile's `notes` included): a change to the tracker configuration, the triage label file, a profile or the evidence standards file is named to the user in step 2's presentation, and the next wave follows the new version. For the tracked files, `git diff <this wave's base commit> HEAD -- <their paths>` shows the change. Read [`COMMON-RULES-TEMPLATE.md`](COMMON-RULES-TEMPLATE.md) again too: a section it has and this wave's rules lack, or the reverse (the log sections `## Checkpoints`, `## Wave agents` and `## Review` aside), is named the same way, and step 3 writes the next wave's rules from this reading.
+Before returning to step 2, run step 1 again, reading its files and `list_profiles` afresh rather than from what this session read before. Compare with what step 1 stated last time (its seven things, the profile's `notes` included): a change to the tracker configuration, the triage label file, a profile, the evidence standards file or the path the plugin detection took is named to the user in step 2's presentation, and the next wave follows the new version. For the tracked files, `git diff <this wave's base commit> HEAD -- <their paths>` shows the change. Read [`COMMON-RULES-TEMPLATE.md`](COMMON-RULES-TEMPLATE.md) again too: a section it has and this wave's rules lack, or the reverse (the log sections `## Checkpoints`, `## Wave agents` and `## Review` aside), is named the same way, and step 3 writes the next wave's rules from this reading.
 
 Learning across waves is Matt's `/mattpocock-skills:retro` (the user invokes it; agents cannot). Add one line naming it to the message that follows this step, step 2's presentation or the summary below, with the two rules that bind the change a retrospective proposes:
 

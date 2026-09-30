@@ -250,6 +250,8 @@ Claude Code only: the skills need a shell, git and the Paseo MCP server. What th
 - [Matt Pocock's skills](https://github.com/mattpocock/skills), installed as the `mattpocock-skills` Claude Code plugin. Both skills suggest commands in the plugin's namespaced form, `/mattpocock-skills:<skill>`; if you installed Matt's skills another way, type the same skill without the prefix (`/<skill>`).
 - A git repository whose tracker is configured by `/mattpocock-skills:setup-matt-pocock-skills`
 
+The Paseo plugin [`matt-with-paseo-plugin`](https://github.com/hanh9898/matt-with-paseo-plugin) is optional. The skills detect it by the rule in its [contract](https://github.com/hanh9898/matt-with-paseo-plugin/blob/main/docs/contract.md) ("Plugin detection"), and this release requires plugin contract version 1. With the plugin absent, or reporting another contract version, the skills supervise by heartbeat, as they did before the plugin existed; a version mismatch is reported to you once.
+
 ### Target repo `paseo.json` (optional)
 
 If the target repo commits a `paseo.json`, the wave skill uses it when spawning: with `worktree.setup` declared, it stops pasting environment setup into agent prompts; with services declared, it stops assigning ports and relies on the port Paseo gives each worktree. Neither skill writes `paseo.json`; the target repo owns it. Notes for whoever maintains that file:
