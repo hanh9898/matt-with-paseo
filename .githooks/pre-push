@@ -35,9 +35,14 @@ case $status in
         echo "pre-push warning: the drift check could not run (exit 2); push goes on." >&2
         exit 0
         ;;
+    1)
+        printf '%s\n' "$output" >&2
+        echo "pre-push: the drift check reported findings (exit 1); push refused." >&2
+        exit 1
+        ;;
     *)
         printf '%s\n' "$output" >&2
-        echo "pre-push: the drift check found stale references (exit $status); push refused." >&2
+        echo "pre-push: the drift check failed (exit $status); push refused." >&2
         exit 1
         ;;
 esac
