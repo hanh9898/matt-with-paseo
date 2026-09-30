@@ -538,7 +538,7 @@ The table below holds the rows both paths need. One stream may match several row
 
 A tick that closes a stream (the merged row above) names `/mattpocock-skills:retro` to the user in the message that reports the close, once: the status line's `merged <date>` keeps a later tick from closing it, and so from naming it, again. The two rules for the change it proposes are written once, in the wave skill's step 8 ([`SKILL.md`](../matt-with-paseo/SKILL.md)).
 
-**Recovery after the top session dies is: run one tick**, in a session in the control folder; there is no separate recovery procedure. The tick finds each stream agent by its label, handles the end-of-turn message the dead session may never have read, and restarts only what has failed. On the heartbeat path it also creates this session's heartbeat and deals with the old one; a new session on the message path holds a heartbeat only for the stream agents it did not spawn ([`HEARTBEAT-PATH.md`](HEARTBEAT-PATH.md), its section 2).
+**Recovery after the top session dies is: run one tick**, in a session in the control folder; there is no separate recovery procedure. The tick finds each stream agent by its label, handles the end-of-turn message the dead session may never have read, and restarts only what has failed. On the heartbeat path it also creates this session's heartbeat and deals with the old one; a new session on the message path holds a heartbeat only for the stream agents it did not spawn (the heartbeat path, its section 2).
 
 Everything a tick does stays at the stream agent's level: a tick never prompts, cancels, kills or archives a ticket agent, which the stream agent's wave skill supervises.
 
@@ -549,7 +549,7 @@ Everything a tick does stays at the stream agent's level: a tick never prompts, 
 | Gone from `paseo ls` while its stream should run (killed, or archived by hand) | Failed | Spends one |
 | Gone from `paseo ls` while its stream's status line records `paused` or `pausing, hold sent <time>` (a real restart of the machine, which **Pause** exists to allow) | Not failed: "Replace a stream agent" spawns the replacement once the user resumes, carrying forward every hold the status line still records | Spends none |
 | `get_agent_status` reports an error, or its last turn ended on an error that prompting again does not get past (the wave skill's [`TROUBLESHOOTING.md`](../matt-with-paseo/TROUBLESHOOTING.md) "Agent stops midway" cases) | Failed | Spends one |
-| Running, its activity count unchanged for three ticks, and its last activity entry one the wave skill's heartbeat path ([`HEARTBEAT-PATH.md`](../matt-with-paseo/HEARTBEAT-PATH.md)) calls hung | Failed, **hung** | Spends one |
+| Running, its activity count unchanged for three ticks, and its last activity entry one the wave skill's heartbeat path calls hung (its hung-agent table) | Failed, **hung** | Spends one |
 | Running, its activity count unchanged for three ticks, and its last activity entry one that contract calls not hung | Not failed: report it to the user, headed with the slug, with that last entry and how long it has run, once (the status line records it as reported); never kill, cancel or prompt it on this signal | Spends none |
 | Stopped on a session or usage limit that resets | Not failed: after the reset, `send_agent_prompt` "where does the stream stand?" to the same agent, `background: true`, `notifyOnFinish: true` | Spends none |
 | Idle with a question, or idle between waves | Not failed: step 4 handles it | Spends none |

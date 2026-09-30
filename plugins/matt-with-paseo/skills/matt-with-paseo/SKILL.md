@@ -32,7 +32,7 @@ Words used throughout:
 - **Hold**: a run with `stream` told `hold` spawns nothing new, rolling start included, while its running agents carry on; `release` lifts it (ADR 0006).
 - **User's language**: the language the user writes to you in; your own text to the user (a stage, a brief, a question, a status) follows it, and text you relay verbatim stays as its author wrote it; step 4 says what stays English.
 - **Message path**: supervision from the plugin's messages, taken when step 1 detects the plugin with the required contract version. It creates no heartbeat for the agents the plugin relays (step 5).
-- **Heartbeat path**: supervision from finish notifications and a heartbeat, taken in every other case, and the only path before the plugin existed. Its rules sit in [`HEARTBEAT-PATH.md`](HEARTBEAT-PATH.md), read only when the run takes it, or when step 5 sends an agent there (a `Stall suspected` message among them).
+- **Heartbeat path**: supervision from finish notifications and a heartbeat, taken in every other case, and the only path before the plugin existed. Its rules sit in the file step 5 points to, read only when the run takes it, or when step 5 sends an agent there (a `Stall suspected` message among them).
 
 Requires plugin contract: 1
 
@@ -63,7 +63,7 @@ With `stream`, the run takes three prompts at any time, from the stream skill or
 
 Ownership: when a `stream` run must settle who decides or may do something, read the table in [`OWNERSHIP.md`](../matt-with-paseo-streams/OWNERSHIP.md) (each role's ownership, its lines of speech and its never-items).
 
-With `stream`, the run's work ends on its integration branch: shipping belongs to the stream skill (`/matt-with-paseo:matt-with-paseo-streams`). The run pushes nothing, opens no pull request, and creates no heartbeat outside the heartbeat path's contract ([`HEARTBEAT-PATH.md`](HEARTBEAT-PATH.md)). Asked to ship, by anyone, answer that shipping belongs to the stream skill, and carry on with the run.
+With `stream`, the run's work ends on its integration branch: shipping belongs to the stream skill (`/matt-with-paseo:matt-with-paseo-streams`). The run pushes nothing, opens no pull request, and creates no heartbeat outside the heartbeat path's contract. Asked to ship, by anyone, answer that shipping belongs to the stream skill, and carry on with the run.
 
 ## 0. Locate the state and suggest the next step
 
@@ -258,8 +258,8 @@ Read each agent's progress and report with `get_agent_activity`, not by reconstr
 
 | Path | A ticket agent's turn end reaches you as | Heartbeat |
 |---|---|---|
-| Message path | the plugin's `Turn ended` message (below) | None for an agent this session spawned. For an agent an earlier session spawned, one under [`HEARTBEAT-PATH.md`](HEARTBEAT-PATH.md): the plugin sends its messages to the agent's parent, which a reopened session may not be |
-| Heartbeat path | the agent's finish notification, when this session spawned it | One under [`HEARTBEAT-PATH.md`](HEARTBEAT-PATH.md) for an agent an earlier session spawned, which sends this session no notification, and for an agent whose finished report has no artifacts yet |
+| Message path | the plugin's `Turn ended` message (below) | None for an agent this session spawned. For an agent an earlier session spawned, one under the heartbeat path: the plugin sends its messages to the agent's parent, which a reopened session may not be |
+| Heartbeat path | the agent's finish notification, when this session spawned it | One under the heartbeat path for an agent an earlier session spawned, which sends this session no notification, and for an agent whose finished report has no artifacts yet |
 
 **On the message path**, the plugin sends you one text for each event of a ticket agent, and holds it while your own turn runs: the messages held arrive as one text when your turn ends, the bodies in order, then one `Next:` line (contract v1, "Message types"). Each body starts with a lead that says what to do:
 
@@ -271,7 +271,7 @@ Read each agent's progress and report with `get_agent_activity`, not by reconstr
 | `Agent archived` | Finish step 8's clean-up of that ticket when you archived the agent; otherwise check the ticket's status before counting its work done |
 | `Gate cap passed` | Spawn no further ticket agent until fewer than the cap it names run, whatever the quota says (step 4) |
 | `Human words` | The user typed into a ticket agent's chat; the message carries a count and message ids, never the words. Read those messages with `get_agent_activity` for the agent it names, then comment on the ticket it names: `Human words: <n> messages typed to agent <agent> (message <ids>). changed the plan: yes` or `no`, with one line on why. That comment is the record, not the agent's own report; step 8's summary reads it |
-| `Stall suspected` | Judge the agent it names now, without waiting three ticks, since the sensor has flagged it: read that agent's recent activity with `get_agent_activity`, and take its last entry through the hung-agent table of [`HEARTBEAT-PATH.md`](HEARTBEAT-PATH.md), with the restart budget it gives. A shell command or no tool call: hung, so `kill_agent` it and hand its remainder to a new agent, and never prompt it to resume, whatever the `Next:` line offers, since a prompt only queues behind the stuck call. A subagent or another long tool: working, so leave it alone and tell the user once. The agent has stopped with its work unfinished: prompt it to resume, or record the ticket as stalled with the reason |
+| `Stall suspected` | Judge the agent it names now, without waiting three ticks, since the sensor has flagged it: read that agent's recent activity with `get_agent_activity`, and take its last entry through the heartbeat path's hung-agent table, with the restart budget it gives. A shell command or no tool call: hung, so `kill_agent` it and hand its remainder to a new agent, and never prompt it to resume, whatever the `Next:` line offers, since a prompt only queues behind the stuck call. A subagent or another long tool: working, so leave it alone and tell the user once. The agent has stopped with its work unfinished: prompt it to resume, or record the ticket as stalled with the reason |
 | Any other lead | Read its `Next:` line and judge the moves under this skill's rules |
 
 The `Next:` line is the plugin's suggestion; the judgement stays with this skill (ADR 0009). The plugin sends a message only for an agent labelled `wave` and `ticket`, so an agent it does not name reaches you as its finish notification, as on the heartbeat path.
@@ -300,7 +300,7 @@ Each time a ticket agent ends a turn with a ticket's report (a bundle of one end
 
 After `stop`, the bundle's unfinished tickets are handled as "Agent stops midway" in [`TROUBLESHOOTING.md`](TROUBLESHOOTING.md) says.
 
-A finished report whose artifacts are not there yet (no commits on the ticket's branch, no status change on the ticket) means the agent is still working: Paseo sends no notification for a turn an agent starts on its own after a background command (the turns and notifications table of [`PASEO-FACTS.md`](PASEO-FACTS.md), read below). Do not record the ticket as failed. On the message path, wait for that agent's next `Turn ended` message; on the heartbeat path, create a heartbeat for its agent under [`HEARTBEAT-PATH.md`](HEARTBEAT-PATH.md). Check the report again once the agent has really stopped.
+A finished report whose artifacts are not there yet (no commits on the ticket's branch, no status change on the ticket) means the agent is still working: Paseo sends no notification for a turn an agent starts on its own after a background command (the turns and notifications table of [`PASEO-FACTS.md`](PASEO-FACTS.md), read below). Do not record the ticket as failed. On the message path, wait for that agent's next `Turn ended` message; on the heartbeat path, create a heartbeat for its agent under the heartbeat path. Check the report again once the agent has really stopped.
 
 **The heartbeat path** lives in [`HEARTBEAT-PATH.md`](HEARTBEAT-PATH.md): its heartbeat contract, its tick checks, its rule for a hung agent and its delete rule. Read it only when this run takes that path, for the agents the table above sends there, or for the agent a `Stall suspected` message names, whose hung-agent table it holds.
 
