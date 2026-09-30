@@ -376,6 +376,14 @@ Issues and pull requests are welcome. Every document an agent reads, and every s
 
 When a fix comes from a real incident, describe the symptom you saw in the pull request.
 
+To have git run the checks before every push, turn on the committed pre-push hook once per clone:
+
+```
+git config core.hooksPath .githooks
+```
+
+The hook (`.githooks/pre-push`) runs the drift check's tests, then the drift check. Failing tests, or drift check exit 1, refuse the push and print the findings; drift check exit 2 (Matt's plugin is not installed, or the check cannot run) prints a warning and lets the push go on. It never runs on a commit, and it works with Python 3 on PATH as `python` or only as `python3`. Its tests: `python -B -m unittest scripts/test_pre_push_hook.py`.
+
 Before a release, run the drift check by hand (Python 3, standard library only):
 
 ```
