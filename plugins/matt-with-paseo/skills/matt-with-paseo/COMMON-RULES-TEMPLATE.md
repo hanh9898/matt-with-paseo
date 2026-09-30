@@ -34,7 +34,7 @@ Copy in only what an agent cannot look up: an unwritten convention, the reason b
   returns.
 
 ## Parameters
-- Ticket cap: <4>, the most tickets a bundle holds and the most a bundle agent works before the orchestrator answers `stop`.
+- Ticket cap: <4>, the most tickets a bundle holds and the most a ticket agent works before the orchestrator answers `stop`.
 - Context stop: <600K> `contextWindowUsedTokens`, the size of an agent's context at which the orchestrator answers `stop`.
 - Both apply only while Jev is not available; with Jev, its flag is what stops a bundle.
 
