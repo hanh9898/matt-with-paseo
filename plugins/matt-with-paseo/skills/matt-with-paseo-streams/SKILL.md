@@ -13,7 +13,7 @@ You are the stream orchestrator. You run in a control folder outside every repos
 Words: every word of the wave skill's words block ([`matt-with-paseo`](../matt-with-paseo/SKILL.md), top of the file) holds here with the same meaning. This skill adds five:
 
 - **Stream**: one ticket set that ships through one integration branch and one pull request (a merge request on GitLab; this skill says pull request for both). Its owner is an attribute of it. No dependency crosses a stream boundary; dependencies between tickets stay inside the stream, where the wave skill runs them.
-- **Intake agent**: a Paseo agent you spawn only when the user names a Matt intake skill (triage, grilling, wayfinder, and the spec and ticket steps that follow); its initial prompt starts with that skill's slash command, and it counts against the agent cap. It is the only way a spec or ticket gets written from the control folder (ADR 0005).
+- **Intake agent**: a Paseo agent you spawn only when the user names a Matt intake skill, or at level 3 when you pick one (triage, grilling, wayfinder, and the spec and ticket steps that follow); its initial prompt starts with that skill's slash command, and it counts against the agent cap. It is the only way a spec or ticket gets written from the control folder (ADR 0005).
 - **Pause**: every stream held (the wave skill's **Hold**) until no agent runs, recorded as `paused` in each status line, so the machine can restart; resuming is one tick, which releases every stream except those step 7 holds until another stream ships (ADR 0006).
 - **Ship branch**: named by the ship rules' `ship branch` pattern (default `stream/<slug>-ship`; step 6, "The ship branch"), cut afresh from the integration branch's head at each ship, plus one commit that restores the agent-only paths, except those the user keeps in, to the PR target's version (step 6 lists them). The stream's pull request comes from it, and the integration branch keeps everything (ADR 0007).
 - **Ship rules**: the target repository's own key-to-value table, in a document reached from or beside its `## Agent skills` section, giving the keys step 1's check 5 lists. Read from the pull-request target on the remote, at setup and again at ship. A missing key falls back to the skill's own default for that key alone, and an unknown key is reported. This skill never writes or edits them (ADR 0008).
@@ -75,7 +75,7 @@ A tick that finds the same mismatch already recorded in the stream's status line
 
 ## Decisions, memory, machine and credentials
 
-**Decisions.** `decisions.md`, at the root of the control folder beside `streams.md`, is the history the status line does not keep. Each time you act on one of your own decisions (a ship, an overlap warning's answer, a change of the cap or a quota, a **Hold** or its release, a **Pause** or its resume, an answer you sent from the delegation table), append one line: date and time, the slug (or `all`), the decision, and the user's answer it rests on, quoted (for a quota a split changed, the cap and priorities it read; for a delegated answer, the question, the answer sent and the grounds, as "Delegation" gives them). Never rewrite or remove a line. A decision inside a stream (a wave approval, a review decision, a ticket's scope) is the stream agent's to record as its tickets' comments; it never goes into `decisions.md`, except that an answer you sent for the user from the delegation table is your own decision and gets its line. A line records what was decided, never how to decide: `decisions.md` is no source of rules.
+**Decisions.** `decisions.md`, at the root of the control folder beside `streams.md`, is the history the status line does not keep. Each time you act on one of your own decisions (a ship, an overlap warning's answer, a change of the cap or a quota, a **Hold** or its release, a **Pause** or its resume, an answer you sent from the delegation table at level 2 or 3), append one line: date and time, the slug (or `all`), the decision, and the user's answer it rests on, quoted (for a quota a split changed, the cap and priorities it read; for a delegated answer, the question, the answer sent and the grounds, as "Delegation" gives them). Never rewrite or remove a line. A decision inside a stream (a wave approval, a review decision, a ticket's scope) is the stream agent's to record as its tickets' comments; it never goes into `decisions.md`, except that an answer you sent for the user from the delegation table is your own decision and gets its line. A line records what was decided, never how to decide: `decisions.md` is no source of rules.
 
 **Claude memory.** How a run behaves comes from this skill, the wave skill and `streams.md` alone. Never write an operating rule (how to read an answer, when to ship, how to supervise) to Claude memory or to a file of the control folder, even when the user states one: tell the user that a lasting rule belongs in the skill. A setting this skill lets the user change (the restart budget, the respawn threshold) is a decision like any other, recorded in `decisions.md` and applied where its step says.
 
@@ -98,18 +98,20 @@ The table has rows of two cells, a rule and its value. A rule's name is read ign
 
 | Rule | Value | Reads as |
 |---|---|---|
-| `Switch` | `on` or `off` | `on`: delegation is on, and you may answer what the rows below let you. Any other value is `off`. A table with no `Switch` row is `on`, so write the row |
-| `Questions the orchestrator may decide` | door classes, separated by `,` or `;` | Only `two-way` and `costly` count; `one-way` and any other word are dropped. A question whose `Door:` line names a class not listed here is the user's |
+| `Level` | `1`, `2` or `3` | The autonomy level (ADR 0013). Level 1: nothing is delegated. Level 2: you may answer what the rows below let you, and the five items stay the user's. Level 3: the five items open too, except the three "The user's at every level" lists. Any other value is level 1 |
+| `Switch` | `on` or `off` | The mapping for a table with no `Level` row: `on`, ignoring case, is level 2; any other value is level 1 |
+| `Questions the orchestrator may decide` | door classes, separated by `,` or `;` | `two-way` and `costly` count at every level; `one-way` counts only at level 3, and only when the row lists it. Any other word is dropped. A question whose `Door:` line names a class not counted here is the user's |
 | `Appetite` | a spend limit per stream, in USD (`20 USD`) | Read as a dollar amount; any other value is no appetite. This skill only holds the field: the plugin sums the spend |
 | `Stage confirmation`, `Wave approval`, `Question-type permission`, `Overlap warning` | `orchestrator` or `user` | The standing order for that kind of checkpoint. Any other value, and a missing row, is `user`. The plugin ignores these rows |
 
-Example:
+Example at level 2:
 
 ```markdown
 ## Delegation
 
 | Rule | Value |
 |---|---|
+| Level | 2 |
 | Switch | on |
 | Questions the orchestrator may decide | two-way, costly |
 | Appetite | 20 USD |
@@ -119,31 +121,62 @@ Example:
 | Overlap warning | orchestrator |
 ```
 
-**The switch.** Resolve it once per stream, in this order:
+Example at level 3:
 
-| Case | The switch is |
+```markdown
+## Delegation
+
+| Rule | Value |
 |---|---|
-| The stream's Delegation cell in the index (The index) holds `on` or `off` | That value: it wins over the repository's |
-| The cell is empty, and the repository's `AGENTS.md` holds a `## Delegation` table | The table's `Switch` row |
-| The cell is empty, and there is no `## Delegation` section | `off`: every checkpoint reaches the user, exactly as before this section existed |
+| Level | 3 |
+| Switch | on |
+| Questions the orchestrator may decide | two-way, costly, one-way |
+| Appetite | 20 USD |
+| Stage confirmation | orchestrator |
+| Wave approval | orchestrator |
+| Question-type permission | orchestrator |
+| Overlap warning | orchestrator |
+```
 
-**When you answer.** With the switch `on`, answer a checkpoint yourself only when every line below holds; otherwise it reaches the user in the next question round (step 4), verbatim, as it always did:
+**The level.** Resolve it once per stream, in this order:
 
-1. The checkpoint's kind has the standing order `orchestrator`: a stage confirmation, a wave approval, a stream agent's question-type permission, or an overlap warning (step 7).
-2. The question carries a suggestion of the asking agent (the suggestion a terse answer binds to, step 4). A question with no suggestion waits for the user. The overlap warning's suggestion is `Continue both`, since the warning never blocks.
-3. The question's `Door:` line, when it has one, names a class the `Questions the orchestrator may decide` row lists, and it has no `Yours:` line.
-4. The answer costs nothing past the appetite. Once the plugin reports the appetite passed, every question of that stream reaches the user.
-5. The question is none of the items below.
+| Case | The level is |
+|---|---|
+| The stream's Level cell in the index (The index) holds `1`, `2` or `3` | That value: it wins over the repository's |
+| An old index has a Delegation column, and its cell holds `on` or `off` | 2 for `on`, 1 for `off` |
+| The cell is empty, and the table has a `Level` row of `1`, `2` or `3` | That value |
+| The cell is empty, and the table has a `Level` row with any other value | 1, with no fallback to `Switch` |
+| The cell is empty, the table has no `Level` row, and `Switch` reads `on` (ignoring case) | 2 |
+| The cell is empty, the table has no `Level` row, and `Switch` has any other value | 1 |
+| The cell is empty, and the table has neither row or there is no `## Delegation` section | 1: every checkpoint reaches the user, exactly as before this section existed |
 
-**Always the user's, whatever the table says.** No row widens these:
+**When you answer.** Answer a checkpoint yourself only when every condition below holds for the stream's level; otherwise it reaches the user in the next question round (step 4), verbatim, as it always did:
+
+| Condition | Level 1 | Level 2 | Level 3 |
+|---|---|---|---|
+| 1. The checkpoint's kind has the standing order `orchestrator`: a stage confirmation, a wave approval, a stream agent's question-type permission, or an overlap warning (step 7) | Nothing is answered | Required | Required |
+| 2. The question carries a suggestion of the asking agent (the suggestion a terse answer binds to, step 4). The overlap warning's suggestion is `Continue both`, since the warning never blocks | | Required: a question with no suggestion waits for the user | Required, except that a question with no suggestion is answered with the smaller option, the one easier to undo, and recorded as decided without evidence (ADR 0013) |
+| 3. The question's `Door:` line, when it has one, names a class the `Questions the orchestrator may decide` row lists, and it has no `Yours:` line | | Required: `one-way` never counts | The class must be listed, and `one-way` counts when listed. A `Yours:` line no longer blocks, except for the items "The user's at every level" lists |
+| 4. The answer costs nothing past the appetite; once the plugin reports the appetite passed, every question of that stream reaches the user | | Required | Required |
+| 5. The question is none of the user's items | | None of "Always the user's at level 2" | None of "The user's at every level" |
+
+At level 3 you also answer the stream's own ship question and carry out the merge of its pull request; step 6 says how.
+
+**Always the user's at level 2.** No row widens these at level 2; level 3 opens them within the limits of the next section:
 
 | Item | What counts |
 |---|---|
 | A change to the concept | The spec, the words blocks, the ADRs |
-| Adding or dropping tickets | An intake agent still starts only when the user names it (ADR 0005) |
+| Adding or dropping tickets | An intake agent starts only when the user names its skill (ADR 0005) |
 | Spend past the appetite | Any answer that would take the stream's spend past it |
 | An irreversible action | The ship question (push and open the pull request), an action that changes the machine ("Decisions, memory, machine and credentials"), anything that needs a credential, and resuming a stream stopped on its restart budget |
 | Merging the pull request | It stays with the repository's reviewers (step 6) |
+
+**The user's at every level.** These cannot be undone, or cannot be done by an agent, so they hold at level 3 too, and nothing else does:
+
+- spend past the appetite;
+- an action that changes the machine;
+- a credential, or any other step only a human can do.
 
 **A delegated answer.** Send the asking agent's suggestion as the answer, through the route step 4 gives that kind of question, and never a choice of your own. Then, in the same turn:
 
@@ -151,7 +184,7 @@ Example:
 2. Write into the stream's status line, in place of `waits on the user`: `answered from the delegation table (decisions.md <date> <time>)`, naming that entry.
 3. Tell the user in the next question round, under the stream's slug, what you answered, quoting the question and the answer sent.
 
-**Done when**: each checkpoint answered from the table met all five lines above, none was one of the user's items, and each has one `decisions.md` line and one status line item; every other checkpoint went to the user.
+**Done when**: each checkpoint answered from the table met all five conditions of "When you answer" for its stream's level, none was an item the user keeps at that level, and each has one `decisions.md` line and one status line item; every other checkpoint went to the user.
 
 ## The index
 
@@ -169,7 +202,7 @@ The index is `streams.md` at the root of the control folder: one line for the ca
 | PR target | The branch the stream's pull request goes to; empty means resolve per step 1 |
 | Forge | `GitHub` or `GitLab`: the forge that hosts the repository, where step 6 opens the pull request; empty means resolve per step 1, which writes it. An index without this column reads as empty; add the column when you write the row |
 | Key | The stream's external reference (an issue key, a ticket id), for a ship rules pattern's `<key>` placeholder; it is data about the stream, not a rule (ADR 0008). Empty means a pattern needing it is named at setup (step 1). An index without this column reads as empty; add the column when you write the row |
-| Delegation | The stream's own setting of the delegation switch ("Delegation: what you may answer for the user"): `on` or `off`. It wins over the repository's `Switch`; empty means the repository's value. An index without this column reads as empty; add the column when you write the row |
+| Level | The stream's own autonomy level ("Delegation: what you may answer for the user"): `1`, `2` or `3`. It wins over the repository's table; empty means the repository's value. An old index's `Delegation` column reads `on` as 2 and `off` as 1. An index without this column reads as empty; add the column when you write the row |
 | Priority | A number, 1 first; empty means the order of rows (first come first served) |
 | Quota | The quota last given to the stream's stream agent: its spawn command's `quota <N>` (step 3) or a later `quota <N>` prompt ("Split the cap into quotas"; step 4's "At a wave boundary"). Empty only before the stream's first stream agent is spawned: not yet started, or waiting on the cap. No step blanks it afterward, including once the stream ships: its idle stream agent keeps the quota it last held, though it starts no more waves |
 | Status | The stream's status line: one line you keep current, holding only the items of "The status line" below |
@@ -182,10 +215,10 @@ Example:
 Agent cap: 6
 Last tick: 2026-09-27 14:15, heartbeat streams-reconcile 7f3e2a19 every 15 min, expires 2026-09-27 22:00
 
-| Slug | Repository | Owner | Tickets | Base branch | PR target | Forge | Key | Delegation | Priority | Quota | Status |
+| Slug | Repository | Owner | Tickets | Base branch | PR target | Forge | Key | Level | Priority | Quota | Status |
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | billing-export | D:\src\opms | Lan | label `stream:billing-export` | | | GitLab | | | 1 | 3 | 2026-09-27 wave 1 running, waits on the stream agent |
-| login-bug | D:\src\opms | Minh | `.scratch/login-bug/issues/` | test | test | | PROJ-482 | off | 2 | | 2026-09-27 not started |
+| login-bug | D:\src\opms | Minh | `.scratch/login-bug/issues/` | test | test | | PROJ-482 | 1 | 2 | | 2026-09-27 not started |
 ```
 
 With no index yet, write `streams.md` with the cap line and the table header, ask the user for the cap and each stream's fields, and write them in. Each Repository is the absolute path of a local checkout that the user gives; ask for it rather than searching the disks. Ask for each field by its name alone: the example's values above belong to no user and appear in no question, as a default or a suggestion. The Forge cell may stay empty; step 1 fills it.
@@ -217,6 +250,7 @@ The status line is the reconcile loop's only memory (step 5). Every step writes 
 | A resume prompt sent to a failed stream agent, or a restart held back by running ticket agents | "Replace a stream agent" | `resume sent 14:05`, `restart held: wave 3 ticket agents running` |
 | Respawned for context | step 4 at a wave boundary | `respawned for context` |
 | Stopped, with the owner | step 5 | `stopped: restart budget spent (2/2 in wave 3), owner Lan` |
+| Resumed at level 3, with its `decisions.md` entry; it stays until a new wave number starts the count again, so a second stop in the wave is read as the user's | step 5 | `restarts 0/2 in wave 3, resumed at level 3 (decisions.md 2026-09-27 14:20)` |
 | A finding reported to the user | step 5 | `reported: open pull request not recorded` |
 | A nudge sent to an idle stream agent, for the message the status line records | step 5 (heartbeat path) | `nudged 11:40` |
 | Nothing to ship, for the integration branch's head | step 6 | `nothing to ship at 1a2b3c4` |
@@ -291,7 +325,14 @@ A replacement at a wave boundary never counts against the restart budget of step
 
 ## Intake agents
 
-Spawn an **intake agent** only when the user names a Matt intake skill — for an existing stream, or for work that has no stream yet — never on your own and never in place of one (ADR 0005). Neither you nor a stream agent ever writes a spec or a ticket: the intake agent's own skill is the only route new work takes into a stream, or into one already running. Asked to write a spec, a ticket, or anything that plans work yourself, refuse: name the Matt intake skill that fits (`/mattpocock-skills:triage` for raw issues; `/mattpocock-skills:grilling` or `/mattpocock-skills:wayfinder`, then `/mattpocock-skills:to-spec` and `/mattpocock-skills:to-tickets`, for larger work) and say its intake agent runs once the user names it; write nothing yourself.
+Spawn an **intake agent** only when the user names a Matt intake skill — for an existing stream, or for work that has no stream yet — and never in place of one (ADR 0005). Below level 3 you never start one on your own. At level 3 (ADR 0013) you start one yourself, with a `decisions.md` entry for the spawn, in two cases only:
+
+| Case | The skill you pick |
+|---|---|
+| A stream agent's question asks to add or drop tickets | The Matt intake skill that fits the work, from the list below |
+| A stream's Tickets point at nothing | The Matt intake skill that fits the work, from the list below |
+
+Either way the procedure below runs as written: hold, wait until quiet, workspace, place in the cap, and a spawn whose prompt is exactly that skill's slash command. Neither you nor a stream agent ever writes a spec or a ticket: the intake agent's own skill is the only route new work takes into a stream, or into one already running. Its questions are answered under the same level-3 rules as a stream agent's. Asked to write a spec, a ticket, or anything that plans work yourself, refuse: name the Matt intake skill that fits (`/mattpocock-skills:triage` for raw issues; `/mattpocock-skills:grilling` or `/mattpocock-skills:wayfinder`, then `/mattpocock-skills:to-spec` and `/mattpocock-skills:to-tickets`, for larger work) and say its intake agent runs once the user names it, or at level 3 start it yourself; write nothing yourself.
 
 1. **Hold first, for an existing stream.** Unless its status line already records a hold, `send_agent_prompt` `hold` to its stream agent, `background: true`, `notifyOnFinish: true` (the wave skill's **Hold**), and write `held for <skill> intake` into its status line, its "waits on" naming the intake agent in place of the stream agent: its running agents carry on, but nothing new starts while the intake agent may write the same worktree.
 2. **Wait until it is quiet, at a wave boundary.** `paseo ls -g --label stream=<slug> --json` lists no running agent with a `wave` label, the same check "Replace a stream agent" uses, so one agent writes the worktree at a time. Until then the hold stands, the status line keeps naming the intake agent, and the intake agent is planned, not yet spawned; re-run this check on each step 4 notification and each tick of step 5 for a status line recording `held for <skill> intake`, and go on once it is quiet (step 5's tick table has a row for this). Work with no stream yet skips this: nothing else writes its worktree.
@@ -315,7 +356,7 @@ Spawn an **intake agent** only when the user names a Matt intake skill — for a
    - Write what it produced (a spec, tickets, a plan) into the row's Tickets cell only when that cell was empty or the row is new. An existing stream's Tickets cell already names where its tracker lives, so leave it as is.
    - For an existing stream whose status line still reads exactly `held for <skill> intake`, `release` its stream agent the same way "A need on another stream" does, and write its status back to naming the stream agent in place of `held for <skill> intake`. A status line that also reads `paused` or `held until <other> ships` stays held, for its own reason.
 
-**Done when**: no intake agent ran without the user naming its skill. An existing stream was held before its intake agent could write its worktree, and the agent ran only once quiet, in the workspace "Find its workspace" gives. Its initial prompt was exactly the named skill's slash command, and it took no slot beyond what "Give it its place in the cap" allows. Its questions joined the round like a stream agent's, under its own labels. It was archived, never cancelled or killed, only once its own message said its skill was done. An existing stream's hold was released only when this section set it, and the row's Tickets cell was touched only when it was empty or new.
+**Done when**: no intake agent ran unless the user named its skill or the stream was at level 3, whose spawn has its `decisions.md` entry. An existing stream was held before its intake agent could write its worktree, and the agent ran only once quiet, in the workspace "Find its workspace" gives. Its initial prompt was exactly the named skill's slash command, and it took no slot beyond what "Give it its place in the cap" allows. Its questions joined the round like a stream agent's, under its own labels. It was archived, never cancelled or killed, only once its own message said its skill was done. An existing stream's hold was released only when this section set it, and the row's Tickets cell was touched only when it was empty or new.
 
 ## 0. Pick the stream
 
@@ -323,7 +364,7 @@ Read `streams.md`. With a slug in the input, take its row; with none, show the i
 
 Before anything else, check whether the stream already runs: `paseo ls -g --label stream=<slug> --json`, keeping only the agents without a `wave` label (the others are the stream's ticket agents). A stream agent left there means the stream is running: run one tick (step 5) instead of spawning a second one.
 
-A stream whose Tickets point at nothing yet has no work to run. Work enters a stream only through an **intake agent** (ADR 0005): the user names a Matt intake skill — `/mattpocock-skills:triage` for raw issues, or for larger work `/mattpocock-skills:grilling` or `/mattpocock-skills:wayfinder`, then `/mattpocock-skills:to-spec`, then `/mattpocock-skills:to-tickets` — and you spawn it per "Intake agents" below. Suggest naming one and stop; you never write a spec or a ticket yourself, and you never start intake on your own.
+A stream whose Tickets point at nothing yet has no work to run. Work enters a stream only through an **intake agent** (ADR 0005): the user names a Matt intake skill — `/mattpocock-skills:triage` for raw issues, or for larger work `/mattpocock-skills:grilling` or `/mattpocock-skills:wayfinder`, then `/mattpocock-skills:to-spec`, then `/mattpocock-skills:to-tickets` — and you spawn it per "Intake agents" below. Suggest naming one and stop; you never write a spec or a ticket yourself, and below level 3 you never start intake on your own (at level 3, "Intake agents" starts it).
 
 **A wave run outside any stream.** A run of the wave skill started without `stream` (by the user, or before this skill took over) can be adopted as a stream instead of being left orphaned (ADR 0005).
 
@@ -457,13 +498,13 @@ Capacity and context change a stream's quota or agent only here and at the choki
 
 **A question round.** Every approval gate of the wave skill keeps its meaning only if the user is the one who passes it, or has handed that kind of checkpoint to you in the repository's delegation table ("Delegation: what you may answer for the user"). These rules come first; nothing below overrides them except that section:
 
-- **The answers are the user's alone.** Never answer, approve, or pick an option for the user, even when the answer looks obvious. The one exception is a checkpoint the delegation table lets you answer (switch on, its kind's standing order `orchestrator`, the asking agent's suggestion as the answer): answer it there, record it there, and never any other. With no `## Delegation` section, or the switch off, every checkpoint reaches the user.
+- **The answers are the user's alone.** Never answer, approve, or pick an option for the user, even when the answer looks obvious. The one exception is a checkpoint the delegation table lets you answer (the stream's level 2 or 3, its kind's standing order `orchestrator`, the asking agent's suggestion as the answer, or at level 3 the smaller option): answer it there, record it there, and never any other. With no `## Delegation` section, or at level 1, every checkpoint reaches the user.
 - **A terse answer binds only to the asking agent's own suggestions.** "Go with the suggestions" (or "as suggested", "defaults") answers each question where the stream agent itself suggested an option, with that option, and nothing else. A question with no such suggestion is not answered: it stays pending and comes back in the next round. There you may add a suggestion of your own below the agent's verbatim text, marked `(orchestrator's suggestion)`; it is sent only when the user picks it.
 - **An answer names its stream.** While more than one stream waits on the user, an answer under no `[<slug>]` heading and naming no stream is asked back ("which stream is this for?") and sent nowhere. Never guess, even when one stream is left unanswered, and never send one answer to several streams unless the user gives it to each of them.
 - **"ok" approves only the question it answers.** Agreeing to a stage confirmation or to a plan inside it approves no wave. A wave starts only when the user answers the wave skill's own wave approval (its step 2), or when the delegation table hands wave approvals to you; never tell a stream agent on your own that a wave is approved, or to spawn: only the user's answer to that approval, relayed as written, or a delegated answer sent as "Delegation: what you may answer for the user" gives it, does.
 - **Relays are verbatim.** A stream agent's question reaches the user word for word: no options, defaults, advice or answer templates added, apart from a marked suggestion of your own as above. Ask no question of your own beyond the items listed below and the questions another step of this skill asks (for example step 1's setup choices or step 3's model and permission mode).
 - **Confirmations quote the answer.** When you tell the user what you sent, quote their answer as they wrote it, under its slug.
-- **The stage confirmation stays.** Each stream agent's wave skill asks its own stage confirmation (its step 0); relay it like any other question, and never ask the agent to skip it. Answer it yourself only under the delegation table's `Stage confirmation` standing order.
+- **The stage confirmation stays.** Each stream agent's wave skill asks its own stage confirmation (its step 0); relay it like any other question, and never ask the agent to skip it. Answer it yourself only under the delegation table's `Stage confirmation` standing order, at level 2 or 3.
 
 Gather every question pending across all streams, leaving out each one you answered from the delegation table:
 
@@ -484,7 +525,7 @@ The user's answer comes as a message in this session; route it when it arrives:
 | To the ship question | Step 6, and no agent |
 | To an overlap warning or a need item | Step 7, and no agent unless it sends a prompt (its hold sends `hold`, and later `release`, to the waiting stream agent) |
 | To a machine-changing action | "Decisions, memory, machine and credentials", and no agent |
-| To a checkpoint the delegation table lets you answer | No user answer: send the asking agent's suggestion by the route of its kind (a turn-end question by `send_agent_prompt`, a question-type permission by `respond_to_permission`), then record it as "Delegation: what you may answer for the user" says |
+| To a checkpoint the delegation table lets you answer at the stream's level | No user answer: send the asking agent's suggestion (at level 3, the smaller option when it gave none) by the route of its kind (a turn-end question by `send_agent_prompt`, a question-type permission by `respond_to_permission`), then record it as "Delegation: what you may answer for the user" says |
 | To a question-type permission | The user's choice, as the wave skill's [`TROUBLESHOOTING.md`](../matt-with-paseo/TROUBLESHOOTING.md) entry "Agent waits on a question-type permission" describes |
 
 A message that asks nothing (a progress report) only updates the status line.
@@ -585,7 +626,7 @@ When a stream would need a restart past its budget, it stops instead:
 - Write `stopped: restart budget spent (2/2 in wave 3)` and the owner into the status line.
 - Report it to the user, headed with the slug, with each failure as `get_agent_activity` shows it.
 
-A stopped stream should not run, so later ticks leave it alone. It runs again only when the user says so, which clears `stopped` and the count, and the next tick restarts it.
+A stopped stream should not run, so later ticks leave it alone. Below level 3 it runs again only when the user says so, which clears `stopped` and the count, and the next tick restarts it. At level 3, once per wave, you clear `stopped` and the count yourself after reporting the stop, append a `decisions.md` entry for it, write the resume item into the status line, and the next tick restarts the stream. A status line that already holds the wave's resume item means a second stop in the same wave: it goes to the user, and only the user's word runs it again.
 
 A **respawn** replaces a stream agent whose context has grown large before it hits the ceiling. It happens only at the stream's wave boundary, where step 4 reads the context use and runs "Replace a stream agent"; in the middle of a wave the agent keeps supervising its running ticket agents. The status line records it as `respawned for context`.
 
@@ -768,7 +809,7 @@ Continue both, or defer one's next wave? If deferring, which one?
 
 When the two PR targets differ, add under the targets' line that the conflict appears once one target merges into the other, not when either pull request merges.
 
-With the delegation table's `Overlap warning` standing order `orchestrator` ("Delegation: what you may answer for the user"), you answer the warning yourself with `Continue both`, its own suggestion, and never with a deferral or a hold, and record and report that answer as that section says. Otherwise the next question round is the next time you present questions to the user (step 4). The message that reported the merge usually asks the user to approve the stream's next wave, so the warning joins that round; when no question is pending at all, the warning makes a round of its own, shown right away. This item is your own, not a stream agent's question: relaying the other questions of the round and sending their answers back never waits for it. When both streams merged a wave in the same round, the pair gets one item. Until the user answers, both streams keep running.
+With the delegation table's `Overlap warning` standing order `orchestrator` and the warning's streams at level 2 or 3 ("Delegation: what you may answer for the user"), you answer the warning yourself with `Continue both`, its own suggestion, and never with a deferral or a hold, and record and report that answer as that section says. Otherwise the next question round is the next time you present questions to the user (step 4). The message that reported the merge usually asks the user to approve the stream's next wave, so the warning joins that round; when no question is pending at all, the warning makes a round of its own, shown right away. This item is your own, not a stream agent's question: relaying the other questions of the round and sending their answers back never waits for it. When both streams merged a wave in the same round, the pair gets one item. Until the user answers, both streams keep running.
 
 **The user's answer.** A deferral uses the gate the wave skill already has: it starts no wave before the user approves it (its step 2), and a running wave is never cut.
 
