@@ -209,3 +209,25 @@ Targeted re-runs (`--case <name> --runs 3`), per the evidence standards: the cas
 `streams-131`'s one scored run (0.75, the full run): `level-1-cell-relays-both` failed because the run read both `billing-export` and `billing-audit` as level 2 and answered `billing-audit`'s wave approval itself. `billing-audit`'s index Level cell `1` is only in the fixture's `streams.md`; the observed-state block in `prompt.md` never states it (it says each index Level cell is empty only for the two level-3 streams). Traced: a case gap is the likelier cause, the skill's resolution table naming the index cell first. The other three graders passed in that run, among them both level-3 graders (the merge with `--squash --delete-branch`, no `--admin`, and one CI fix pass for the red check).
 
 Open for the orchestrator (not fixed: the stream's one fix pass is spent): the `streams-131` observed-state gap, and whether to retry its three runs once.
+
+**Orchestrator's decision (D132, 2026-10-01):** 1: fix the case with one sentence naming `billing-audit`'s Level cell in the observed state; 2: re-run only `streams-131` with `--runs 3`, once, recording "no verdict" if the API filter stops it again. Done: the sentence went into `prompt.md` (5802d0a; the grader still fails on 8a361df, whose skill reads only a `Delegation` column). Re-run on 5802d0a (175 s, $0.97): **0.92, 2 of 3 runs at 1.00**; the third run failed `level-1-cell-relays-both` alone (0.75). The API filter did not stop it. Report at `plugins/matt-with-paseo/evals/results/2026-10-01T10-16-09-090Z/` (gitignored).
+
+### Merge Danger
+
+- Contract: the `Level` row and "The decision log" live in contract v1 only on `hanh9898/matt-with-paseo-plugin`'s `release/v0.1.0` (plugin #58 still open) until the plugin's `v0.1.0` merges. The skills' contract link stays on `main`, and `Requires plugin contract: 1` is unchanged.
+- Eval, new case: `streams-131-autonomy-levels` 0.92 over 3 runs on 5802d0a. `level-1-cell-relays-both` failed in 1 of 3 runs: the run read `billing-audit` as level 2 and answered its wave approval itself, though its index Level cell `1` should win over the repository's table.
+- Eval, other cases below 1.00 in the one full run on 2819f44, none fixed (1 run each, noisy). Compared with `plugin-v0-1-0-skills`' run on 8f7f5b9:
+
+| Case | Score now | Score on 8f7f5b9 | Failing grader now | Stream text it could touch |
+|---|---|---|---|---|
+| `streams-40-silent-supervision` | 0.60 | 0.80 | `nudges-idle-stream-agent` | step 5's restart budget (#131's level-3 resume) |
+| `streams-41-hung-agents` | 0.50 | 0.83 | `kills-and-replaces` | step 5's restart budget (#131) |
+| `streams-49-ship-branch` | 0.56 | 0.78 | `conflict-reported-not-asked` | step 6 (#132) |
+| `streams-51-overlap-and-need` | 0.50 | 0.50 | `need-yields-merge-or-hold` | step 7's overlap paragraph (#131) |
+| `streams-52-answer-and-machine` | 0.50 | 0.50 | `status-line-drops-answer` | status line (#133) |
+| `streams-61-ship-rules` | 0.20 | 0.40 | `names-ship-rules-change` | step 6 (#132) |
+| `wave-121-bundle-turn-end` | 0.80 | 0.80 | `stops-at-ticket-cap` | none (wave skill unchanged) |
+| `wave-75-chosen-default-challenge` | 0.00 | 0.00 | `answer-names-reason` | none |
+| `wave-95-user-language-one-door` | 0.00 | 0.00 | `two-languages` | none |
+
+- Re-run with `--runs 3` (verdict changed against 8f7f5b9): `streams-39` 0.93, `streams-46` 1.00, `streams-47` 0.78, `streams-50` 0.89, `wave-53` 0.83, `wave-54` 0.95. The full run's `wave-53` 0.50 and `wave-54` 0.57 were noise: the wave skill is unchanged.
