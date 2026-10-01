@@ -13,7 +13,7 @@ You are the stream orchestrator. You run in a control folder outside every repos
 Words: every word of the wave skill's words block ([`matt-with-paseo`](../matt-with-paseo/SKILL.md), top of the file) holds here with the same meaning. This skill adds five:
 
 - **Stream**: one ticket set that ships through one integration branch and one pull request (a merge request on GitLab; this skill says pull request for both). Its owner is an attribute of it. No dependency crosses a stream boundary; dependencies between tickets stay inside the stream, where the wave skill runs them.
-- **Intake agent**: a Paseo agent you spawn only when the user names a Matt intake skill (triage, grilling, wayfinder, and the spec and ticket steps that follow); its initial prompt starts with that skill's slash command, and it counts against the agent cap. It is the only way a spec or ticket gets written from the control folder (ADR 0005).
+- **Intake agent**: a Paseo agent you spawn only when the user names a Matt intake skill, or at level 3 when you pick one (triage, grilling, wayfinder, and the spec and ticket steps that follow); its initial prompt starts with that skill's slash command, and it counts against the agent cap. It is the only way a spec or ticket gets written from the control folder (ADR 0005).
 - **Pause**: every stream held (the wave skill's **Hold**) until no agent runs, recorded as `paused` in each status line, so the machine can restart; resuming is one tick, which releases every stream except those step 7 holds until another stream ships (ADR 0006).
 - **Ship branch**: named by the ship rules' `ship branch` pattern (default `stream/<slug>-ship`; step 6, "The ship branch"), cut afresh from the integration branch's head at each ship, plus one commit that restores the agent-only paths, except those the user keeps in, to the PR target's version (step 6 lists them). The stream's pull request comes from it, and the integration branch keeps everything (ADR 0007).
 - **Ship rules**: the target repository's own key-to-value table, in a document reached from or beside its `## Agent skills` section, giving the keys step 1's check 5 lists. Read from the pull-request target on the remote, at setup and again at ship. A missing key falls back to the skill's own default for that key alone, and an unknown key is reported. This skill never writes or edits them (ADR 0008).
@@ -42,7 +42,7 @@ Run both guards first, in this order. A guard that fails stops the skill with it
 
 ## Inputs: public signals only
 
-What you know about a stream comes from these four signals and nothing else:
+What you know about a stream comes from these five signals and nothing else:
 
 | Signal | Read it with |
 |---|---|
@@ -50,6 +50,7 @@ What you know about a stream comes from these four signals and nothing else:
 | The stream agent's end-of-turn message | `get_agent_activity` on the stream agent |
 | Paseo agent status and activity | `get_agent_status`, `get_agent_activity`, `list_pending_permissions` (step 5), `paseo ls -g --label stream=<slug> --json`, and `paseo ls -g --json` unfiltered for a wave run outside any stream (step 0) |
 | Git diff | `git -C <worktree> diff`, `git -C <worktree> log` on the integration branch; `git -C <repository> worktree list` (step 5) and `git -C <cwd> worktree list` (step 0) for where a checkout sits |
+| The plugin's `decision-log.md`, on the message path only, read only | the file the `Plugin decisions:` line of `decisions.md` points to ("Decisions, memory, machine and credentials"); never write it |
 
 You never read wave files (`wave*-common-rules.md` or anything else the wave skill writes to record a wave): their format belongs to the wave skill and may change. To learn where a stream stands, prompt its stream agent ("where does the stream stand?") and let the wave skill's step 0 answer.
 
@@ -75,7 +76,20 @@ A tick that finds the same mismatch already recorded in the stream's status line
 
 ## Decisions, memory, machine and credentials
 
-**Decisions.** `decisions.md`, at the root of the control folder beside `streams.md`, is the history the status line does not keep. Each time you act on one of your own decisions (a ship, an overlap warning's answer, a change of the cap or a quota, a **Hold** or its release, a **Pause** or its resume, an answer you sent from the delegation table), append one line: date and time, the slug (or `all`), the decision, and the user's answer it rests on, quoted (for a quota a split changed, the cap and priorities it read; for a delegated answer, the question, the answer sent and the grounds, as "Delegation" gives them). Never rewrite or remove a line. A decision inside a stream (a wave approval, a review decision, a ticket's scope) is the stream agent's to record as its tickets' comments; it never goes into `decisions.md`, except that an answer you sent for the user from the delegation table is your own decision and gets its line. A line records what was decided, never how to decide: `decisions.md` is no source of rules.
+**Decisions.** `decisions.md`, at the root of the control folder beside `streams.md`, is the history the status line does not keep. Each time you act on one of your own decisions (a ship, an overlap warning's answer, a change of the cap or a quota, a **Hold** or its release, a **Pause** or its resume, an answer you sent from the delegation table at level 2 or 3, a level-3 merge), append one entry in this shape:
+
+```
+### D<n> — <YYYY-MM-DD HH:MM> [<slug>|all] <gate>
+Asked: <the question, with the options offered>
+Answer: <exactly what was sent or done>
+Grounds: <the level and where it was read, the rule, the suggestion or the evidence>
+```
+
+The next `n` is the highest `D<n>` in the file plus one, or 1 when there is none. For a quota a split changed, `Grounds:` holds the cap and priorities it read; for a decision resting on the user's answer, that answer, quoted. Lines written before this shape stay as they are. Never rewrite or remove an entry. A decision inside a stream (a wave approval, a review decision, a ticket's scope) is the stream agent's to record as its tickets' comments; it never goes into `decisions.md`, except that an answer you sent for the user from the delegation table is your own decision and gets its entry. An entry records what was decided, never how to decide: `decisions.md` is no source of rules.
+
+`decisions.md` opens with `## Decided without evidence`, above the entries: one line per entry you decided without evidence (level 3's smaller-option rule), `D<n>: <what was decided> (smaller option taken)`, linking to the entry, whose `Grounds:` reads `no evidence; smaller option taken`. With none, the section reads `None.`. It is a reading list: nothing waits on it and no one has to act on it. Adding a line to it is the one edit allowed above the entries. `decisions.md` has no `## Pending for the user` section: a gate the user keeps goes to the next question round (step 4) and waits there.
+
+On the message path, the plugin writes its own decision log (the contract's "The decision log"), and `decisions.md` never logs a request twice. When you first detect the plugin, write one line under the file's title, `Plugin decisions: <path of decision-log.md>`, taking the path from the contract's "The decision log" (its state directory) or from the plugin's report card link; never hard-code it. Write the line once, and again only if the path changes. Write no entry for a request the plugin answered or left to the user: read the plugin's entry instead. When you act on a question the plugin left to the user, your entry is your own `D<n>`, and its `Grounds:` cites `plugin D<n>` for the plugin's leave. **The `plugin D<n>` rule**: write a plugin entry as `plugin D<n>` everywhere (in `decisions.md`, in the status line and in a message to the user); a bare `D<n>` is always an entry of `decisions.md`.
 
 **Claude memory.** How a run behaves comes from this skill, the wave skill and `streams.md` alone. Never write an operating rule (how to read an answer, when to ship, how to supervise) to Claude memory or to a file of the control folder, even when the user states one: tell the user that a lasting rule belongs in the skill. A setting this skill lets the user change (the restart budget, the respawn threshold) is a decision like any other, recorded in `decisions.md` and applied where its step says.
 
@@ -88,7 +102,7 @@ A tick that finds the same mismatch already recorded in the stream's status line
 
 **Credentials.** No agent reads, prints or passes on a credential: never run `gh auth token`, `glab auth status --show-token` or `git credential fill`, never read a CLI's hosts or config file or an environment variable that holds a token, and never put a token in a URL, a command or a prompt. When a forge CLI fails (`gh`, `glab`, a push, an upload, an authentication error), stop the step that ran it and report to the user, headed with the slug, the command and its error as printed, and what they can do (log in again, grant a scope); never work around it with another tool, the forge's API or another account. The wave skill and its common rules hold stream agents and ticket agents to the same rule.
 
-**Done when**: each of your decisions acted on has one line in `decisions.md`, no operating rule was written to Claude memory, every machine-changing action ran only on the user's yes to that action, and no credential was read, printed or passed on, a forge CLI failure having gone to the user.
+**Done when**: each of your decisions acted on has one `D<n>` entry in `decisions.md` (none for a request the plugin logged), no operating rule was written to Claude memory, every machine-changing action ran only on the user's yes to that action, and no credential was read, printed or passed on, a forge CLI failure having gone to the user.
 
 ## Delegation: what you may answer for the user
 
@@ -98,18 +112,20 @@ The table has rows of two cells, a rule and its value. A rule's name is read ign
 
 | Rule | Value | Reads as |
 |---|---|---|
-| `Switch` | `on` or `off` | `on`: delegation is on, and you may answer what the rows below let you. Any other value is `off`. A table with no `Switch` row is `on`, so write the row |
-| `Questions the orchestrator may decide` | door classes, separated by `,` or `;` | Only `two-way` and `costly` count; `one-way` and any other word are dropped. A question whose `Door:` line names a class not listed here is the user's |
+| `Level` | `1`, `2` or `3` | The autonomy level (ADR 0013). Level 1: nothing is delegated. Level 2: you may answer what the rows below let you, and the five items stay the user's. Level 3: the five items open too, except the three "The user's at every level" lists. Any other value is level 1 |
+| `Switch` | `on` or `off` | The mapping for a table with no `Level` row: `on`, ignoring case, is level 2; any other value is level 1 |
+| `Questions the orchestrator may decide` | door classes, separated by `,` or `;` | `two-way` and `costly` count at every level; `one-way` counts only at level 3, and only when the row lists it. Any other word is dropped. A question whose `Door:` line names a class not counted here is the user's |
 | `Appetite` | a spend limit per stream, in USD (`20 USD`) | Read as a dollar amount; any other value is no appetite. This skill only holds the field: the plugin sums the spend |
 | `Stage confirmation`, `Wave approval`, `Question-type permission`, `Overlap warning` | `orchestrator` or `user` | The standing order for that kind of checkpoint. Any other value, and a missing row, is `user`. The plugin ignores these rows |
 
-Example:
+Example at level 2:
 
 ```markdown
 ## Delegation
 
 | Rule | Value |
 |---|---|
+| Level | 2 |
 | Switch | on |
 | Questions the orchestrator may decide | two-way, costly |
 | Appetite | 20 USD |
@@ -119,39 +135,70 @@ Example:
 | Overlap warning | orchestrator |
 ```
 
-**The switch.** Resolve it once per stream, in this order:
+Example at level 3:
 
-| Case | The switch is |
+```markdown
+## Delegation
+
+| Rule | Value |
 |---|---|
-| The stream's Delegation cell in the index (The index) holds `on` or `off` | That value: it wins over the repository's |
-| The cell is empty, and the repository's `AGENTS.md` holds a `## Delegation` table | The table's `Switch` row |
-| The cell is empty, and there is no `## Delegation` section | `off`: every checkpoint reaches the user, exactly as before this section existed |
+| Level | 3 |
+| Switch | on |
+| Questions the orchestrator may decide | two-way, costly, one-way |
+| Appetite | 20 USD |
+| Stage confirmation | orchestrator |
+| Wave approval | orchestrator |
+| Question-type permission | orchestrator |
+| Overlap warning | orchestrator |
+```
 
-**When you answer.** With the switch `on`, answer a checkpoint yourself only when every line below holds; otherwise it reaches the user in the next question round (step 4), verbatim, as it always did:
+**The level.** Resolve it once per stream, in this order:
 
-1. The checkpoint's kind has the standing order `orchestrator`: a stage confirmation, a wave approval, a stream agent's question-type permission, or an overlap warning (step 7).
-2. The question carries a suggestion of the asking agent (the suggestion a terse answer binds to, step 4). A question with no suggestion waits for the user. The overlap warning's suggestion is `Continue both`, since the warning never blocks.
-3. The question's `Door:` line, when it has one, names a class the `Questions the orchestrator may decide` row lists, and it has no `Yours:` line.
-4. The answer costs nothing past the appetite. Once the plugin reports the appetite passed, every question of that stream reaches the user.
-5. The question is none of the items below.
+| Case | The level is |
+|---|---|
+| The stream's Level cell in the index (The index) holds `1`, `2` or `3` | That value: it wins over the repository's |
+| An old index has a Delegation column, and its cell holds `on` or `off` | 2 for `on`, 1 for `off` |
+| The cell is empty, and the table has a `Level` row of `1`, `2` or `3` | That value |
+| The cell is empty, and the table has a `Level` row with any other value | 1, with no fallback to `Switch` |
+| The cell is empty, the table has no `Level` row, and `Switch` reads `on` (ignoring case) | 2 |
+| The cell is empty, the table has no `Level` row, and `Switch` has any other value | 1 |
+| The cell is empty, and the table has neither row or there is no `## Delegation` section | 1: every checkpoint reaches the user, exactly as before this section existed |
 
-**Always the user's, whatever the table says.** No row widens these:
+**When you answer.** Answer a checkpoint yourself only when every condition below holds for the stream's level; otherwise it reaches the user in the next question round (step 4), verbatim, as it always did:
+
+| Condition | Level 1 | Level 2 | Level 3 |
+|---|---|---|---|
+| 1. The checkpoint's kind has the standing order `orchestrator`: a stage confirmation, a wave approval, a stream agent's question-type permission, or an overlap warning (step 7) | Nothing is answered | Required | Required |
+| 2. The question carries a suggestion of the asking agent (the suggestion a terse answer binds to, step 4). The overlap warning's suggestion is `Continue both`, since the warning never blocks | | Required: a question with no suggestion waits for the user | Required, except that a question with no suggestion is answered with the smaller option, the one easier to undo, and recorded as decided without evidence (ADR 0013) |
+| 3. The question's `Door:` line, when it has one, names a class the `Questions the orchestrator may decide` row lists, and it has no `Yours:` line | | Required: `one-way` never counts | The class must be listed, and `one-way` counts when listed. A `Yours:` line no longer blocks, except for the items "The user's at every level" lists |
+| 4. The answer costs nothing past the appetite; once the plugin reports the appetite passed, every question of that stream reaches the user | | Required | Required |
+| 5. The question is none of the user's items | | None of "Always the user's at level 2" | None of "The user's at every level" |
+
+At level 3 you also answer the stream's own ship question and carry out the merge of its pull request; step 6 says how.
+
+**Always the user's at level 2.** No row widens these at level 2; level 3 opens them within the limits of the next section:
 
 | Item | What counts |
 |---|---|
 | A change to the concept | The spec, the words blocks, the ADRs |
-| Adding or dropping tickets | An intake agent still starts only when the user names it (ADR 0005) |
+| Adding or dropping tickets | An intake agent starts only when the user names its skill (ADR 0005) |
 | Spend past the appetite | Any answer that would take the stream's spend past it |
 | An irreversible action | The ship question (push and open the pull request), an action that changes the machine ("Decisions, memory, machine and credentials"), anything that needs a credential, and resuming a stream stopped on its restart budget |
 | Merging the pull request | It stays with the repository's reviewers (step 6) |
 
+**The user's at every level.** These cannot be undone, or cannot be done by an agent, so they hold at level 3 too, and nothing else does:
+
+- spend past the appetite;
+- an action that changes the machine;
+- a credential, or any other step only a human can do.
+
 **A delegated answer.** Send the asking agent's suggestion as the answer, through the route step 4 gives that kind of question, and never a choice of your own. Then, in the same turn:
 
-1. Append one line to `decisions.md`: the question, the answer sent and the grounds (the switch's source, the standing order's row, the suggestion, the door class).
-2. Write into the stream's status line, in place of `waits on the user`: `answered from the delegation table (decisions.md <date> <time>)`, naming that entry.
+1. Append one `D<n>` entry to `decisions.md` ("Decisions, memory, machine and credentials"): the question with its options in `Asked:`, the answer sent in `Answer:`, and in `Grounds:` the level and where it was read, the standing order's row, the suggestion and the door class. At level 3, an answer with no suggestion to send also adds its line under `## Decided without evidence` ("Decisions, memory, machine and credentials"). On the message path, write no entry for a question the plugin answered: read its entry.
+2. Write into the stream's status line, in place of `waits on the user`: `answered by the orchestrator (D<n>)`, naming that entry. A question the plugin answered reads `answered by the plugin (plugin D<n>)`, or `answered by the plugin` when its entry cannot be found yet.
 3. Tell the user in the next question round, under the stream's slug, what you answered, quoting the question and the answer sent.
 
-**Done when**: each checkpoint answered from the table met all five lines above, none was one of the user's items, and each has one `decisions.md` line and one status line item; every other checkpoint went to the user.
+**Done when**: each checkpoint answered from the table met all five conditions of "When you answer" for its stream's level, none was an item the user keeps at that level, and each has one `decisions.md` entry and one status line item; every other checkpoint went to the user.
 
 ## The index
 
@@ -169,7 +216,7 @@ The index is `streams.md` at the root of the control folder: one line for the ca
 | PR target | The branch the stream's pull request goes to; empty means resolve per step 1 |
 | Forge | `GitHub` or `GitLab`: the forge that hosts the repository, where step 6 opens the pull request; empty means resolve per step 1, which writes it. An index without this column reads as empty; add the column when you write the row |
 | Key | The stream's external reference (an issue key, a ticket id), for a ship rules pattern's `<key>` placeholder; it is data about the stream, not a rule (ADR 0008). Empty means a pattern needing it is named at setup (step 1). An index without this column reads as empty; add the column when you write the row |
-| Delegation | The stream's own setting of the delegation switch ("Delegation: what you may answer for the user"): `on` or `off`. It wins over the repository's `Switch`; empty means the repository's value. An index without this column reads as empty; add the column when you write the row |
+| Level | The stream's own autonomy level ("Delegation: what you may answer for the user"): `1`, `2` or `3`. It wins over the repository's table; empty means the repository's value. An old index's `Delegation` column reads `on` as 2 and `off` as 1. An index without this column reads as empty; add the column when you write the row |
 | Priority | A number, 1 first; empty means the order of rows (first come first served) |
 | Quota | The quota last given to the stream's stream agent: its spawn command's `quota <N>` (step 3) or a later `quota <N>` prompt ("Split the cap into quotas"; step 4's "At a wave boundary"). Empty only before the stream's first stream agent is spawned: not yet started, or waiting on the cap. No step blanks it afterward, including once the stream ships: its idle stream agent keeps the quota it last held, though it starts no more waves |
 | Status | The stream's status line: one line you keep current, holding only the items of "The status line" below |
@@ -182,10 +229,10 @@ Example:
 Agent cap: 6
 Last tick: 2026-09-27 14:15, heartbeat streams-reconcile 7f3e2a19 every 15 min, expires 2026-09-27 22:00
 
-| Slug | Repository | Owner | Tickets | Base branch | PR target | Forge | Key | Delegation | Priority | Quota | Status |
+| Slug | Repository | Owner | Tickets | Base branch | PR target | Forge | Key | Level | Priority | Quota | Status |
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | billing-export | D:\src\opms | Lan | label `stream:billing-export` | | | GitLab | | | 1 | 3 | 2026-09-27 wave 1 running, waits on the stream agent |
-| login-bug | D:\src\opms | Minh | `.scratch/login-bug/issues/` | test | test | | PROJ-482 | off | 2 | | 2026-09-27 not started |
+| login-bug | D:\src\opms | Minh | `.scratch/login-bug/issues/` | test | test | | PROJ-482 | 1 | 2 | | 2026-09-27 not started |
 ```
 
 With no index yet, write `streams.md` with the cap line and the table header, ask the user for the cap and each stream's fields, and write them in. Each Repository is the absolute path of a local checkout that the user gives; ask for it rather than searching the disks. Ask for each field by its name alone: the example's values above belong to no user and appear in no question, as a default or a suggestion. The Forge cell may stay empty; step 1 fills it.
@@ -197,7 +244,7 @@ The status line is the reconcile loop's only memory (step 5). Every step writes 
 - It always starts with the date, the stage, and who the stream waits on. The other items appear when the step that writes them has run, and nothing the table below does not list goes in.
 - It is a snapshot of about 160 characters, never a log. A step replaces its own item rather than adding a second one, and an item goes once it no longer holds (a question shown, once its answer is sent).
 - An item stays while a later step or tick can still read it. The latest handled message time stays, or a tick handles that message twice.
-- An answer routed to a stream agent (step 4) never goes in: once it is sent, the line says only that the stream waits on the stream agent. The one exception is an answer you sent from the delegation table, whose `decisions.md` entry the line names in place of `waits on the user`.
+- An answer routed to a stream agent (step 4) never goes in: once it is sent, the line says only that the stream waits on the stream agent. The one exception is an answer you sent from the delegation table, whose `D<n>` entry the line names in place of `waits on the user`.
 - History goes elsewhere: your own decisions to `decisions.md` ("Decisions, memory, machine and credentials"); a stream's decisions stay in its tickets' comments.
 
 | Item | Written by | Example |
@@ -211,12 +258,14 @@ The status line is the reconcile loop's only memory (step 5). Every step writes 
 | Waits on the cap | step 3, and "Replace a stream agent" at a wave boundary | `waits on the cap` |
 | The last end-of-turn message handled, with its time | step 4 | `handled message of 2026-09-27 14:02` |
 | A question shown to the user | step 4 | `waits on the user (wave 2 approval shown)` |
-| An answer sent from the delegation table, with its `decisions.md` entry | "Delegation: what you may answer for the user" | `answered from the delegation table (decisions.md 2026-09-27 14:03)` |
+| An answer sent from the delegation table, with its `D<n>` entry | "Delegation: what you may answer for the user" | `answered by the orchestrator (D12)` |
+| A question the plugin answered, with its entry (the `plugin D<n>` rule); without a number when the entry cannot be found yet | "Delegation: what you may answer for the user" | `answered by the plugin (plugin D7)` |
 | Restart count, per wave | step 5 | `restarts 1/2 in wave 3` |
 | A running stream agent's activity count, and the ticks it has not moved | step 5 | `activity 41 unchanged 2 ticks` |
 | A resume prompt sent to a failed stream agent, or a restart held back by running ticket agents | "Replace a stream agent" | `resume sent 14:05`, `restart held: wave 3 ticket agents running` |
 | Respawned for context | step 4 at a wave boundary | `respawned for context` |
 | Stopped, with the owner | step 5 | `stopped: restart budget spent (2/2 in wave 3), owner Lan` |
+| Resumed at level 3, with its `D<n>` entry; it stays until a new wave number starts the count again, so a second stop in the wave is read as the user's | step 5 | `restarts 0/2 in wave 3, resumed at level 3 (D13)` |
 | A finding reported to the user | step 5 | `reported: open pull request not recorded` |
 | A nudge sent to an idle stream agent, for the message the status line records | step 5 (heartbeat path) | `nudged 11:40` |
 | Nothing to ship, for the integration branch's head | step 6 | `nothing to ship at 1a2b3c4` |
@@ -225,7 +274,9 @@ The status line is the reconcile loop's only memory (step 5). Every step writes 
 | Ship blocked by a conflict with the PR target, for the integration branch's head | step 6 | `ship blocked at 1a2b3c4: conflicts with test` |
 | Ship blocked by an invalid or foreign ship-branch name, for the integration branch's head | step 6 | `ship blocked at 1a2b3c4: ship-branch name test/login-bug starts with test/` |
 | Ship branch pushed, with its name | step 6 ("Push and open") | `ship branch pushed stream/login-bug-ship` |
-| Shipped, with the pull request's or merge request's link | step 6 | `shipped https://…/pull/12, waits on the reviewers` |
+| Shipped, with the pull request's or merge request's link; below level 3 it waits on the reviewers | step 6 | `shipped https://…/pull/12, waits on the reviewers` |
+| A level-3 stream waiting on its pull request's checks (it replaces `waits on the reviewers`), and the one fix pass sent for a red check | step 6 ("Merge at level 3") | `shipped https://…/pull/12, waits on CI` / `shipped https://…/pull/12, waits on CI, CI fix pass sent 14:30` |
+| `merged by the orchestrator <date>`, at level 3, in place of `waits on CI`, with its `D<n>` entry | step 6 ("Merge at level 3") | `shipped https://…/pull/12, merged by the orchestrator 2026-09-29 (D14)` |
 | Reopened after ship, on the user's request | **After ship** (step 6) | `reopened after ship` |
 | Closed after its pull request merged, with the date | step 5 | `merged 2026-09-29` |
 | Deferred over an overlap | step 7 | `waits on the user (deferred, overlaps login-bug)` |
@@ -254,7 +305,7 @@ A running stream with no ticket left for agents (every ticket resolved or waitin
 
 With billing-export and login-bug of the example above, and a cap of 6: billing-export reaches its wave boundary with 16 tickets in the ready for agent role, but its last wave approval names bundles `[12+13]` and 14 as starting and `[15+16]`, 17 and 18 as waiting on the quota, a next wave of width 5 (five bundles, though they hold seven tickets; most of the 16 are still blocked). It takes 1 + quota 5 and leaves 0. login-bug has not started, so it waits on the cap, with no stream agent, until a later split frees room.
 
-Changing the cap or a priority in the index takes effect at the next wave boundary: it changes the next split, never a quota a stream is running a wave with. A cap lowered below the slots in use is reached as each stream comes to its boundary. Append each quota a split changes, and each change of the cap or a priority, to `decisions.md`.
+Changing the cap or a priority in the index takes effect at the next wave boundary: it changes the next split, never a quota a stream is running a wave with. A cap lowered below the slots in use is reached as each stream comes to its boundary. Add a `D<n>` entry to `decisions.md` for each quota a split changes, and for each change of the cap or a priority ("Decisions, memory, machine and credentials").
 
 ## Replace a stream agent
 
@@ -282,16 +333,23 @@ A replacement at a wave boundary never counts against the restart budget of step
 
 **Pause**, asked for by the user, applies to every row of `streams.md`, never only the stream named in this session's own invocation, and holds each one until the machine is quiet enough to restart:
 
-1. **Hold.** Every row that would otherwise spawn new work gets `send_agent_prompt` `hold` to its stream agent (`paseo ls -g --label stream=<slug> --json`, the one without a `wave` label), running or idle alike, whether or not its status line already records `held until <other> ships`. A stream that waits on the cap has no stream agent to hold; a shipped or stopped stream already spawns nothing new and is left as it is. The hold never touches ticket agents: each stream agent's own wave skill holds them the same way (its "Prompts under `stream`" table). Write `pausing, hold sent <time>` into every held stream's status line, alongside any item it already holds, and append one line to `decisions.md` ("Decisions, memory, machine and credentials"). Then run a tick (step 5) at once, in this same turn, rather than waiting for the next heartbeat: its new row below reports what still runs.
+1. **Hold.** Every row that would otherwise spawn new work gets `send_agent_prompt` `hold` to its stream agent (`paseo ls -g --label stream=<slug> --json`, the one without a `wave` label), running or idle alike, whether or not its status line already records `held until <other> ships`. A stream that waits on the cap has no stream agent to hold; a shipped or stopped stream already spawns nothing new and is left as it is. The hold never touches ticket agents: each stream agent's own wave skill holds them the same way (its "Prompts under `stream`" table). Write `pausing, hold sent <time>` into every held stream's status line, alongside any item it already holds, and add a `D<n>` entry to `decisions.md` ("Decisions, memory, machine and credentials"). Then run a tick (step 5) at once, in this same turn, rather than waiting for the next heartbeat: its new row below reports what still runs.
 2. **Wait and record.** The tick table's new row below carries this on, on every later tick too. While `paseo ls -g --label stream=<slug> --json` still lists a `running` agent for the stream, the stream agent or a ticket agent, the line stays `pausing` and those agents are named to the user. Once none of the stream's own agents is `running` (idle and archived ones do not count), it becomes `paused`.
 
-**Resume** needs no procedure of its own: it is one tick, the same way recovery is (step 5). Asked to resume, run a tick (step 5) at once, the same way. The same new row lifts `paused` once the user asks to resume, or once a session newly opened in the control folder after the restart runs its first tick (never a heartbeat firing in the session that recorded the pause): every such stream is released, except one step 7 holds until another stream ships, whose hold lifts only when step 7 does, never here. Append each release to `decisions.md`.
+**Resume** needs no procedure of its own: it is one tick, the same way recovery is (step 5). Asked to resume, run a tick (step 5) at once, the same way. The same new row lifts `paused` once the user asks to resume, or once a session newly opened in the control folder after the restart runs its first tick (never a heartbeat firing in the session that recorded the pause): every such stream is released, except one step 7 holds until another stream ships, whose hold lifts only when step 7 does, never here. Add a `D<n>` entry to `decisions.md` for each release.
 
 **Done when**: every stream that would otherwise spawn new work has had `hold` sent to its stream agent, running or idle alike. After a tick run at once in the same turn, its status line reads `pausing, hold sent <time>` with its still-running agents named to the user, or `paused` once none of its own agents is `running`. Once resumed, `paused` is gone from every status line that held it (except one step 7 still holds), and `release` has reached its stream agent.
 
 ## Intake agents
 
-Spawn an **intake agent** only when the user names a Matt intake skill — for an existing stream, or for work that has no stream yet — never on your own and never in place of one (ADR 0005). Neither you nor a stream agent ever writes a spec or a ticket: the intake agent's own skill is the only route new work takes into a stream, or into one already running. Asked to write a spec, a ticket, or anything that plans work yourself, refuse: name the Matt intake skill that fits (`/mattpocock-skills:triage` for raw issues; `/mattpocock-skills:grilling` or `/mattpocock-skills:wayfinder`, then `/mattpocock-skills:to-spec` and `/mattpocock-skills:to-tickets`, for larger work) and say its intake agent runs once the user names it; write nothing yourself.
+Spawn an **intake agent** only when the user names a Matt intake skill — for an existing stream, or for work that has no stream yet — and never in place of one (ADR 0005). Below level 3 you never start one on your own. At level 3 (ADR 0013) you start one yourself, with a `decisions.md` entry for the spawn, in two cases only:
+
+| Case | The skill you pick |
+|---|---|
+| A stream agent's question asks to add or drop tickets | The Matt intake skill that fits the work, from the list below |
+| A stream's Tickets point at nothing | The Matt intake skill that fits the work, from the list below |
+
+Either way the procedure below runs as written: hold, wait until quiet, workspace, place in the cap, and a spawn whose prompt is exactly that skill's slash command. Neither you nor a stream agent ever writes a spec or a ticket: the intake agent's own skill is the only route new work takes into a stream, or into one already running. Its questions are answered under the same level-3 rules as a stream agent's. Asked to write a spec, a ticket, or anything that plans work yourself, refuse: name the Matt intake skill that fits (`/mattpocock-skills:triage` for raw issues; `/mattpocock-skills:grilling` or `/mattpocock-skills:wayfinder`, then `/mattpocock-skills:to-spec` and `/mattpocock-skills:to-tickets`, for larger work) and say its intake agent runs once the user names it, or at level 3 start it yourself; write nothing yourself.
 
 1. **Hold first, for an existing stream.** Unless its status line already records a hold, `send_agent_prompt` `hold` to its stream agent, `background: true`, `notifyOnFinish: true` (the wave skill's **Hold**), and write `held for <skill> intake` into its status line, its "waits on" naming the intake agent in place of the stream agent: its running agents carry on, but nothing new starts while the intake agent may write the same worktree.
 2. **Wait until it is quiet, at a wave boundary.** `paseo ls -g --label stream=<slug> --json` lists no running agent with a `wave` label, the same check "Replace a stream agent" uses, so one agent writes the worktree at a time. Until then the hold stands, the status line keeps naming the intake agent, and the intake agent is planned, not yet spawned; re-run this check on each step 4 notification and each tick of step 5 for a status line recording `held for <skill> intake`, and go on once it is quiet (step 5's tick table has a row for this). Work with no stream yet skips this: nothing else writes its worktree.
@@ -315,7 +373,7 @@ Spawn an **intake agent** only when the user names a Matt intake skill — for a
    - Write what it produced (a spec, tickets, a plan) into the row's Tickets cell only when that cell was empty or the row is new. An existing stream's Tickets cell already names where its tracker lives, so leave it as is.
    - For an existing stream whose status line still reads exactly `held for <skill> intake`, `release` its stream agent the same way "A need on another stream" does, and write its status back to naming the stream agent in place of `held for <skill> intake`. A status line that also reads `paused` or `held until <other> ships` stays held, for its own reason.
 
-**Done when**: no intake agent ran without the user naming its skill. An existing stream was held before its intake agent could write its worktree, and the agent ran only once quiet, in the workspace "Find its workspace" gives. Its initial prompt was exactly the named skill's slash command, and it took no slot beyond what "Give it its place in the cap" allows. Its questions joined the round like a stream agent's, under its own labels. It was archived, never cancelled or killed, only once its own message said its skill was done. An existing stream's hold was released only when this section set it, and the row's Tickets cell was touched only when it was empty or new.
+**Done when**: no intake agent ran unless the user named its skill or the stream was at level 3, whose spawn has its `decisions.md` entry. An existing stream was held before its intake agent could write its worktree, and the agent ran only once quiet, in the workspace "Find its workspace" gives. Its initial prompt was exactly the named skill's slash command, and it took no slot beyond what "Give it its place in the cap" allows. Its questions joined the round like a stream agent's, under its own labels. It was archived, never cancelled or killed, only once its own message said its skill was done. An existing stream's hold was released only when this section set it, and the row's Tickets cell was touched only when it was empty or new.
 
 ## 0. Pick the stream
 
@@ -323,7 +381,7 @@ Read `streams.md`. With a slug in the input, take its row; with none, show the i
 
 Before anything else, check whether the stream already runs: `paseo ls -g --label stream=<slug> --json`, keeping only the agents without a `wave` label (the others are the stream's ticket agents). A stream agent left there means the stream is running: run one tick (step 5) instead of spawning a second one.
 
-A stream whose Tickets point at nothing yet has no work to run. Work enters a stream only through an **intake agent** (ADR 0005): the user names a Matt intake skill — `/mattpocock-skills:triage` for raw issues, or for larger work `/mattpocock-skills:grilling` or `/mattpocock-skills:wayfinder`, then `/mattpocock-skills:to-spec`, then `/mattpocock-skills:to-tickets` — and you spawn it per "Intake agents" below. Suggest naming one and stop; you never write a spec or a ticket yourself, and you never start intake on your own.
+A stream whose Tickets point at nothing yet has no work to run. Work enters a stream only through an **intake agent** (ADR 0005): the user names a Matt intake skill — `/mattpocock-skills:triage` for raw issues, or for larger work `/mattpocock-skills:grilling` or `/mattpocock-skills:wayfinder`, then `/mattpocock-skills:to-spec`, then `/mattpocock-skills:to-tickets` — and you spawn it per "Intake agents" below. Suggest naming one and stop; you never write a spec or a ticket yourself, and below level 3 you never start intake on your own (at level 3, "Intake agents" starts it).
 
 **A wave run outside any stream.** A run of the wave skill started without `stream` (by the user, or before this skill took over) can be adopted as a stream instead of being left orphaned (ADR 0005).
 
@@ -449,7 +507,7 @@ On each notification:
 | New quota and context | Do |
 |---|---|
 | Same quota, context below the threshold | Nothing; the wave approval joins the round. |
-| Different quota, at least 1, context below the threshold | `send_agent_prompt` `quota <N>` to the stream agent, `background: true`, `notifyOnFinish: true`; write `<N>` into the row's Quota cell and append the change to `decisions.md`. No agent is archived, killed or replaced: the wave skill's own run takes the new quota, a raise starting waiting tickets by rolling start at once, a cut stopping none (ADR 0006). |
+| Different quota, at least 1, context below the threshold | `send_agent_prompt` `quota <N>` to the stream agent, `background: true`, `notifyOnFinish: true`; write `<N>` into the row's Quota cell and add a `D<n>` entry for the change to `decisions.md`. No agent is archived, killed or replaced: the wave skill's own run takes the new quota, a raise starting waiting tickets by rolling start at once, a cut stopping none (ADR 0006). |
 | Context past the threshold, whatever the new quota | "Replace a stream agent" with the new quota (the same one when it did not change); write `respawned for context` in the status line. Its spawn command already carries the new quota, so no separate `quota <N>` prompt follows. |
 | No room (the split leaves the stream waiting on the cap) | "Replace a stream agent", which spawns nothing and writes "waits on the cap" in the status line. A later split that gives the stream room spawns it per step 3. |
 
@@ -457,13 +515,13 @@ Capacity and context change a stream's quota or agent only here and at the choki
 
 **A question round.** Every approval gate of the wave skill keeps its meaning only if the user is the one who passes it, or has handed that kind of checkpoint to you in the repository's delegation table ("Delegation: what you may answer for the user"). These rules come first; nothing below overrides them except that section:
 
-- **The answers are the user's alone.** Never answer, approve, or pick an option for the user, even when the answer looks obvious. The one exception is a checkpoint the delegation table lets you answer (switch on, its kind's standing order `orchestrator`, the asking agent's suggestion as the answer): answer it there, record it there, and never any other. With no `## Delegation` section, or the switch off, every checkpoint reaches the user.
+- **The answers are the user's alone.** Never answer, approve, or pick an option for the user, even when the answer looks obvious. The one exception is a checkpoint the delegation table lets you answer (the stream's level 2 or 3, its kind's standing order `orchestrator`, the asking agent's suggestion as the answer, or at level 3 the smaller option): answer it there, record it there, and never any other. With no `## Delegation` section, or at level 1, every checkpoint reaches the user.
 - **A terse answer binds only to the asking agent's own suggestions.** "Go with the suggestions" (or "as suggested", "defaults") answers each question where the stream agent itself suggested an option, with that option, and nothing else. A question with no such suggestion is not answered: it stays pending and comes back in the next round. There you may add a suggestion of your own below the agent's verbatim text, marked `(orchestrator's suggestion)`; it is sent only when the user picks it.
 - **An answer names its stream.** While more than one stream waits on the user, an answer under no `[<slug>]` heading and naming no stream is asked back ("which stream is this for?") and sent nowhere. Never guess, even when one stream is left unanswered, and never send one answer to several streams unless the user gives it to each of them.
 - **"ok" approves only the question it answers.** Agreeing to a stage confirmation or to a plan inside it approves no wave. A wave starts only when the user answers the wave skill's own wave approval (its step 2), or when the delegation table hands wave approvals to you; never tell a stream agent on your own that a wave is approved, or to spawn: only the user's answer to that approval, relayed as written, or a delegated answer sent as "Delegation: what you may answer for the user" gives it, does.
 - **Relays are verbatim.** A stream agent's question reaches the user word for word: no options, defaults, advice or answer templates added, apart from a marked suggestion of your own as above. Ask no question of your own beyond the items listed below and the questions another step of this skill asks (for example step 1's setup choices or step 3's model and permission mode).
 - **Confirmations quote the answer.** When you tell the user what you sent, quote their answer as they wrote it, under its slug.
-- **The stage confirmation stays.** Each stream agent's wave skill asks its own stage confirmation (its step 0); relay it like any other question, and never ask the agent to skip it. Answer it yourself only under the delegation table's `Stage confirmation` standing order.
+- **The stage confirmation stays.** Each stream agent's wave skill asks its own stage confirmation (its step 0); relay it like any other question, and never ask the agent to skip it. Answer it yourself only under the delegation table's `Stage confirmation` standing order, at level 2 or 3.
 
 Gather every question pending across all streams, leaving out each one you answered from the delegation table:
 
@@ -484,7 +542,7 @@ The user's answer comes as a message in this session; route it when it arrives:
 | To the ship question | Step 6, and no agent |
 | To an overlap warning or a need item | Step 7, and no agent unless it sends a prompt (its hold sends `hold`, and later `release`, to the waiting stream agent) |
 | To a machine-changing action | "Decisions, memory, machine and credentials", and no agent |
-| To a checkpoint the delegation table lets you answer | No user answer: send the asking agent's suggestion by the route of its kind (a turn-end question by `send_agent_prompt`, a question-type permission by `respond_to_permission`), then record it as "Delegation: what you may answer for the user" says |
+| To a checkpoint the delegation table lets you answer at the stream's level | No user answer: send the asking agent's suggestion (at level 3, the smaller option when it gave none) by the route of its kind (a turn-end question by `send_agent_prompt`, a question-type permission by `respond_to_permission`), then record it as "Delegation: what you may answer for the user" says |
 | To a question-type permission | The user's choice, as the wave skill's [`TROUBLESHOOTING.md`](../matt-with-paseo/TROUBLESHOOTING.md) entry "Agent waits on a question-type permission" describes |
 
 A message that asks nothing (a progress report) only updates the status line.
@@ -541,6 +599,7 @@ The table below holds the rows both paths need. One stream may match several row
 | Stream agent idle on the message the status line records, and its context past the respawn threshold | None; the respawn waits for the stream's next wave boundary (step 4), so a running wave is never cut |
 | Every ticket of the stream resolved or in the ready for human or needs info role, the stream agent idle, and the status line records neither shipped nor, for the integration branch's current head, nothing to ship or the ship question asked | Step 6 |
 | The status line records `held until <other> ships`, and `<other>`'s status line records it shipped | Step 7's `release` ("A need on another stream") |
+| A level-3 stream whose status line records `shipped <link>` and `waits on CI`, and whose pull request at `<link>` is still open (`gh pr view <link> --json state --jq .state` prints `OPEN`; on GitLab `glab mr view <link> --output json --jq .state` prints `opened`) | Step 6's "Merge at level 3": read the checks with `gh pr checks <link>` (GitLab: `glab ci status`); all green merges, a pending check keeps `waits on CI`, a red one gets its one fix pass or goes to the user |
 | Status line records `shipped <link>`, the pull request at `<link>` reports merged (`gh pr view <link> --json state --jq .state` prints `MERGED`; on GitLab `glab mr view <link> --output json --jq .state` prints `merged`), and, after `git -C <worktree> fetch origin`, `git -C <worktree> branch --remote --merged origin/<PR target>` lists `origin/<name>` for the `<name>` the status line's `ship branch pushed <name>` item records, and `git -C <worktree> status --porcelain` is empty | Close it, the same clean-worktree check step 8 of the wave skill uses before archiving: `get_agent_status` on the agent id its status line records gives the stream agent's `workspaceId`; `archive_agent` that agent, then `archive_workspace` that `workspaceId`. No other agent or worktree is touched, and no workspace is found by a lookup of a branch, a path or a `paseo ls` scan: when `get_agent_status` gives no `workspaceId`, report it to the user, headed with the slug, and archive nothing. Write `merged <date>` into the status line, and keep the row |
 | The same, but `git -C <worktree> status --porcelain` prints something | Report it to the user instead, headed with the slug and what the worktree holds, and take no other action: `archive_workspace` never runs on an unclean worktree (the wave skill's [`TROUBLESHOOTING.md`](../matt-with-paseo/TROUBLESHOOTING.md), "Worktree has uncommitted changes"). The status line still records `shipped <link>`, so a later tick, once the worktree is clean, closes it; the finding is recorded as reported so a later tick does not report it twice |
 | The status line records `pausing, hold sent <time>` or `paused` | "Pause and resume": while `pausing`, `paseo ls -g --label stream=<slug> --json` still lists a `running` agent, the stream agent or a ticket agent (idle and archived ones do not count), report each one (slug, agent id, label) to the user and keep `pausing`; once none of the stream's own agents is `running`, write `paused` in its place. Once `paused` and the user asks to resume, or this tick is the first of a session newly opened after the restart, drop `paused` and, unless the line also records `held until <other> ships`, send `release` to the stream agent |
@@ -585,7 +644,7 @@ When a stream would need a restart past its budget, it stops instead:
 - Write `stopped: restart budget spent (2/2 in wave 3)` and the owner into the status line.
 - Report it to the user, headed with the slug, with each failure as `get_agent_activity` shows it.
 
-A stopped stream should not run, so later ticks leave it alone. It runs again only when the user says so, which clears `stopped` and the count, and the next tick restarts it.
+A stopped stream should not run, so later ticks leave it alone. Below level 3 it runs again only when the user says so, which clears `stopped` and the count, and the next tick restarts it. At level 3, once per wave, you clear `stopped` and the count yourself after reporting the stop, append a `decisions.md` entry for it, write the resume item into the status line, and the next tick restarts the stream. A status line that already holds the wave's resume item means a second stop in the same wave: it goes to the user, and only the user's word runs it again.
 
 A **respawn** replaces a stream agent whose context has grown large before it hits the ceiling. It happens only at the stream's wave boundary, where step 4 reads the context use and runs "Replace a stream agent"; in the middle of a wave the agent keeps supervising its running ticket agents. The status line records it as `respawned for context`.
 
@@ -593,7 +652,7 @@ A **respawn** replaces a stream agent whose context has grown large before it hi
 
 ## 6. Ship the stream
 
-A stream ships through one pull request from its **Ship branch** to its PR target; the integration branch keeps everything, so the next wave and a later ship see the same history. You open the pull request; you never merge it. Merging it, and any later promotion (such as `test` to `develop`), belongs to the repository's own process and its reviewers.
+A stream ships through one pull request from its **Ship branch** to its PR target; the integration branch keeps everything, so the next wave and a later ship see the same history. You open the pull request. Below level 3 you never merge it: merging it belongs to the repository's own process and its reviewers. At level 3 you also merge it, once every check is green ("Merge at level 3" below). A later promotion (such as `test` to `develop`) stays with the repository's own process at every level, and the stream agent never pushes or merges at any level.
 
 **The last stage.** A stream reaches its last stage when two public signals agree:
 
@@ -673,7 +732,7 @@ The two counts sum to the total. When the base branch's share is more than half,
 
 A template found above shapes the pull request's description ("Push and open" below fills it). A section it marks mandatory — its heading, or an HTML comment under it, naming it `required` or `mandatory` — that the public signals leave with nothing to fill is written `Missing: <what the section calls for>`, never left blank and never invented, and named in the ship question's mandatory-sections line. `mattpocock-skills:pr`'s own sections, used when no template is found, mark nothing mandatory.
 
-**Ask first.** Pushing and opening a pull request are outward actions, so nothing is pushed or opened before the user says yes in a question round. Put the ship question into the next question round of step 4, headed with the stream's slug like every relayed question, and write `ship question asked at <head>`, with the integration branch's short head, into the status line. Ask it in these words every round, filling in the values, so that its meaning never drifts:
+**Ask first.** Pushing and opening a pull request are outward actions, so nothing is pushed or opened before the ship question is answered yes. Below level 3 the user answers it, and level 3 answers it as the next section says. Put the ship question into the next question round of step 4, headed with the stream's slug like every relayed question, and write `ship question asked at <head>`, with the integration branch's short head, into the status line. Ask it in these words every round, filling in the values, so that its meaning never drifts:
 
 ```
 [<slug>] Ship <slug>? Pull request from <name> (cut at <head>) to <PR target> (from <source of step 1>), on <forge>, repository <repository>.
@@ -700,13 +759,24 @@ Answer yes, no, or yes keeping <path> in.
 | Yes keeping `<path>` in | Write `keeps <path>` into the status line; cut the ship branch again with that path in the kept row, check its merge again, then "Push and open" |
 | Anything else | The stream stays unshipped |
 
-Append each answer to `decisions.md` ("Decisions, memory, machine and credentials"); no answer text goes into the status line.
+Add a `D<n>` entry to `decisions.md` for each answer ("Decisions, memory, machine and credentials"); no answer text goes into the status line.
+
+**The ship question at level 3.** At level 3 you answer the ship question yourself, `Yes`, with no path kept in, in the turn that reaches this point, unless one of the first two rows below applies. Then it goes to the user in a question round, as above:
+
+| Case | Do |
+|---|---|
+| A ship-rules pattern uses `<key>` and the Key cell is still empty | The user answers: the value is one only the user has |
+| The plugin has reported `Appetite passed` for the stream | The user answers: spend past the appetite |
+| A mandatory template section is written `Missing: <what the section calls for>` | Does not stop the ship: the ship question's mandatory-sections line and the pull request name the section, to fill in later |
+| A conflict, an invalid or foreign ship-branch name, or an eval gate not passed ("Skill changes of this plugin's own repository") | Stops the ship at every level, as those sections say, with no ship question asked |
+
+The answer takes the record of "A delegated answer" ("Delegation: what you may answer for the user"): its `D<n>` entry and the status line item that entry names. Then "Push and open" runs at once.
 
 Ask again only when the user brings it up or the integration branch's head moves (a later wave merged), since the status line then records no ship question for the current head — the same rule that lets a stream reopened per **After ship** ask again, once its next wave gives the integration branch a new head.
 
 **Skill changes of this plugin's own repository.** When a changed path lies under `plugins/matt-with-paseo/skills/`, the eval gate has passed before the push below: README, "Behaviour evals", "Eval gate", and `CODING_STANDARDS.md` H3 give the slice and how to run it. Otherwise tell the user, headed with the slug, and push nothing.
 
-**Push and open.** On the user's yes, in this order:
+**Push and open.** On a yes to the ship question (the user's, or level 3's own), in this order:
 
 1. `git -C <worktree> status --porcelain` must be empty and `git -C <worktree> branch --show-current` must print `stream/<slug>`; otherwise tell the user and stop.
 2. `git -C <worktree> fetch origin`, then check the PR target still exists (`git -C <worktree> rev-parse --verify origin/<PR target>`). When the integration branch's head is no longer the one the question named, or the PR target moved, cut the ship branch again and check its merge; a conflict now is reported as "The ship branch" says, with no push.
@@ -717,7 +787,7 @@ Ask again only when the user brings it up or the integration branch's head moves
    - GitHub: `gh pr create --head <name> --base <PR target> --title "<title>" --body-file <that file>`, adding `--draft` (the ship rules' `draft` key on), `--label <label>` (repeated, per the `labels` key), `--reviewer <reviewer>` (repeated, per `reviewers`), `--assignee <assignee>` (repeated, per `assignees`), and `--attach <path>` for each image or video of the evidence.
    - GitLab: `glab mr create --source-branch <name> --target-branch <PR target> --title "<title>" --description-file <that file> --yes`, with the same `--draft`, `--label`, `--reviewer` and `--assignee` options, plus `--squash` and `--remove-source-branch` when the ship rules' `squash` and `delete source branch` keys are set (GitLab carries both at creation).
    - Evidence the command cannot attach (every file on GitLab, anything but an image or video on GitHub) goes to the user as a list, to attach on the pull request's page.
-7. On GitHub only, when `squash` or `delete source branch` is set (GitLab already carried them in step 6): `gh pr merge --auto`, adding `--squash` and `--delete-branch` for the ones set. This queues the merge method for once the repository's own checks and reviewers allow it; it does not merge now, keeping "you never merge it" (above) true.
+7. On GitHub only, when `squash` or `delete source branch` is set (GitLab already carried them in step 6): `gh pr merge --auto`, adding `--squash` and `--delete-branch` for the ones set. This queues the merge method for once the repository's own checks and reviewers allow it; it does not merge now, so below level 3 "you never merge it" (above) stays true, and at level 3 "Merge at level 3" below only checks whether the forge merged.
 8. Read back what the forge actually set: `gh pr view <url> --json isDraft,labels,reviewRequests,assignees,autoMergeRequest`, on GitLab `glab mr view <name> --output json`. Compare with the metadata and merge options above; each one the forge refused (an unknown label, a reviewer without repository access, an option its CLI lacks, `--auto` refused because the repository has auto-merge off) is reported to the user, headed with the slug, right after the pull request opens — never a reason to hold it back, and never worked around by creating the missing label or changing anyone's access (ADR 0008).
 
 **Post the link.** The owner reads the stream's spec or tickets, so the link goes there, through the tracker configuration's own way to comment:
@@ -728,11 +798,25 @@ Ask again only when the user brings it up or the integration branch's head moves
 | GitLab | A note on the stream's parent spec issue when Tickets names one; otherwise a note on each ticket of the stream, with the tracker configuration's comment command (by default `glab issue note <number> --message "<link>"`) |
 | Local markdown | A comment in the spec file, or in each ticket file when the stream has no spec, as the tracker configuration writes comments. It is a file change in the stream's worktree: commit it on `stream/<slug>` only; the ticket folder is left out of the ship branch, so nothing is pushed for it |
 
-Then write the link into the stream's status line: date, shipped, the pull request's URL, and that the stream waits on the repository's reviewers. The pull request stays open for them; you never merge it, on either forge.
+Then write the link into the stream's status line: date, shipped, the pull request's URL, and that the stream waits on the repository's reviewers (`waits on CI` at level 3). Below level 3 the pull request stays open for them and you never merge it, on either forge.
+
+**Merge at level 3.** Only at level 3, after "Post the link", and never at levels 1 and 2. A tick runs it for a stream whose status line records `shipped <link>` and `waits on CI` while its pull request is open (step 5's tick table):
+
+1. **Wait for the checks.** On each tick read them with `gh pr checks <url>` (GitLab: `glab ci status`) and keep `waits on CI` in the status line while any check is pending. A pull request with no check reported is not green: report it once to the user, headed with the slug, merge nothing, and leave the merge to the user's word.
+2. **A red check never merges.** Prompt the stream agent once for one fix pass on its integration branch (`send_agent_prompt`, `background: true`, `notifyOnFinish: true`) and write `CI fix pass sent <time>` into the status line. When its head moves, step 6 runs again at the new head: the ship branch is cut again, the ship question is answered again, the push updates the same pull request, and CI runs again (`docs/agents/evidence-standards.md`, "Each pull request into `main`"). A check red again after that fix pass goes to the user, headed with the slug and the checks as printed, and nothing merges. A drift check that cannot run (exit 2) only warns, as that file says.
+3. **Every check green: merge**, with the forge's CLI and its existing login. A pull request the forge already queued with `gh pr merge --auto` (Push and open, item 7) merges on its own: only check that its state turns `MERGED`.
+
+   | Forge | Command |
+   |---|---|
+   | GitHub | `gh pr merge <url>` with `--squash` when the ship rules' `squash` key is on (`--merge` when it is not set), and `--delete-branch` when `delete source branch` is on |
+   | GitLab | `glab mr merge <name>` with `--squash` when `squash` is on, and `--remove-source-branch` when `delete source branch` is on |
+
+   Never `--admin`, and never anything that bypasses a branch protection or a required review. A merge the forge refuses (a review required, a protection, a conflict) goes to the user, headed with the slug, with the command and its error as printed; it is never worked around ("Decisions, memory, machine and credentials", credentials).
+4. **Record it.** Add one `D<n>` entry to `decisions.md` for the merge, with the pull request's link and the command run in `Answer:` and the checks' result in `Grounds:`, then write `merged by the orchestrator <date> (D<n>)` into the status line, in place of `waits on CI`, naming that entry. Step 5's close-out row then closes the stream as it does today, once the pull request reports `MERGED`.
 
 **After ship.** A shipped stream runs again only on the user's request: naming its slug to this skill, or asking for it in a question round. On that request, write `reopened after ship` into the status line in place of `shipped <link>...`; the stream then rejoins "Split the cap into quotas" (The index) and step 5's reconcile tick like any stream that is not shipped, its existing stream agent, idle since the ship, picking up the tickets the request adds. Ship stays gated behind the last stage and "Ask first" above: once the reopened stream reaches its last stage again with its integration branch's head moved past the one already shipped, a new ship question is asked at that new head, cutting a fresh ship branch. A stream whose pull request merged, closed by step 5's tick ("Reconcile and supervise"), is never reopened this way; it runs again only as a new row.
 
-**Done when**: the stream is at its last stage by both signals, and the forge is the row's Forge cell (step 1). The ship branch's name passed every check of "The ship branch" (or the ship stopped there with the reason). It was cut from the integration branch's head with its left-out paths derived from the repository, and its merge into the PR target was checked clean. The user said yes to the ship question in a question round before anything was pushed (or a conflict was reported and no ship question asked). A change under `plugins/matt-with-paseo/skills/` was pushed only after the eval gate passed. Only that ship branch was pushed, and its name is in the status line. One pull request (a merge request on GitLab) goes from it to the PR target, its title built from the title pattern. Its description, metadata and merge options were built as "Title, template and metadata" says, the description filled with `/mattpocock-skills:pr` and a mandatory section with no evidence named as missing, never blank or invented. Every refusal was reported to the user only after the pull request opened, never worked around by creating a label or changing access. The link is posted on the stream's spec or tickets and written in the status line. Nothing was merged. A shipped stream reopens only on the user's request, with a new ship question once its head moves.
+**Done when**: the stream is at its last stage by both signals, and the forge is the row's Forge cell (step 1). The ship branch's name passed every check of "The ship branch" (or the ship stopped there with the reason). It was cut from the integration branch's head with its left-out paths derived from the repository, and its merge into the PR target was checked clean. The ship question was answered yes before anything was pushed: by the user in a question round below level 3 (and at level 3 when the Key cell is empty or `Appetite passed` was reported), otherwise by you at level 3 with a `D<n>` entry in `decisions.md` (or a conflict was reported and no ship question asked). A change under `plugins/matt-with-paseo/skills/` was pushed only after the eval gate passed. Only that ship branch was pushed, and its name is in the status line. One pull request (a merge request on GitLab) goes from it to the PR target, its title built from the title pattern. Its description, metadata and merge options were built as "Title, template and metadata" says, the description filled with `/mattpocock-skills:pr` and a mandatory section with no evidence named as missing, never blank or invented. Every refusal was reported to the user only after the pull request opened, never worked around by creating a label or changing access. The link is posted on the stream's spec or tickets and written in the status line. Below level 3 nothing was merged. At level 3 the pull request was merged only with every check green, by the command the ship rules' `squash` and `delete source branch` keys give and never with `--admin`, after at most one fix pass for a red check, and a refused merge went to the user; the merge has its `D<n>` entry in `decisions.md`, named in the status line. A shipped stream reopens only on the user's request, with a new ship question once its head moves.
 
 ## 7. Warn when streams change the same file or need each other's work
 
@@ -768,7 +852,7 @@ Continue both, or defer one's next wave? If deferring, which one?
 
 When the two PR targets differ, add under the targets' line that the conflict appears once one target merges into the other, not when either pull request merges.
 
-With the delegation table's `Overlap warning` standing order `orchestrator` ("Delegation: what you may answer for the user"), you answer the warning yourself with `Continue both`, its own suggestion, and never with a deferral or a hold, and record and report that answer as that section says. Otherwise the next question round is the next time you present questions to the user (step 4). The message that reported the merge usually asks the user to approve the stream's next wave, so the warning joins that round; when no question is pending at all, the warning makes a round of its own, shown right away. This item is your own, not a stream agent's question: relaying the other questions of the round and sending their answers back never waits for it. When both streams merged a wave in the same round, the pair gets one item. Until the user answers, both streams keep running.
+With the delegation table's `Overlap warning` standing order `orchestrator` and the warning's streams at level 2 or 3 ("Delegation: what you may answer for the user"), you answer the warning yourself with `Continue both`, its own suggestion, and never with a deferral or a hold, and record and report that answer as that section says. Otherwise the next question round is the next time you present questions to the user (step 4). The message that reported the merge usually asks the user to approve the stream's next wave, so the warning joins that round; when no question is pending at all, the warning makes a round of its own, shown right away. This item is your own, not a stream agent's question: relaying the other questions of the round and sending their answers back never waits for it. When both streams merged a wave in the same round, the pair gets one item. Until the user answers, both streams keep running.
 
 **The user's answer.** A deferral uses the gate the wave skill already has: it starts no wave before the user approves it (its step 2), and a running wave is never cut.
 
@@ -777,7 +861,7 @@ With the delegation table's `Overlap warning` standing order `orchestrator` ("De
 | Continue both | nothing; the next merged wave of either stream warns again with the list as it then stands |
 | Defer one | no prompt to any agent; the stream's running wave finishes. When its agent next asks to approve a wave, relay that question verbatim as step 4 says, noting under it that the user deferred the stream over the overlap with `<other>`; the stream waits there until the user approves. Its status line reads: date, stage, waits on the user (deferred, overlaps `<other>`) |
 
-Append each answer to `decisions.md` ("Decisions, memory, machine and credentials").
+Add a `D<n>` entry to `decisions.md` for each answer ("Decisions, memory, machine and credentials").
 
 **A need on another stream.** A stream agent's end-of-turn message (step 4) may say that the stream needs work of another open stream (the tests of "Which streams") whose status line does not record it as shipped: a ticket that cannot start without a change only the other integration branch holds. The user may say so too. Only such a declared need counts; you never derive one from tickets or diffs, since the stream layer holds no dependency graph (ADR 0001). Put one item in the next question round, headed with both slugs, the waiting stream first:
 
@@ -793,7 +877,7 @@ The message's own question, such as a wave approval, is still relayed verbatim b
 | Merge the two | no prompt to any agent; write `merge with <other> agreed` into both status lines. Which stream stays, and how the other's tickets and integration branch move into it, is the user's to do or to tell you step by step; you never move or write a ticket |
 | Hold `<waiting>` until `<other>` ships | `send_agent_prompt` to `<waiting>`'s stream agent with `hold`, `background: true`, `notifyOnFinish: true`: it spawns nothing new while its running agents carry on (the wave skill's **Hold**). Write `held until <other> ships` into its status line. On each step 4 notification and each tick of step 5, read `<other>`'s status line; once it records `<other>` shipped, send `release` the same way, drop the item from the status line, and tell the user in the next round that `<waiting>` was released and that the work reaches `<waiting>`'s base branch only once `<other>`'s pull request merges there |
 
-Append each answer, and each `release` you send, to `decisions.md`.
+Add a `D<n>` entry to `decisions.md` for each answer, and for each `release` you send.
 
 You never defer, hold, block or delay a stream without the user's answer, and never pick an answer for them.
 
