@@ -16,6 +16,24 @@ Agent cap: 6
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | billing-export | /srv/src/shop | Lan | label `stream:billing-export` | main | main | GitHub | | | 1 | 2 | 2026-09-30 wave 1 merged, agent 3e0a7953, waits on the stream agent, handled message of 2026-09-30 09:40 |
 | billing-audit | /srv/src/shop-admin | Minh | label `stream:billing-audit` | main | main | GitHub | | 1 | 2 | 2 | 2026-09-30 wave 1 merged, agent 5b7c9d11, waits on the stream agent, handled message of 2026-09-30 09:41 |
-| billing-ledger | /srv/src/ledger | Lan | label `stream:billing-ledger` | main | main | GitHub | | | 3 | 2 | 2026-09-30 shipped https://github.com/acme/ledger/pull/21, waits on CI, agent 6d2f8a40, answered from the delegation table (decisions.md 2026-09-30 09:20) |
-| billing-refunds | /srv/src/refunds | Minh | label `stream:billing-refunds` | main | main | GitHub | | | 4 | 2 | 2026-09-30 shipped https://github.com/acme/refunds/pull/8, waits on CI, agent 7e3a9b51, answered from the delegation table (decisions.md 2026-09-30 09:25) |
+| billing-ledger | /srv/src/ledger | Lan | label `stream:billing-ledger` | main | main | GitHub | | | 3 | 2 | 2026-09-30 shipped https://github.com/acme/ledger/pull/21, waits on CI, agent 6d2f8a40, answered by the orchestrator (D1) |
+| billing-refunds | /srv/src/refunds | Minh | label `stream:billing-refunds` | main | main | GitHub | | | 4 | 2 | 2026-09-30 shipped https://github.com/acme/refunds/pull/8, waits on CI, agent 7e3a9b51, answered by the orchestrator (D2) |
+EOF
+# The two ship answers those status items name, so the next entry the orchestrator adds is D3.
+cat > decisions.md <<'EOF'
+# Decisions
+
+## Decided without evidence
+
+None.
+
+### D1 — 2026-09-30 09:20 [billing-ledger] ship
+Asked: Ship stream billing-ledger as a pull request to main? Options: yes, no.
+Answer: Yes
+Grounds: level 3, read in /srv/src/ledger/AGENTS.md; the ship question is the orchestrator's at level 3; no template section missing; no Appetite passed.
+
+### D2 — 2026-09-30 09:25 [billing-refunds] ship
+Asked: Ship stream billing-refunds as a pull request to main? Options: yes, no.
+Answer: Yes
+Grounds: level 3, read in /srv/src/refunds/AGENTS.md; the ship question is the orchestrator's at level 3; no template section missing; no Appetite passed.
 EOF
