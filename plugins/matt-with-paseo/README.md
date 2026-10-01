@@ -25,7 +25,7 @@ The plugin contains only Markdown skills: no hooks, no MCP server, no scripts, n
 
 - **Paseo MCP tools**: create and archive workspaces (git worktrees) and agents, send prompts to agents, create and delete heartbeats, read agent status and activity. Archiving a workspace deletes its worktree directory; the skills archive only after checking that the agent has stopped, its tree is clean, and its branch is merged.
 - **git, in your repositories**: create branches and worktrees, commit, merge ticket branches into the integration branch, and compare branches. The stream skill runs `git push` of a stream's integration branch only after you confirm.
-- **Your issue tracker**: read tickets and specs; post comments; open a pull request with `gh` or a merge request with `glab` after you confirm. The skills never merge a pull request.
+- **Your issue tracker**: read tickets and specs; post comments; open a pull request with `gh` or a merge request with `glab` after you confirm. Below level 3 the skills never merge a pull request; at level 3 the stream skill merges it once every check is green.
 - **Files**: each wave's common-rules file next to the ticket folder, and for streams an index file, `streams.md`, in the control folder you choose.
 
 The plugin sends nothing anywhere except through those tools, to the Paseo daemon on your machine and to the git host and tracker your repository already uses. It reads no credentials; `gh`, `glab` and git use the sign-in you already have.
