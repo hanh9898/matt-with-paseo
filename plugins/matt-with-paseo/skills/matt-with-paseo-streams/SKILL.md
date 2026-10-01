@@ -42,7 +42,7 @@ Run both guards first, in this order. A guard that fails stops the skill with it
 
 ## Inputs: public signals only
 
-What you know about a stream comes from these four signals and nothing else:
+What you know about a stream comes from these five signals and nothing else:
 
 | Signal | Read it with |
 |---|---|
@@ -50,6 +50,7 @@ What you know about a stream comes from these four signals and nothing else:
 | The stream agent's end-of-turn message | `get_agent_activity` on the stream agent |
 | Paseo agent status and activity | `get_agent_status`, `get_agent_activity`, `list_pending_permissions` (step 5), `paseo ls -g --label stream=<slug> --json`, and `paseo ls -g --json` unfiltered for a wave run outside any stream (step 0) |
 | Git diff | `git -C <worktree> diff`, `git -C <worktree> log` on the integration branch; `git -C <repository> worktree list` (step 5) and `git -C <cwd> worktree list` (step 0) for where a checkout sits |
+| The plugin's `decision-log.md`, on the message path only, read only | the file the `Plugin decisions:` line of `decisions.md` points to ("Decisions, memory, machine and credentials"); never write it |
 
 You never read wave files (`wave*-common-rules.md` or anything else the wave skill writes to record a wave): their format belongs to the wave skill and may change. To learn where a stream stands, prompt its stream agent ("where does the stream stand?") and let the wave skill's step 0 answer.
 
@@ -75,7 +76,20 @@ A tick that finds the same mismatch already recorded in the stream's status line
 
 ## Decisions, memory, machine and credentials
 
-**Decisions.** `decisions.md`, at the root of the control folder beside `streams.md`, is the history the status line does not keep. Each time you act on one of your own decisions (a ship, an overlap warning's answer, a change of the cap or a quota, a **Hold** or its release, a **Pause** or its resume, an answer you sent from the delegation table at level 2 or 3), append one line: date and time, the slug (or `all`), the decision, and the user's answer it rests on, quoted (for a quota a split changed, the cap and priorities it read; for a delegated answer, the question, the answer sent and the grounds, as "Delegation" gives them). Never rewrite or remove a line. A decision inside a stream (a wave approval, a review decision, a ticket's scope) is the stream agent's to record as its tickets' comments; it never goes into `decisions.md`, except that an answer you sent for the user from the delegation table is your own decision and gets its line. A line records what was decided, never how to decide: `decisions.md` is no source of rules.
+**Decisions.** `decisions.md`, at the root of the control folder beside `streams.md`, is the history the status line does not keep. Each time you act on one of your own decisions (a ship, an overlap warning's answer, a change of the cap or a quota, a **Hold** or its release, a **Pause** or its resume, an answer you sent from the delegation table at level 2 or 3, a level-3 merge), append one entry in this shape:
+
+```
+### D<n> — <YYYY-MM-DD HH:MM> [<slug>|all] <gate>
+Asked: <the question, with the options offered>
+Answer: <exactly what was sent or done>
+Grounds: <the level and where it was read, the rule, the suggestion or the evidence>
+```
+
+The next `n` is the highest `D<n>` in the file plus one, or 1 when there is none. For a quota a split changed, `Grounds:` holds the cap and priorities it read; for a decision resting on the user's answer, that answer, quoted. Lines written before this shape stay as they are. Never rewrite or remove an entry. A decision inside a stream (a wave approval, a review decision, a ticket's scope) is the stream agent's to record as its tickets' comments; it never goes into `decisions.md`, except that an answer you sent for the user from the delegation table is your own decision and gets its entry. An entry records what was decided, never how to decide: `decisions.md` is no source of rules.
+
+`decisions.md` opens with `## Decided without evidence`, above the entries: one line per entry you decided without evidence (level 3's smaller-option rule), `D<n>: <what was decided> (smaller option taken)`, linking to the entry, whose `Grounds:` reads `no evidence; smaller option taken`. With none, the section reads `None.`. It is a reading list: nothing waits on it and no one has to act on it. Adding a line to it is the one edit allowed above the entries. `decisions.md` has no `## Pending for the user` section: a gate the user keeps goes to the next question round (step 4) and waits there.
+
+On the message path, the plugin writes its own decision log (the contract's "The decision log"), and `decisions.md` never logs a request twice. When you first detect the plugin, write one line under the file's title, `Plugin decisions: <path of decision-log.md>`, taking the path from the contract's "The decision log" (its state directory) or from the plugin's report card link; never hard-code it. Write the line once, and again only if the path changes. Write no entry for a request the plugin answered or left to the user: read the plugin's entry instead. When you act on a question the plugin left to the user, your entry is your own `D<n>`, and its `Grounds:` cites `plugin D<n>` for the plugin's leave. **The `plugin D<n>` rule**: write a plugin entry as `plugin D<n>` everywhere (in `decisions.md`, in the status line and in a message to the user); a bare `D<n>` is always an entry of `decisions.md`.
 
 **Claude memory.** How a run behaves comes from this skill, the wave skill and `streams.md` alone. Never write an operating rule (how to read an answer, when to ship, how to supervise) to Claude memory or to a file of the control folder, even when the user states one: tell the user that a lasting rule belongs in the skill. A setting this skill lets the user change (the restart budget, the respawn threshold) is a decision like any other, recorded in `decisions.md` and applied where its step says.
 
@@ -88,7 +102,7 @@ A tick that finds the same mismatch already recorded in the stream's status line
 
 **Credentials.** No agent reads, prints or passes on a credential: never run `gh auth token`, `glab auth status --show-token` or `git credential fill`, never read a CLI's hosts or config file or an environment variable that holds a token, and never put a token in a URL, a command or a prompt. When a forge CLI fails (`gh`, `glab`, a push, an upload, an authentication error), stop the step that ran it and report to the user, headed with the slug, the command and its error as printed, and what they can do (log in again, grant a scope); never work around it with another tool, the forge's API or another account. The wave skill and its common rules hold stream agents and ticket agents to the same rule.
 
-**Done when**: each of your decisions acted on has one line in `decisions.md`, no operating rule was written to Claude memory, every machine-changing action ran only on the user's yes to that action, and no credential was read, printed or passed on, a forge CLI failure having gone to the user.
+**Done when**: each of your decisions acted on has one `D<n>` entry in `decisions.md` (none for a request the plugin logged), no operating rule was written to Claude memory, every machine-changing action ran only on the user's yes to that action, and no credential was read, printed or passed on, a forge CLI failure having gone to the user.
 
 ## Delegation: what you may answer for the user
 
@@ -180,11 +194,11 @@ At level 3 you also answer the stream's own ship question and carry out the merg
 
 **A delegated answer.** Send the asking agent's suggestion as the answer, through the route step 4 gives that kind of question, and never a choice of your own. Then, in the same turn:
 
-1. Append one line to `decisions.md`: the question, the answer sent and the grounds (the switch's source, the standing order's row, the suggestion, the door class).
-2. Write into the stream's status line, in place of `waits on the user`: `answered from the delegation table (decisions.md <date> <time>)`, naming that entry.
+1. Append one `D<n>` entry to `decisions.md` ("Decisions, memory, machine and credentials"): the question with its options in `Asked:`, the answer sent in `Answer:`, and in `Grounds:` the level and where it was read, the standing order's row, the suggestion and the door class. On the message path, write no entry for a question the plugin answered: read its entry.
+2. Write into the stream's status line, in place of `waits on the user`: `answered by the orchestrator (D<n>)`, naming that entry. A question the plugin answered reads `answered by the plugin (plugin D<n>)`, or `answered by the plugin` when its entry cannot be found yet.
 3. Tell the user in the next question round, under the stream's slug, what you answered, quoting the question and the answer sent.
 
-**Done when**: each checkpoint answered from the table met all five conditions of "When you answer" for its stream's level, none was an item the user keeps at that level, and each has one `decisions.md` line and one status line item; every other checkpoint went to the user.
+**Done when**: each checkpoint answered from the table met all five conditions of "When you answer" for its stream's level, none was an item the user keeps at that level, and each has one `decisions.md` entry and one status line item; every other checkpoint went to the user.
 
 ## The index
 
@@ -230,7 +244,7 @@ The status line is the reconcile loop's only memory (step 5). Every step writes 
 - It always starts with the date, the stage, and who the stream waits on. The other items appear when the step that writes them has run, and nothing the table below does not list goes in.
 - It is a snapshot of about 160 characters, never a log. A step replaces its own item rather than adding a second one, and an item goes once it no longer holds (a question shown, once its answer is sent).
 - An item stays while a later step or tick can still read it. The latest handled message time stays, or a tick handles that message twice.
-- An answer routed to a stream agent (step 4) never goes in: once it is sent, the line says only that the stream waits on the stream agent. The one exception is an answer you sent from the delegation table, whose `decisions.md` entry the line names in place of `waits on the user`.
+- An answer routed to a stream agent (step 4) never goes in: once it is sent, the line says only that the stream waits on the stream agent. The one exception is an answer you sent from the delegation table, whose `D<n>` entry the line names in place of `waits on the user`.
 - History goes elsewhere: your own decisions to `decisions.md` ("Decisions, memory, machine and credentials"); a stream's decisions stay in its tickets' comments.
 
 | Item | Written by | Example |
@@ -244,13 +258,14 @@ The status line is the reconcile loop's only memory (step 5). Every step writes 
 | Waits on the cap | step 3, and "Replace a stream agent" at a wave boundary | `waits on the cap` |
 | The last end-of-turn message handled, with its time | step 4 | `handled message of 2026-09-27 14:02` |
 | A question shown to the user | step 4 | `waits on the user (wave 2 approval shown)` |
-| An answer sent from the delegation table, with its `decisions.md` entry | "Delegation: what you may answer for the user" | `answered from the delegation table (decisions.md 2026-09-27 14:03)` |
+| An answer sent from the delegation table, with its `D<n>` entry | "Delegation: what you may answer for the user" | `answered by the orchestrator (D12)` |
+| A question the plugin answered, with its entry (the `plugin D<n>` rule); without a number when the entry cannot be found yet | "Delegation: what you may answer for the user" | `answered by the plugin (plugin D7)` |
 | Restart count, per wave | step 5 | `restarts 1/2 in wave 3` |
 | A running stream agent's activity count, and the ticks it has not moved | step 5 | `activity 41 unchanged 2 ticks` |
 | A resume prompt sent to a failed stream agent, or a restart held back by running ticket agents | "Replace a stream agent" | `resume sent 14:05`, `restart held: wave 3 ticket agents running` |
 | Respawned for context | step 4 at a wave boundary | `respawned for context` |
 | Stopped, with the owner | step 5 | `stopped: restart budget spent (2/2 in wave 3), owner Lan` |
-| Resumed at level 3, with its `decisions.md` entry; it stays until a new wave number starts the count again, so a second stop in the wave is read as the user's | step 5 | `restarts 0/2 in wave 3, resumed at level 3 (decisions.md 2026-09-27 14:20)` |
+| Resumed at level 3, with its `D<n>` entry; it stays until a new wave number starts the count again, so a second stop in the wave is read as the user's | step 5 | `restarts 0/2 in wave 3, resumed at level 3 (D13)` |
 | A finding reported to the user | step 5 | `reported: open pull request not recorded` |
 | A nudge sent to an idle stream agent, for the message the status line records | step 5 (heartbeat path) | `nudged 11:40` |
 | Nothing to ship, for the integration branch's head | step 6 | `nothing to ship at 1a2b3c4` |
