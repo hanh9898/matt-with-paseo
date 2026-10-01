@@ -20,6 +20,7 @@ append_system_prompt: |
     | Wave approval | orchestrator |
     | Question-type permission | orchestrator |
     | Overlap warning | orchestrator |
+  - In `streams.md`, `billing-export`'s Level cell is empty and `billing-audit`'s Level cell reads `1`.
   - The last end-of-turn message of `3e0a7953` (billing-export), of 2026-09-30 10:01, the same message in the same shape for `5b7c9d11` (billing-audit) at 10:02 with its own slug: "Wave 1 is merged. Two questions for you:
     1. Wave 2 would run tickets 03 and 04 (03 is unblocked, the vendor schema landed). Approve wave 2? I suggest approving it.
     2. The spec lists no ticket for the CSV header, and the finance team's export needs one. Add a ticket for the CSV header, or leave the header out of this stream? Yours: tickets. I suggest adding the ticket."
