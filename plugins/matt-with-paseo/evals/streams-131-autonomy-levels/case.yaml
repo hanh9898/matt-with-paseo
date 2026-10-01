@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: streams-131-autonomy-levels
-description: "A tick over two streams whose stream agents each ended their turn with a wave approval (with a suggestion) and a question carrying a Yours: tickets line (with a suggestion). billing-export's repository table reads Level 2 and its index Level cell is empty: the orchestrator answers the wave approval from the table and relays the Yours: question verbatim to the user. billing-audit's repository table reads Level 2 too, but its index Level cell is 1, which wins: both of its questions are relayed, none answered."
+description: "A tick over two streams whose stream agents each ended their turn with a wave approval (with a suggestion) and a question carrying a Yours: tickets line (with a suggestion). billing-export's repository table reads Level 2 and its index Level cell is empty: the orchestrator answers the wave approval from the table and relays the Yours: question verbatim to the user. billing-audit's repository table reads Level 2 too, but its index Level cell is 1, which wins: both of its questions are relayed, none answered. Two more streams are shipped at level 3 with their pull requests open and waiting on CI: billing-ledger has every check green, so the orchestrator merges it with the command the ship rules give (squash and delete the source branch, never --admin); billing-refunds has a red check, so the orchestrator sends its stream agent one fix pass and merges nothing."
 tags: [delegation, levels, streams]
 context:
   scaffold_script: fixture.sh
