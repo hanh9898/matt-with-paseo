@@ -6,7 +6,7 @@ Read this when a question is who decides, owns or may do something across the st
 
 | Role | Runs in | Owns | Speaks to |
 |---|---|---|---|
-| Orchestrator (the stream skill's "you") | The control folder | `streams.md` and `decisions.md`; the agent cap and each stream's quota; the reconcile tick; the Checkpoint that gathers the streams' questions; the ship question and the pull request's opening; the answers the delegation table hands it, each with its `decisions.md` line | The user; stream agents; intake agents |
+| Orchestrator (the stream skill's "you") | The control folder | `streams.md` and `decisions.md`'s `D<n>` entries (the plugin's `decision-log.md` is read only); the agent cap and each stream's quota; the reconcile tick; the Checkpoint that gathers the streams' questions; the ship question and the pull request's opening; the answers the delegation table hands it, each with its `D<n>` entry | The user; stream agents; intake agents |
 | Stream agent | The stream's worktree, on `stream/<slug>` | The stream's waves: the graph, the common rules, spawning and checking ticket agents, merges into the integration branch, the review, the cleanup | The orchestrator, through its end-of-turn message; ticket agents; the review agent |
 | Intake agent | The stream's worktree, or a worktree on the base branch | The spec or tickets of the one Matt intake skill the user named | The orchestrator, through its end-of-turn message |
 | Ticket agent | Its own worktree, on its ticket branch | One ticket inside its file zone, and the report on it | The stream agent, through its report and the ticket's comments |
