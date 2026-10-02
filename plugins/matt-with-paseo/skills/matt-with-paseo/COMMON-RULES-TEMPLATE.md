@@ -2,9 +2,9 @@
 
 Copy the frame below into `wave<N>-common-rules.md` and fill in each section. Each section answers a question every agent in the wave would otherwise ask itself; answered here once, no agent has to guess.
 
-Steps 3, 4 and 7 of the skill append three sections, `## Checkpoints`, `## Wave agents` and `## Review`, to the end of the file; leave all three out when writing the rules.
+Steps 3, 4 and 7 of the skill append three sections, `## Checkpoints`, `## Wave agents` and `## Review`, to the end of the file, and a `hold <agent>` prompt adds a fourth, `## Held agents`; leave all four out when writing the rules.
 
-Copy in only what an agent cannot look up: an unwritten convention, the reason behind a choice, a trap already hit. Anything one command or one file answers (scripts in `package.json`, the directory layout, `CLAUDE.md`) gets a pointer, not a copy.
+Copy in only what an agent cannot look up: an unwritten convention, the reason behind a choice, a trap already hit. Anything one command or one file answers (scripts in `package.json`, the directory layout, `CLAUDE.md`) gets a pointer, not a copy. One exception: a finding the stream agent or its exploration subagent already made goes in as a pointer to the wave's notes file (`wave<N>-explore.md`), though an agent could look it up again.
 
 ```markdown
 # Common rules for wave <N> (tickets <NN>, <NN>)
@@ -73,7 +73,7 @@ Copy in only what an agent cannot look up: an unwritten convention, the reason b
 | Part | What it holds | What you do when your evidence goes against it |
 |---|---|---|
 | Must hold | Your ticket's acceptance criteria, and the section above. | Follow the section above; never rewrite the criteria. |
-| Chosen for you | `<choice>`: `<the reason it was made>`. | Challenge it with evidence, in your ticket's comments and your report. A challenge alone does not move the ticket to `<ready for human label from the triage label file>`. |
+| Chosen for you | `<choice>`: `<the reason it was made>`. | Challenge it with evidence, in your ticket's comments and your report. A challenge alone does not move the ticket to `<ready for human label from the triage label file>`. Your Ticket handover (the comment named by `handover:` in your prompt) is challenged the same way. |
 | Not known yet | `<the open question>`. | `<who resolves it, or how to proceed while it stays open>`. |
 
 Whoever answers a challenge to a chosen default writes why the plan changes or stands; an answer with no reason is not a resolution.
@@ -88,17 +88,30 @@ Whoever answers a challenge to a chosen default writes why the plan changes or s
   guards>, <how to take it, how to see who holds it, how to release it>. Hold a lock only while the command
   that needs it runs.
 
+## Scratch Paseo daemon
+Fill this section only when a ticket needs a running Paseo daemon; otherwise write "not applicable".
+- A scratch Paseo daemon runs only on its own home directory under your temp directory, on its own port, from a clean environment built in the spawn call: no `PASEO_*` variable and no token variable, and only what a tool needs (for example `APPDATA` for `gh` on Windows). A scratch daemon started from the owner's environment inherits the owner's `PASEO_*`.
+- Never touch the owner's daemon, its sessions, config, plugins or skills, and never read or print a credential. When the scratch daemon needs a provider login, that is a human step: report `blocked: provider login`.
+- Stop the daemon and remove its home at the end, and name both among your private resources; the orchestrator removes what you leave once your ticket is merged.
+
 ## Repo and user rules
-- <commit and comment language>, <accepted way to verify>, <lint command>, <test accounts>.
+- Write your reports, ticket comments and commit messages in English, even when your own settings or a global `CLAUDE.md` ask for another language; this wave's rules override that preference. The repo's own commit-language rule, where one exists, still governs commits.
+- <accepted way to verify>, <lint command>, <test accounts>.
 - Commit format: <the commit-message format the repository's own agent documents declare, repeated here
   in full rather than pointed to, since a ticket agent commits often and cannot re-read those documents
   before each one>; <or "none declared: match this repo's existing commit style">.
-- Credentials: never read, print or pass on a token or credential (no `gh auth token`, no reading a CLI's
-  hosts or config file or a token's environment variable, no token in a URL or a command). A `gh`, `glab`,
-  push or upload failure goes into your report with the command and its error as printed; never work
-  around it with another tool, the forge's API or another account.
+- Credentials: never read, print or pass on a token or credential (no `gh auth token`, no `gh auth status`,
+  no reading a CLI's hosts or config file or a token's environment variable, no token in a URL or a
+  command). A `gh`, `glab`, push or upload failure goes into your report with the command and its error as
+  printed; never work around it with another tool, the forge's API or another account.
 - Evidence standards: read `<path to the evidence standards file, or "none declared">`; it is not copied here.
   Name it in your `mattpocock-skills:code-review` call.
+
+## How you work
+1. Write and edit files only with the Write and Edit tools, never through a shell heredoc, `python -c`, `sed` or `echo >`: a shell can swallow a backslash, and an escape such as backslash-n arrives broken in the file.
+2. Before you change a call, an exported name or a text a test may read (a heading, a message, a line of a document), grep the tests for it; fix every hit inside your file zone and name every hit outside it in your report. In tests, build paths with the platform's path-join and temp-dir functions, never a hard-coded drive letter or separator.
+3. Message path: when you need a decision, ask it with AskUserQuestion or end your turn with the question in text; the plugin relays a pending permission to the orchestrator.
+3. Heartbeat path: never use AskUserQuestion; when you need a decision, end your turn with the question written in your message, with your recommendation, since a question asked mid-turn sends no finish notification and waits unseen.
 
 ## Done when:
 Each item below holds for one ticket, and you go through them again for each ticket of your bundle.

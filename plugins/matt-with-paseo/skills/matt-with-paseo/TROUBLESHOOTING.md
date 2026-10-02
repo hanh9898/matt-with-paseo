@@ -23,7 +23,7 @@ Rating: nothing yet.
 | Control | What it does | Use it when |
 |---|---|---|
 | `cancel_agent` | Stops the current turn; the agent and its context stay | The agent can still do the ticket: redirect it with `send_agent_prompt`, narrowing the task as in "Agent stops midway". Never for a hung agent, which the heartbeat path (`HEARTBEAT-PATH.md`) kills |
-| `kill_agent` | Ends the agent's session for good; its workspace and worktree stay | The session itself is broken (errors on every turn, context unusable): handle the remainder as in "Agent stops midway", sent to a new agent spawned in the same workspace per step 4 instead of the same one |
+| `kill_agent` | Ends the agent's session for good; its workspace and worktree stay | The session itself is broken (errors on every turn, context unusable): handle the remainder as in "Agent stops midway", sent to a new agent spawned in the same workspace per step 4 instead of the same one, with step 4's `notifyOnFinish` rule for the recorded path (false on the message path, true on the heartbeat path) |
 | `archive_agent` | Interrupts the agent if running and removes it from the active list; the worktree stays | Only in step 8 cleanup, after its three checks. Archiving the workspace (`archive_workspace`) is what deletes the worktree |
 
 Rating: nothing yet.

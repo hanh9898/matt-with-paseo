@@ -237,11 +237,13 @@ The stream agent runs the wave skill with two optional arguments, which you can 
 
 The wave skill runs in a checkout of its integration branch, whoever calls it. Without `stream` it behaves exactly as in 0.3.0; without `quota` a wave takes every ticket that can run.
 
-With `stream`, the run also takes three prompts while it runs, typed into its session by the stream skill or by you (ADR 0006):
+With `stream`, the run also takes five prompts while it runs, typed into its session by the stream skill or by you (ADR 0006, ADR 0014 for the two per-agent ones):
 
 - `hold`: it starts no new agent, rolling start included, while the agents already running carry on and finished tickets still merge.
 - `release`: lifts the hold; waiting tickets start at once, within the quota.
 - `quota <N>`: a new quota. A raise starts waiting tickets at once; a cut stops no agent and takes effect as agents finish.
+- `hold <agent>`: cuts that one ticket or bundle agent's running turn short with `cancel_agent`, records it under `## Held agents` in the wave file and sends it no prompt; it still counts against the quota. No other agent is touched.
+- `release <agent>`: removes the record and prompts the agent again (to resume, or a replacement when it is broken).
 
 With `stream`, a single ticket also runs as a one-ticket wave, rather than the skill suggesting `/mattpocock-skills:implement`. And the run never ships: it pushes nothing and opens no pull request. Asked to, it answers that shipping belongs to the stream skill.
 
@@ -268,6 +270,8 @@ If the target repo commits a `paseo.json`, the wave skill uses it when spawning:
 If the target repo has its own standard for proving a change works (measure on real data, attach a recording of the screen, run a command twice and compare the counts), write it as free prose in a file, for example `docs/agents/evidence-standards.md`, and declare it in an `## Evidence standards` section of `CLAUDE.md` or `AGENTS.md` that points to that file. Put the section **outside** the `## Agent skills` block: `/mattpocock-skills:setup-matt-pocock-skills` rewrites that block in place and would drop anything added inside it.
 
 The wave skill reads the file while preparing a wave, points every agent to it from the common rules instead of copying it, and names it in every `mattpocock-skills:code-review` call, because the review's Standards axis reads only documents on how code is written (such as `CODING_STANDARDS.md`) on its own. The file is about how to prove a change works, so keep it separate from those. A repo without the section runs exactly as before.
+
+The file may also name two optional things for a `stream` run: the **full check**, the one command that runs everything CI runs (`npm run check` in the plugin repo; here, the unit tests plus the drift check), and the **branches whose pull requests run CI**. When the stream's PR target is not among those branches, the wave skill runs the full check once on the integration branch's head before the stream agent reports stage F, with one fix pass on red, and the pull request body carries the result as evidence. When the PR target is among them, nothing runs locally. When the file names the full check and no branch list, the check runs as above. When it names the branch list and no full check, the stage F message names the missing full check and nothing runs. When the file names neither, the stage F message says so and nothing runs.
 
 ### Known Paseo behaviour
 
@@ -300,7 +304,7 @@ npx skills add hanh9898/matt-with-paseo --skill '*' -g -a claude-code
 gh skill install hanh9898/matt-with-paseo --all --agent claude-code --scope user
 ```
 
-`--all` takes both skills. This resolves the latest tagged release; add `--pin v0.8.0` to fix a version. The commands are `/matt-with-paseo` and `/matt-with-paseo-streams`.
+`--all` takes both skills. This resolves the latest tagged release; add `--pin v0.9.0` to fix a version. The commands are `/matt-with-paseo` and `/matt-with-paseo-streams`.
 
 ### Option 4: Manual copy
 
