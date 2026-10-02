@@ -37,6 +37,11 @@ A test pins behaviour or structure, never wording:
 - Allowed: a skill's behaviour through an eval case; a script's output; the structure of a document (a link resolves, a file exists, a table has its columns, a pinned line listed in `scripts/pinned-lines.json` is present).
 - Not allowed in a new test: a whole sentence of prose copied into an assertion. Such a test fails each time someone rewords the sentence and catches no change in behaviour.
 
+## Declarations for the wave skill
+
+- **Full check:** `python -B -m unittest discover -s scripts`, then `python -B scripts/drift-check.py`.
+- **Branches whose pull requests run CI:** `main`.
+
 ## Writing files
 
 Agents write and edit files with the Write and Edit tools, never through a shell heredoc, `python -c` or `sed`: on the owner's machine a shell swallows backslashes, so an escape such as backslash-n or backslash-b arrives broken in the file.
