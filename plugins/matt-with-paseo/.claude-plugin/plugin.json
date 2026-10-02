@@ -1,7 +1,7 @@
 {
   "name": "matt-with-paseo",
   "displayName": "Matt with Paseo",
-  "version": "0.8.0",
+  "version": "0.9.0",
   "description": "A simple multi-agent orchestrator: Matt Pocock's skills + the Paseo agent control plane, running tickets in waves of parallel agents, and many ticket sets as streams that each ship through one pull request or GitLab merge request.",
   "author": {
     "name": "hanh9898",

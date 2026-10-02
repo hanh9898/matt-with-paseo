@@ -269,6 +269,8 @@ If the target repo has its own standard for proving a change works (measure on r
 
 The wave skill reads the file while preparing a wave, points every agent to it from the common rules instead of copying it, and names it in every `mattpocock-skills:code-review` call, because the review's Standards axis reads only documents on how code is written (such as `CODING_STANDARDS.md`) on its own. The file is about how to prove a change works, so keep it separate from those. A repo without the section runs exactly as before.
 
+The file may also name two optional things for a `stream` run: the **full check**, the one command that runs everything CI runs (`npm run check` in the plugin repo; here, the unit tests plus the drift check), and the **branches whose pull requests run CI**. When the stream's PR target is not among those branches, the wave skill runs the full check once on the integration branch's head before the stream agent reports stage F, with one fix pass on red, and the pull request body carries the result as evidence. When the PR target is among them, nothing runs locally. When the file names neither, the stage F message says so and nothing runs.
+
 ### Known Paseo behaviour
 
 The skills act on what Paseo is known to do: they check the real artifacts instead of trusting "finished", every heartbeat tick re-reads the agents' real state and every heartbeat expires, they read `git worktree list` before calling `create_workspace` again, they archive only a stopped agent with a clean, merged worktree, and they replace a stream agent only when no ticket agent runs. The why is one row per fact in [`PASEO-FACTS.md`](plugins/matt-with-paseo/skills/matt-with-paseo/PASEO-FACTS.md), written for the agents that run the skills, each with its basis and the Paseo version it was seen on (`version not recorded` where nobody wrote it down). On Windows the shells and a fixed service `port` behave as the `paseo.json` notes above say.
@@ -300,7 +302,7 @@ npx skills add hanh9898/matt-with-paseo --skill '*' -g -a claude-code
 gh skill install hanh9898/matt-with-paseo --all --agent claude-code --scope user
 ```
 
-`--all` takes both skills. This resolves the latest tagged release; add `--pin v0.8.0` to fix a version. The commands are `/matt-with-paseo` and `/matt-with-paseo-streams`.
+`--all` takes both skills. This resolves the latest tagged release; add `--pin v0.9.0` to fix a version. The commands are `/matt-with-paseo` and `/matt-with-paseo-streams`.
 
 ### Option 4: Manual copy
 
