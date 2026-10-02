@@ -196,7 +196,7 @@ Present the graph, the upcoming wave, and the lost-width list to the user, and w
 
 Pin the base commit: `git rev-parse <integration branch>`. Write `wave<N>-common-rules.md` next to the ticket folder, following [`COMMON-RULES-TEMPLATE.md`](COMMON-RULES-TEMPLATE.md); its first section is the graph from step 2, with each ticket's wave and status, so the dependency tree lives on disk. You run each verification command the repo has on the base commit yourself, before the first spawn, and write what fails into its "Failing on base" section.
 
-Fill the template's `## How you work` section with the line of the path step 1 recorded for rule 4 (the message path's line or the heartbeat path's line) and delete the other; rules 1 and 2 stay as written.
+Fill the template's `## How you work` section with the line of the path step 1 recorded for rule 3 (the message path's line or the heartbeat path's line) and delete the other; copy rules 1 and 2 as written.
 
 For a Paseo plugin target (step 1), add a "Chosen for you" row: ticket agents do not load `/paseo-plugin` and design nothing on the plugin's side; the plugin's behaviour is read from its contract and its issues. Fill the template's scratch-daemon section only when a ticket needs a running Paseo daemon, and write "not applicable" there otherwise.
 
@@ -224,7 +224,7 @@ Filter each trap from earlier waves before copying it and check it against the a
 
 A trap's "how to check you avoided it" column tells its kind: a command with a clear result makes it mechanical, prose makes it a judgement call (the split `mattpocock-skills:retro` draws). A mechanical trap stays in the list together with its command. Wiring that command into the target repo's own checks is a separate ticket for that repo, proposed to the user; this skill never edits the target repo's checks itself.
 
-**Done when**: every section of the template has content or reads "not applicable", `## How you work` holds rules 1 and 2 and the one rule 4 line of the recorded path, every choice the tickets leave open that several tickets must make alike is in "Chosen for you" with its reason or in "Not known yet" with how to proceed, `## Checkpoints` holds the mark of each Checkpoint since the previous wave file, every trap from earlier waves has been filtered and checked against the acceptance criteria as above before it was copied, and no trap marked **wrong** in an earlier wave's log is copied as written, and every ticket of the wave that gets an agent has its Ticket handover posted as a comment, with its comment URL listed.
+**Done when**: every section of the template has content or reads "not applicable", `## How you work` holds rules 1 and 2 and the one rule 3 line of the recorded path, every choice the tickets leave open that several tickets must make alike is in "Chosen for you" with its reason or in "Not known yet" with how to proceed, `## Checkpoints` holds the mark of each Checkpoint since the previous wave file, every trap from earlier waves has been filtered and checked against the acceptance criteria as above before it was copied, and no trap marked **wrong** in an earlier wave's log is copied as written, and every ticket of the wave that gets an agent has its Ticket handover posted as a comment, with its comment URL listed.
 
 ## 3b. Write the wave's exploration notes
 
