@@ -2,9 +2,9 @@
 
 Copy the frame below into `wave<N>-common-rules.md` and fill in each section. Each section answers a question every agent in the wave would otherwise ask itself; answered here once, no agent has to guess.
 
-Steps 3, 4 and 7 of the skill append three sections, `## Checkpoints`, `## Wave agents` and `## Review`, to the end of the file; leave all three out when writing the rules.
+Steps 3, 4 and 7 of the skill append three sections, `## Checkpoints`, `## Wave agents` and `## Review`, to the end of the file, and a `hold <agent>` prompt adds a fourth, `## Held agents`; leave all four out when writing the rules.
 
-Copy in only what an agent cannot look up: an unwritten convention, the reason behind a choice, a trap already hit. Anything one command or one file answers (scripts in `package.json`, the directory layout, `CLAUDE.md`) gets a pointer, not a copy. A finding the stream agent or its exploration subagent already made goes in as a pointer to the wave's notes file (`wave<N>-explore.md`), even though an agent could look it up again.
+Copy in only what an agent cannot look up: an unwritten convention, the reason behind a choice, a trap already hit. Anything one command or one file answers (scripts in `package.json`, the directory layout, `CLAUDE.md`) gets a pointer, not a copy. One exception: a finding the stream agent or its exploration subagent already made goes in as a pointer to the wave's notes file (`wave<N>-explore.md`), though an agent could look it up again.
 
 ```markdown
 # Common rules for wave <N> (tickets <NN>, <NN>)
@@ -92,10 +92,10 @@ Whoever answers a challenge to a chosen default writes why the plan changes or s
 Fill this section only when a ticket needs a running Paseo daemon; otherwise write "not applicable".
 - A scratch Paseo daemon runs only on its own home directory under your temp directory, on its own port, from a clean environment built in the spawn call: no `PASEO_*` variable and no token variable, and only what a tool needs (for example `APPDATA` for `gh` on Windows). A scratch daemon started from the owner's environment inherits the owner's `PASEO_*`.
 - Never touch the owner's daemon, its sessions, config, plugins or skills, and never read or print a credential. When the scratch daemon needs a provider login, that is a human step: report `blocked: provider login`.
-- Stop the daemon and remove its home at the end, and name both among your private resources (step 8).
+- Stop the daemon and remove its home at the end, and name both among your private resources; the orchestrator removes what you leave once your ticket is merged.
 
 ## Repo and user rules
-- Write your reports, ticket comments and commit messages in English, even when your own settings or a global `CLAUDE.md` ask for another language; this wave's rules override that preference.
+- Write your reports, ticket comments and commit messages in English, even when your own settings or a global `CLAUDE.md` ask for another language; this wave's rules override that preference. The repo's own commit-language rule, where one exists, still governs commits.
 - <accepted way to verify>, <lint command>, <test accounts>.
 - Commit format: <the commit-message format the repository's own agent documents declare, repeated here
   in full rather than pointed to, since a ticket agent commits often and cannot re-read those documents
@@ -108,11 +108,10 @@ Fill this section only when a ticket needs a running Paseo daemon; otherwise wri
   Name it in your `mattpocock-skills:code-review` call.
 
 ## How you work
-Copy these lines as written, except rule 4: copy the one line of the path step 1 recorded and delete the other.
 1. Write and edit files only with the Write and Edit tools, never through a shell heredoc, `python -c`, `sed` or `echo >`: a shell can swallow a backslash, and an escape such as backslash-n arrives broken in the file.
 2. Before you change a call, an exported name or a text a test may read (a heading, a message, a line of a document), grep the tests for it; fix every hit inside your file zone and name every hit outside it in your report. In tests, build paths with the platform's path-join and temp-dir functions, never a hard-coded drive letter or separator.
-4. Message path: when you need a decision, ask it with AskUserQuestion or end your turn with the question in text; the plugin relays a pending permission to the orchestrator.
-4. Heartbeat path: never use AskUserQuestion; when you need a decision, end your turn with the question written in your message, with your recommendation, since a question asked mid-turn sends no finish notification and waits unseen.
+3. Message path: when you need a decision, ask it with AskUserQuestion or end your turn with the question in text; the plugin relays a pending permission to the orchestrator.
+3. Heartbeat path: never use AskUserQuestion; when you need a decision, end your turn with the question written in your message, with your recommendation, since a question asked mid-turn sends no finish notification and waits unseen.
 
 ## Done when:
 Each item below holds for one ticket, and you go through them again for each ticket of your bundle.
