@@ -94,12 +94,19 @@ Whoever answers a challenge to a chosen default writes why the plan changes or s
 - Commit format: <the commit-message format the repository's own agent documents declare, repeated here
   in full rather than pointed to, since a ticket agent commits often and cannot re-read those documents
   before each one>; <or "none declared: match this repo's existing commit style">.
-- Credentials: never read, print or pass on a token or credential (no `gh auth token`, no reading a CLI's
-  hosts or config file or a token's environment variable, no token in a URL or a command). A `gh`, `glab`,
-  push or upload failure goes into your report with the command and its error as printed; never work
-  around it with another tool, the forge's API or another account.
+- Credentials: never read, print or pass on a token or credential (no `gh auth token`, no `gh auth status`,
+  no reading a CLI's hosts or config file or a token's environment variable, no token in a URL or a
+  command). A `gh`, `glab`, push or upload failure goes into your report with the command and its error as
+  printed; never work around it with another tool, the forge's API or another account.
 - Evidence standards: read `<path to the evidence standards file, or "none declared">`; it is not copied here.
   Name it in your `mattpocock-skills:code-review` call.
+
+## How you work
+Copy these lines as written, except rule 4: copy the one line of the path step 1 recorded and delete the other.
+1. Write and edit files only with the Write and Edit tools, never through a shell heredoc, `python -c`, `sed` or `echo >`: a shell can swallow a backslash, and an escape such as backslash-n arrives broken in the file.
+2. Before you change a call, an exported name or a text a test may read (a heading, a message, a line of a document), grep the tests for it; fix every hit inside your file zone and name every hit outside it in your report. In tests, build paths with the platform's path-join and temp-dir functions, never a hard-coded drive letter or separator.
+4. Message path: when you need a decision, ask it with AskUserQuestion or end your turn with the question in text; the plugin relays a pending permission to the orchestrator.
+4. Heartbeat path: never use AskUserQuestion; when you need a decision, end your turn with the question written in your message, with your recommendation, since a question asked mid-turn sends no finish notification and waits unseen.
 
 ## Done when:
 Each item below holds for one ticket, and you go through them again for each ticket of your bundle.
