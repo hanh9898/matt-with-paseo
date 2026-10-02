@@ -196,6 +196,8 @@ Then write one **Ticket handover** per ticket of the wave, and post it as a comm
 | Prefactor | A change to make first inside this ticket, or "none"; never a new ticket, since adding tickets is the user's |
 | Out of scope | What the ticket must not touch |
 
+A symptom ticket's base reproduction from step 2, its command and its output on the base commit, goes into its Ticket handover as the loop.
+
 The seams stand in for `tdd`'s user-confirmed seams inside a wave: no user is present to agree them with, so you choose them once for the wave, and two tickets that touch one module go through the same seam. A handover says in its first line that it is wave-scoped, and may name paths and line numbers, because it lives for one wave. The ticket's acceptance criteria stay the contract and a handover is never the contract: it ranks with a trap. A ticket agent that finds a handover wrong challenges it as it challenges "Chosen for you", with evidence in its ticket's comments and its report, and keeps working; step 5 answers the challenge.
 
 Once the first agent is spawned, the rules part of the file is **frozen**: agents read it at any moment, so an edit mid-wave reaches some of them and not others. A rule that must change mid-wave goes to each running agent with `send_agent_prompt` and into the next wave's rules; only the log sections below the rules keep growing.
@@ -255,7 +257,7 @@ Every flow ends with the bundle's review, once per bundle over its diff from its
 
 The review's result goes into the comments of every ticket of the bundle: the number of findings per axis and the outcome of each. The seams inside a bundle are its ticket agent's; step 7 reviews only the seams between bundles.
 
-For a symptom ticket, `/mattpocock-skills:diagnosing-bugs` must leave a loop in the report that goes **red** on exactly that symptom before the fix; step 5 checks it.
+For a symptom ticket, `/mattpocock-skills:diagnosing-bugs` starts Phase 1 from the loop in its Ticket handover: it runs the command once, confirms it is red, tightens it if needed, and builds a new loop only when the handed loop is not red on the ticket's base. It must leave a loop in the report that goes **red** on exactly that symptom before the fix; step 5 checks it.
 
 Chaining another Matt Pocock skill means adding a row to this table, not a prose branch. Before adding it, read that skill's `disable-model-invocation` frontmatter flag in the installed plugin: set to `true`, only a human can type the skill, so it cannot go in an agent's flow; absent or `false`, it can. Name every Matt skill as `mattpocock-skills:<name>`.
 
