@@ -302,7 +302,7 @@ npx skills add hanh9898/matt-with-paseo --skill '*' -g -a claude-code
 gh skill install hanh9898/matt-with-paseo --all --agent claude-code --scope user
 ```
 
-`--all` takes both skills. This resolves the latest tagged release; add `--pin v0.8.0` to fix a version. The commands are `/matt-with-paseo` and `/matt-with-paseo-streams`.
+`--all` takes both skills. This resolves the latest tagged release; add `--pin v0.9.0` to fix a version. The commands are `/matt-with-paseo` and `/matt-with-paseo-streams`.
 
 ### Option 4: Manual copy
 
