@@ -89,7 +89,8 @@ Whoever answers a challenge to a chosen default writes why the plan changes or s
   that needs it runs.
 
 ## Repo and user rules
-- <commit and comment language>, <accepted way to verify>, <lint command>, <test accounts>.
+- Write your reports, ticket comments and commit messages in English, even when your own settings or a global `CLAUDE.md` ask for another language; this wave's rules override that preference.
+- <accepted way to verify>, <lint command>, <test accounts>.
 - Commit format: <the commit-message format the repository's own agent documents declare, repeated here
   in full rather than pointed to, since a ticket agent commits often and cannot re-read those documents
   before each one>; <or "none declared: match this repo's existing commit style">.
