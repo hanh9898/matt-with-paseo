@@ -88,6 +88,12 @@ Whoever answers a challenge to a chosen default writes why the plan changes or s
   guards>, <how to take it, how to see who holds it, how to release it>. Hold a lock only while the command
   that needs it runs.
 
+## Scratch Paseo daemon
+Fill this section only when a ticket needs a running Paseo daemon; otherwise write "not applicable".
+- A scratch Paseo daemon runs only on its own home directory under your temp directory, on its own port, from a clean environment built in the spawn call: no `PASEO_*` variable and no token variable, and only what a tool needs (for example `APPDATA` for `gh` on Windows). A scratch daemon started from the owner's environment inherits the owner's `PASEO_*`.
+- Never touch the owner's daemon, its sessions, config, plugins or skills, and never read or print a credential. When the scratch daemon needs a provider login, that is a human step: report `blocked: provider login`.
+- Stop the daemon and remove its home at the end, and name both among your private resources (step 8).
+
 ## Repo and user rules
 - Write your reports, ticket comments and commit messages in English, even when your own settings or a global `CLAUDE.md` ask for another language; this wave's rules override that preference.
 - <accepted way to verify>, <lint command>, <test accounts>.
