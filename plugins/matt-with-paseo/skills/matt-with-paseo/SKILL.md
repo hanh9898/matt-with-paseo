@@ -17,7 +17,7 @@ Without `stream`, every label, branch name and file name is the one the "Without
 
 **Precondition:** this skill runs in a checkout of its integration branch. It reads that branch from the checkout it stands in (step 1), so whoever calls it, human or agent, opens it there first.
 
-**Credentials:** no agent of a wave, you included, reads, prints or passes on a credential: never run `gh auth token`, `glab auth status --show-token` or `git credential fill`, never read a CLI's hosts or config file or an environment variable that holds a token, and never put a token in a URL, a command or a prompt. A forge CLI failure (`gh`, `glab`, a push, an upload, an authentication error) is reported to the user with the command and its error as printed, and the step that ran it stops there; never work around it with another tool, the forge's API or another account. Step 3 puts the same rule into the common rules for every ticket agent.
+**Credentials:** no agent of a wave, you included, reads, prints or passes on a credential: never run `gh auth token`, `gh auth status` (it prints a masked token prefix), `glab auth status --show-token` or `git credential fill`, never read a CLI's hosts or config file or an environment variable that holds a token, and never put a token in a URL, a command or a prompt. A forge CLI failure (`gh`, `glab`, a push, an upload, an authentication error) is reported to the user with the command and its error as printed, and the step that ran it stops there; never work around it with another tool, the forge's API or another account. Step 3 puts the same rule into the common rules for every ticket agent.
 
 Words used throughout:
 
@@ -65,6 +65,8 @@ With `stream`, the run takes three prompts at any time, from the stream skill or
 Ownership: when a `stream` run must settle who decides or may do something, read the table in [`OWNERSHIP.md`](../matt-with-paseo-streams/OWNERSHIP.md) (each role's ownership, its lines of speech and its never-items).
 
 With `stream`, the run's work ends on its integration branch: shipping belongs to the stream skill (`/matt-with-paseo:matt-with-paseo-streams`). The run pushes nothing, opens no pull request, and creates no heartbeat outside the heartbeat path's contract. Asked to ship, by anyone, answer that shipping belongs to the stream skill, and carry on with the run.
+
+With `stream` on the heartbeat path, you never use AskUserQuestion: when you need a decision from the user, end your turn with the question written in your message, since a question asked mid-turn sends no finish notification and waits unseen. On the message path AskUserQuestion stays allowed, since the plugin relays a `Permission pending`.
 
 ## 0. Locate the state and suggest the next step
 
@@ -184,6 +186,8 @@ Present the graph, the upcoming wave, and the lost-width list to the user, and w
 
 Pin the base commit: `git rev-parse <integration branch>`. Write `wave<N>-common-rules.md` next to the ticket folder, following [`COMMON-RULES-TEMPLATE.md`](COMMON-RULES-TEMPLATE.md); its first section is the graph from step 2, with each ticket's wave and status, so the dependency tree lives on disk. You run each verification command the repo has on the base commit yourself, before the first spawn, and write what fails into its "Failing on base" section.
 
+Fill the template's `## How you work` section with the line of the path step 1 recorded for rule 4 (the message path's line or the heartbeat path's line) and delete the other; rules 1 and 2 stay as written.
+
 Settle what the spec and the tickets leave open. A choice that several tickets must make alike (a format, a name, a threshold) and that you can make goes in the template's "Chosen for you" row: pick it yourself, and write it with its reason. Never write it into a ticket's acceptance criteria, which an agent can challenge only by stopping. "Not known yet" holds only what nobody can settle yet, with how to proceed meanwhile. When you name the rules to the user, state for "Chosen for you" the row's challenge route (a ticket agent challenges with evidence, in its ticket's comments and its report, and keeps working) and the sentence on answering a challenge (the answer says why the plan changes or stands).
 
 Then write one **Ticket handover** per ticket of the wave, and post it as a comment on that ticket before step 4 spawns any agent. A handover holds five parts: Current behavior, Key interfaces, Seams, Prefactor and Out of scope.
@@ -208,7 +212,7 @@ Filter each trap from earlier waves before copying it and check it against the a
 
 A trap's "how to check you avoided it" column tells its kind: a command with a clear result makes it mechanical, prose makes it a judgement call (the split `mattpocock-skills:retro` draws). A mechanical trap stays in the list together with its command. Wiring that command into the target repo's own checks is a separate ticket for that repo, proposed to the user; this skill never edits the target repo's checks itself.
 
-**Done when**: every section of the template has content or reads "not applicable", every choice the tickets leave open that several tickets must make alike is in "Chosen for you" with its reason or in "Not known yet" with how to proceed, `## Checkpoints` holds the mark of each Checkpoint since the previous wave file, every trap from earlier waves has been filtered and checked against the acceptance criteria as above before it was copied, and no trap marked **wrong** in an earlier wave's log is copied as written, and every ticket of the wave that gets an agent has its Ticket handover posted as a comment, with its comment URL listed.
+**Done when**: every section of the template has content or reads "not applicable", `## How you work` holds rules 1 and 2 and the one rule 4 line of the recorded path, every choice the tickets leave open that several tickets must make alike is in "Chosen for you" with its reason or in "Not known yet" with how to proceed, `## Checkpoints` holds the mark of each Checkpoint since the previous wave file, every trap from earlier waves has been filtered and checked against the acceptance criteria as above before it was copied, and no trap marked **wrong** in an earlier wave's log is copied as written, and every ticket of the wave that gets an agent has its Ticket handover posted as a comment, with its comment URL listed.
 
 ## 3b. Write the wave's exploration notes
 
