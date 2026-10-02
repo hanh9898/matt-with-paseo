@@ -237,11 +237,13 @@ The stream agent runs the wave skill with two optional arguments, which you can 
 
 The wave skill runs in a checkout of its integration branch, whoever calls it. Without `stream` it behaves exactly as in 0.3.0; without `quota` a wave takes every ticket that can run.
 
-With `stream`, the run also takes three prompts while it runs, typed into its session by the stream skill or by you (ADR 0006):
+With `stream`, the run also takes five prompts while it runs, typed into its session by the stream skill or by you (ADR 0006, ADR 0014 for the two per-agent ones):
 
 - `hold`: it starts no new agent, rolling start included, while the agents already running carry on and finished tickets still merge.
 - `release`: lifts the hold; waiting tickets start at once, within the quota.
 - `quota <N>`: a new quota. A raise starts waiting tickets at once; a cut stops no agent and takes effect as agents finish.
+- `hold <agent>`: cuts that one ticket or bundle agent's running turn short with `cancel_agent`, records it under `## Held agents` in the wave file and sends it no prompt; it still counts against the quota. No other agent is touched.
+- `release <agent>`: removes the record and prompts the agent again (to resume, or a replacement when it is broken).
 
 With `stream`, a single ticket also runs as a one-ticket wave, rather than the skill suggesting `/mattpocock-skills:implement`. And the run never ships: it pushes nothing and opens no pull request. Asked to, it answers that shipping belongs to the stream skill.
 
