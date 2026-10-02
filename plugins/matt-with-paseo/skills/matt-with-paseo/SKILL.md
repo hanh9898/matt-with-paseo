@@ -99,13 +99,14 @@ For stage E, a previous session may have ended mid-step (a crash, a closed windo
 - `paseo ls -g --label wave=<N> --json` lists the wave's agents by label (`list_agents` cannot filter by label; `-g` because the agents run in worktrees, not in this checkout), with the label filter of "Names this run writes", so that with `stream` another run's agents are never listed. An agent with no row in the `## Wave agents` table was spawned but never logged; add its row before anything else, unless it carries a `stream` label this run does not have (see [`TROUBLESHOOTING.md`](TROUBLESHOOTING.md)).
 - The wave's workspaces are the ones its labelled agents run in: match each agent's `cwd` (printed with `~` for the home directory) against `list_workspaces` and `git worktree list`. A workspace or worktree of this wave with no row, or with no labelled agent in it, is an orphan of an interrupted spawn; a row whose workspace is gone is a cleanup already done. With `stream`, a worktree or branch is this run's only when its branch has the ticket branch shape of "Names this run writes"; leave every other one alone, even with the same wave number.
 - Every background job or heartbeat the previous session started: its output, if any, may hold a report nobody processed.
+- `## Held agents` in the wave file, when it has one: each id listed there is an agent held with `hold <agent>`. Its cancelled turn is a hold, not a stop: it is neither stopped nor failed, and it gets no prompt until `release <agent>` ("Prompts under `stream`").
 - A merge left in progress on the integration branch (`git status` says it is still merging): run step 6's conflict-marker search on it before anything else. A file the search prints goes into what you report, and the merge stays uncommitted.
 
 Then take each unfinished ticket of the wave. Find its agent in the `## Wave agents` table, or else in the sweep's list of the wave's agents (by `wave`, and `stream` under `stream`): the agent whose `tickets` label holds the ticket's number, and whose row's ticket column is not `review`, is its agent. A label filter cannot match inside `"70,71"`, so read each agent's `tickets` label instead of filtering on it. The row's merged-SHA column says which tickets of a bundle are already merged: a ticket with a SHA is done, and only the tickets without one are unfinished:
 
 - No agent: step 4, spawning only for that ticket, with `notifyOnFinish: false` on the message path and `notifyOnFinish: true` on the heartbeat path as step 4 says.
 - Agent still running (`get_agent_status`): wait, then step 5. If this session did not spawn the agent it will not receive the agent's notification, so create a heartbeat per step 5.
-- Agent stopped with the ticket unfinished: handle it per "Agent stops midway" in [`TROUBLESHOOTING.md`](TROUBLESHOOTING.md). This ticket's branch is not merged yet.
+- Agent stopped with the ticket unfinished, and not listed under `## Held agents`: handle it per "Agent stops midway" in [`TROUBLESHOOTING.md`](TROUBLESHOOTING.md). This ticket's branch is not merged yet.
 
 A `## Wave agents` row whose ticket is `review` is a review agent, and only that row tells it from a ticket agent. Step 7's review agent carries no `bundle` or `tickets` label; a bundle's fresh review agent (step 4) carries its bundle's labels, so it is never a bundle's ticket agent and no ticket resolves to it. Step 7's, still running: wait, with a heartbeat per step 5 if this session did not spawn it (its ticks check only `get_agent_status`, since it has no ticket branch), then continue step 7 with its findings; stopped with no `## Review` yet: continue step 7 with its findings; it has no ticket branch to merge. A bundle's fresh review agent is waited for the same way, its ticks also reading the commits on the bundle's branch; once it has stopped, step 5 checks the review result and step 6 merges its fixes.
 
@@ -216,7 +217,7 @@ A symptom ticket's base reproduction from step 2, its command and its output on 
 
 The seams stand in for `tdd`'s user-confirmed seams inside a wave: no user is present to agree them with, so you choose them once for the wave, and two tickets that touch one module go through the same seam. A handover says in its first line that it is wave-scoped, and may name paths and line numbers, because it lives for one wave. The ticket's acceptance criteria stay the contract and a handover is never the contract: it ranks with a trap. A ticket agent that finds a handover wrong challenges it as it challenges "Chosen for you", with evidence in its ticket's comments and its report, and keeps working; step 5 answers the challenge.
 
-Once the first agent is spawned, the rules part of the file, and the exploration notes file of step 3b, are **frozen**: agents read them at any moment, so an edit mid-wave reaches some of them and not others. A rule or a finding that must change mid-wave goes to each running agent with `send_agent_prompt` and into the next wave's rules; only the log sections below the rules keep growing.
+Once the first agent is spawned, the rules part of the file, and the exploration notes file of step 3b, are **frozen**: agents read them at any moment, so an edit mid-wave reaches some of them and not others. A rule or a finding that must change mid-wave goes to each running agent with `send_agent_prompt` and into the next wave's rules; only the log sections below the rules (`## Checkpoints`, `## Wave agents`, `## Review` and `## Held agents`) keep growing.
 
 The common rules are the single place holding what every agent in the wave needs to know, so each agent's own prompt carries only four things (step 4): the path to the common rules, the tickets in order each with its flow, the private resources, and the path to the exploration notes (step 3b). Fill the template's parameters section (the values it shows are the defaults), and count its "<k> other agents" in bundles. The file is also the wave's log: steps 3, 4 and 7 append to it, so step 0 of a later session can read where an unfinished wave stands. Step 3 starts its `## Checkpoints` section right after the rules, holding the marks of the Checkpoints since the previous wave file (step 0's and step 2's; step 7's marks paragraph).
 
@@ -294,7 +295,7 @@ Chaining another Matt Pocock skill means adding a row to this table, not a prose
 
 If the wave's first agent reports it cannot find a skill, the plugin has not reached the worktree: paste the method straight into the prompts of the remaining agents, and record it in the traps section of the common rules.
 
-Create each ticket agent and bundle agent with `notifyOnFinish: false` on the message path and `notifyOnFinish: true` on the heartbeat path: on the message path the plugin relays each turn end as a `Turn ended` message, so Paseo's finish notification would reach you a second time, and on the heartbeat path the notification is the only report you get. The plugin cannot set this itself, since `notifyOnFinish` is an argument of `create_agent`. Between reports, spend the time on other work of the wave. A finish the report misses is caught in step 5.
+Create each ticket agent and bundle agent with `notifyOnFinish: false` on the message path and `notifyOnFinish: true` on the heartbeat path: on the message path the plugin relays each turn end as a `Turn ended` message, so Paseo's finish notification would reach you a second time, and on the heartbeat path the notification is the only report you get. A `send_agent_prompt` to a ticket or bundle agent (step 5's `next` and `stop`, a finding sent back) follows the same rule. The plugin cannot set this itself, since `notifyOnFinish` is an argument of `create_agent` and `send_agent_prompt`. Between reports, spend the time on other work of the wave. A finish the report misses is caught in step 5.
 
 **Done when**: every ticket in the wave belongs to a bundle with exactly one running agent and one row in the table, except, with `quota` or while a hold stands, the tickets waiting on it; and each bundle ended by `stop` (step 5) whose review runs has its fresh review agent, with a row of its own.
 
@@ -311,7 +312,7 @@ Read each agent's progress and report with `get_agent_activity`, not by reconstr
 
 | Lead | Do |
 |---|---|
-| `Turn ended` | Run "At each turn end" below for the ticket it names. Outcome `failed` or `canceled`: as "Agent stops midway" in [`TROUBLESHOOTING.md`](TROUBLESHOOTING.md) says |
+| `Turn ended` | Run "At each turn end" below for the ticket it names. Outcome `failed`, or `canceled` for an agent not listed under `## Held agents` (a held agent's cancel is the hold's own): as "Agent stops midway" in [`TROUBLESHOOTING.md`](TROUBLESHOOTING.md) says |
 | `Permission pending` | Read the request with `list_pending_permissions`, and treat it as settled when it is no longer listed. A question-type one goes to the user at a Checkpoint and is answered as [`TROUBLESHOOTING.md`](TROUBLESHOOTING.md)'s "Agent waits on a question-type permission" says; any other kind is answered, or left to the user, as its `Next:` line offers |
 | `Agent created` | Nothing: step 4 wrote the agent's row when it spawned it |
 | `Agent archived` | Finish step 8's clean-up of that ticket when you archived the agent; otherwise check the ticket's status before counting its work done |
@@ -342,7 +343,7 @@ Each time a ticket agent ends a turn with a ticket's report (a bundle of one end
 3. Read the stop signals:
    - **With the plugin:** a Jev flag that reaches you at this turn end is weighed by you (the stream agent, under `stream`); accepting it means `stop`. This skill names that seam and nothing of Jev's inside: the plugin never judges (ADR 0009).
    - **Without the plugin:** read `contextWindowUsedTokens` from `lastUsage` in `get_agent_status`; when that field is missing, from the last main-chain `usage` in the agent's transcript. The signal is `stop` when the common rules' parameters section calls for it (its context stop, its ticket cap).
-4. Answer the agent with `send_agent_prompt`, `notifyOnFinish` set: `next`, or `stop` when step 3 gave a stop; `stop` tells the agent to run no bundle review and to hand off, since the fresh review agent of step 4 runs it. The bundle's last ticket needs no answer: its agent has finished.
+4. Answer the agent with `send_agent_prompt`, with step 4's `notifyOnFinish` rule for the recorded path (false on the message path, true on the heartbeat path): `next`, or `stop` when step 3 gave a stop; `stop` tells the agent to run no bundle review and to hand off, since the fresh review agent of step 4 runs it. The bundle's last ticket needs no answer: its agent has finished.
 
 After `stop`, the bundle's unfinished tickets are handled as "Agent stops midway" in [`TROUBLESHOOTING.md`](TROUBLESHOOTING.md) says.
 
@@ -398,7 +399,7 @@ The `## Wave agents` table is the one record of what is live: a row not checked 
 
 `archive_workspace` deletes the worktree directory and `archive_agent` interrupts a running agent, so check three things once for each live row, one row per bundle (a row is a bundle's; the fresh review agent of step 4 and step 7's review agent have rows of their own):
 
-- `get_agent_status` shows the agent has stopped;
+- `get_agent_status` shows the agent has stopped, and its id is not listed under `## Held agents` (a held agent is released first, "Prompts under `stream`");
 - `git -C <worktree> status --porcelain` is empty;
 - the row's branch (the bundle's, for a bundle) appears in `git branch --merged <integration branch>`; a bundle's branch counts as merged only once its last ticket and its review fixes are merged, and before that its row's merged-SHA column says which tickets are in.
 
