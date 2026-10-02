@@ -73,7 +73,7 @@ Copy in only what an agent cannot look up: an unwritten convention, the reason b
 | Part | What it holds | What you do when your evidence goes against it |
 |---|---|---|
 | Must hold | Your ticket's acceptance criteria, and the section above. | Follow the section above; never rewrite the criteria. |
-| Chosen for you | `<choice>`: `<the reason it was made>`. | Challenge it with evidence, in your ticket's comments and your report. A challenge alone does not move the ticket to `<ready for human label from the triage label file>`. |
+| Chosen for you | `<choice>`: `<the reason it was made>`. | Challenge it with evidence, in your ticket's comments and your report. A challenge alone does not move the ticket to `<ready for human label from the triage label file>`. Your Ticket handover (the comment named by `handover:` in your prompt) is challenged the same way. |
 | Not known yet | `<the open question>`. | `<who resolves it, or how to proceed while it stays open>`. |
 
 Whoever answers a challenge to a chosen default writes why the plan changes or stands; an answer with no reason is not a resolution.
