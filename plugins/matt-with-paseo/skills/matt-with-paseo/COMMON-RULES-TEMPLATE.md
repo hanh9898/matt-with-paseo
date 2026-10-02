@@ -4,7 +4,7 @@ Copy the frame below into `wave<N>-common-rules.md` and fill in each section. Ea
 
 Steps 3, 4 and 7 of the skill append three sections, `## Checkpoints`, `## Wave agents` and `## Review`, to the end of the file; leave all three out when writing the rules.
 
-Copy in only what an agent cannot look up: an unwritten convention, the reason behind a choice, a trap already hit. Anything one command or one file answers (scripts in `package.json`, the directory layout, `CLAUDE.md`) gets a pointer, not a copy.
+Copy in only what an agent cannot look up: an unwritten convention, the reason behind a choice, a trap already hit. Anything one command or one file answers (scripts in `package.json`, the directory layout, `CLAUDE.md`) gets a pointer, not a copy. A finding the stream agent or its exploration subagent already made goes in as a pointer to the wave's notes file (`wave<N>-explore.md`), even though an agent could look it up again.
 
 ```markdown
 # Common rules for wave <N> (tickets <NN>, <NN>)
